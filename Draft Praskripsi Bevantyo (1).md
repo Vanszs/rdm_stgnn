@@ -3,41 +3,41 @@
 
 ## 1.1 Latar Belakang
 
-Hipotermia merupakan kondisi darurat ketika suhu inti tubuh turun secara abnormal akibat kehilangan panas yang melebihi kemampuan tubuh untuk memproduksinya. Pada aktivitas pendakian, risiko hipotermia meningkat secara signifikan ketika pendaki terpapar suhu rendah, angin kencang, hujan, pakaian yang basah, serta kelelahan fisik dalam durasi yang panjang [1], [2]. Urgensi permasalahan ini ditunjukkan oleh data BASARNAS periode 2015–2018 yang dilaporkan oleh Aminullah et al. [2], di mana hipotermia menjadi penyebab utama kecelakaan dalam aktivitas pendakian gunung dengan kontribusi sebesar 47%. Bahkan pada tahun 2018, dilaporkan terdapat tiga pendaki yang meninggal dunia akibat kondisi ini di Gunung Tampomas. Fakta tersebut menegaskan bahwa keselamatan pendaki sangat bergantung pada kesediaan informasi kondisi cuaca yang cepat dan akurat agar mereka dapat mengambil tindakan pencegahan sebelum paparan risiko berkembang menjadi kondisi medis yang mengancam jiwa.
+Hipotermia merupakan kondisi darurat ketika suhu inti tubuh turun secara abnormal akibat kehilangan panas yang melebihi kemampuan tubuh untuk memproduksinya. Pada aktivitas pendakian, risiko hipotermia meningkat ketika pendaki terpapar suhu rendah, angin kencang, hujan, pakaian basah, serta kelelahan fisik dalam durasi yang panjang [1], [2]. Menurut Aminullah et al. [2], data BASARNAS periode 2015–2018 menunjukkan bahwa hipotermia merupakan penyebab kecelakaan pendakian yang paling dominan dengan persentase 47%. Sumber yang sama melaporkan tiga pendaki meninggal akibat hipotermia di Gunung Tampomas pada 2018. Studi eksperimental menunjukkan bahwa mempertahankan pakaian basah setelah paparan dingin dapat memperlambat pemulihan suhu kulit dibandingkan dengan mengganti pakaian basah [58]. Fakta tersebut menegaskan pentingnya ketersediaan informasi kondisi cuaca yang cepat dan akurat agar pendaki dapat mengambil tindakan pencegahan sebelum paparan risiko berkembang menjadi kondisi medis yang mengancam jiwa.
 
-Untuk meminimalkan risiko kecelakaan tersebut, diperlukan informasi prakiraan cuaca jangka pendek (nowcasting) yang mampu memberikan deteksi dini sebelum kondisi berbahaya terjadi. Dalam konteks mitigasi keselamatan pendakian, informasi cuaca per jam lebih relevan untuk mendukung keputusan jangka pendek dibandingkan prakiraan harian karena kondisi atmosfer di pegunungan dapat berubah secara dinamis dalam hitungan jam. Informasi mengenai hujan probabilistik—yaitu peluang terjadinya hujan dalam rentang waktu tertentu—menjadi parameter kunci untuk memahami tingkat ketidakpastian cuaca di lapangan. Berbeda dengan prakiraan deterministik yang hanya memberikan nilai tunggal, prakiraan probabilistik menyajikan distribusi kemungkinan kejadian cuaca beserta tingkat keyakinannya. Hal ini memungkinkan pendaki memperoleh gambaran risiko yang lebih realistis, seperti kemungkinan terjadinya hujan lebat mendadak atau peningkatan kecepatan angin yang ekstrem.
+Untuk meminimalkan risiko kecelakaan tersebut, diperlukan informasi prakiraan cuaca jangka pendek (nowcasting) yang mampu memberikan deteksi dini sebelum kondisi berbahaya terjadi. Dalam konteks mitigasi keselamatan pendakian, informasi cuaca per jam lebih relevan untuk mendukung keputusan jangka pendek dibandingkan prakiraan harian karena kondisi atmosfer di pegunungan dapat berubah secara dinamis dalam hitungan jam. Informasi mengenai prakiraan probabilistik curah hujan—yaitu peluang atau sebaran kemungkinan curah hujan dalam rentang waktu tertentu—menjadi parameter penting untuk memahami tingkat ketidakpastian cuaca di lapangan. Berbeda dengan prakiraan deterministik yang hanya memberikan nilai tunggal, prakiraan probabilistik menyajikan distribusi kemungkinan kejadian cuaca beserta tingkat keyakinannya. Hal ini memungkinkan pendaki memperoleh gambaran risiko yang lebih realistis, seperti kemungkinan terjadinya hujan lebat mendadak atau peningkatan kecepatan angin yang ekstrem.
 
 Nowcasting cuaca pada rentang waktu sangat pendek (0–6 jam) berperan penting dalam sistem peringatan dini untuk aktivitas luar ruang [3], [4]. Pemanfaatan data radar, model prediksi numerik, dan kecerdasan buatan memungkinkan informasi cuaca diperbarui secara berkala dan cepat guna mendukung keputusan taktis di lapangan [4], [5]. Penerapan metode deep learning dalam nowcasting juga telah terbukti mampu menghasilkan prakiraan curah hujan dan angin dengan resolusi spasial dan temporal yang tinggi [6], [7], [8]. Kendati demikian, efektivitas model ini sangat bergantung pada karakteristik wilayah pengamatan, sehingga evaluasi metodologis yang mendalam pada area dengan kondisi geografis ekstrem sangat diperlukan sebelum model diterapkan secara praktis.
 
-Kawasan Gunung Gede–Pangrango merupakan salah satu destinasi wisata alam dan pendakian dengan intensitas kunjungan yang sangat tinggi, sehingga memiliki paparan risiko keselamatan yang besar. Berdasarkan kajian daya dukung lingkungan di kawasan Curug Cibeureum [9], tingkat kunjungan harian pada akhir pekan dan musim liburan sering kali melampaui kapasitas tampung nyata (Real Carrying Capacity/RCC) dan kapasitas tampung efektif (Effective Carrying Capacity/ECC). Kajian tersebut mengidentifikasi curah hujan tinggi sebagai faktor pembatas utama yang secara signifikan menurunkan daya dukung kawasan, bahkan dalam kondisi tertentu memaksa penutupan jalur wisata demi keselamatan pengunjung. Oleh karena itu, ketersediaan informasi cuaca per jam di kawasan ini sangat vital untuk membantu pihak pengelola dan pendaki dalam mengambil keputusan operasional, seperti pembatasan jumlah pengunjung, penutupan jalur sementara, atau evakuasi dini.
+Kawasan Gunung Gede–Pangrango merupakan salah satu destinasi wisata alam dan pendakian dengan intensitas kunjungan yang sangat tinggi, sehingga memiliki risiko keselamatan yang perlu diperhatikan. Berdasarkan kajian daya dukung lingkungan di kawasan Curug Cibeureum [9], curah hujan merupakan salah satu faktor yang perlu dipertimbangkan dalam pengelolaan kawasan wisata. Temuan tersebut menunjukkan bahwa kondisi cuaca dapat berkaitan dengan kapasitas dan keselamatan pengunjung. Oleh karena itu, ketersediaan informasi cuaca per jam di kawasan ini dapat menjadi bahan pertimbangan bagi pihak pengelola dan pendaki dalam menilai kondisi aktivitas di lapangan.
 
 Dinamika hujan di wilayah pegunungan seperti Gunung Gede–Pangrango sangat kompleks karena dipengaruhi oleh interaksi antara topografi, perbedaan elevasi, kelembapan udara, dan arah angin. Mekanisme pengangkatan orografis (*orographic lifting*) memicu kondensasi uap air dan pembentukan awan konvektif secara cepat di lereng atas, sementara siklus harian pemanasan daratan turut menentukan waktu puncak terjadinya hujan [11], [12], [13]. Dinamika lokal ini menciptakan variabilitas spasial yang ekstrem, di mana perbedaan curah hujan yang signifikan dapat terjadi dalam jarak horizontal yang sangat pendek [14], [15]. Ketergantungan spasial dan temporal yang erat antar-elevasi ini membuat prakiraan cuaca per jam di wilayah pegunungan menjadi sangat menantang dan tidak dapat didekati dengan asumsi stasioner.
 
-Model prakiraan cuaca deterministik konvensional dapat mengalami keterbatasan dalam merepresentasikan kejadian ekstrem di pegunungan karena prediksinya cenderung mendekati nilai rata-rata (*smoothing effect*) [16], [17]. Model deterministik merupakan pendekatan prediksi yang menghasilkan satu nilai untuk setiap waktu dan lokasi, tanpa menyertakan rentang ketidakpastian atau peluang kejadian lainnya. Sebaliknya, pendekatan probabilistik menghasilkan beberapa kemungkinan prediksi beserta peluang atau tingkat ketidakpastiannya, sehingga dapat menggambarkan berbagai kondisi cuaca yang mungkin terjadi. Hambatan utama dalam pemodelan cuaca ini terletak pada karakteristik data hujan yang bersifat *zero-inflated* dan *heavy-tailed*. Karakteristik *zero-inflated* berarti sebagian besar rekaman data menunjukkan nilai nol (tidak ada hujan), sedangkan karakteristik *heavy-tailed* berarti sebagian kecil kejadian hujan memiliki intensitas yang sangat ekstrem. Model regresi deterministik yang dioptimalkan dengan fungsi loss rata-rata akan cenderung memprediksi hujan ringan saat terjadi hujan lebat, dan sebaliknya, memprediksi ada hujan ringan saat kondisi sebenarnya kering. Akibatnya, representasi kejadian ekstrem yang sangat penting untuk mitigasi keselamatan menjadi terabaikan [16], [17].
+Model prakiraan cuaca deterministik konvensional dapat mengalami keterbatasan dalam merepresentasikan kejadian ekstrem di pegunungan karena prediksinya cenderung mendekati nilai rata-rata (*smoothing effect*) [16], [17]. Model deterministik merupakan pendekatan prediksi yang menghasilkan satu nilai untuk setiap waktu dan lokasi, tanpa menyertakan rentang ketidakpastian atau peluang kejadian lainnya. Sebaliknya, pendekatan probabilistik menghasilkan beberapa kemungkinan prediksi beserta peluang atau tingkat ketidakpastiannya, sehingga dapat menggambarkan berbagai kondisi cuaca yang mungkin terjadi. Hambatan utama dalam pemodelan cuaca ini berkaitan dengan kemungkinan karakteristik data hujan yang *zero-inflated* dan *heavy-tailed*. Karakteristik *zero-inflated* berarti sebagian besar rekaman data menunjukkan nilai nol (tidak ada hujan), sedangkan karakteristik *heavy-tailed* berarti sebagian kecil kejadian hujan memiliki intensitas yang sangat ekstrem. Karakteristik tersebut perlu dikonfirmasi melalui analisis statistik pada data penelitian. Model regresi deterministik yang dioptimalkan dengan fungsi loss rata-rata akan cenderung memprediksi hujan ringan saat terjadi hujan lebat, dan sebaliknya, memprediksi ada hujan ringan saat kondisi sebenarnya kering. Akibatnya, representasi kejadian ekstrem yang sangat penting untuk mitigasi keselamatan menjadi terabaikan [16], [17].
 
 Untuk mengatasi keterbatasan tersebut, sejumlah penelitian mengembangkan pendekatan **probabilistik generatif**, termasuk *Retrieval-Augmented Diffusion Model*, serta **pemodelan spasio-temporal** melalui *Spatio-Temporal Graph Neural Network*. Namun, pada penelitian yang ditinjau, kedua pendekatan tersebut masih banyak diterapkan secara terpisah. Beberapa penelitian hanya berfokus pada model generatif untuk ketidakpastian tanpa mempertimbangkan informasi topografi [6], [7], sedangkan sebagian lainnya menggunakan pemodelan spasio-temporal untuk representasi spasial namun menghasilkan keluaran deterministik tunggal [10], [18], [20], [21]. Berdasarkan penelitian yang ditinjau, masih diperlukan kajian yang mengintegrasikan model generatif probabilistik dengan representasi spasial graf untuk menangani karakteristik data hujan pegunungan yang zero-inflated dan heavy-tailed.
 
 Penelitian ini merespons kebutuhan tersebut dengan mengembangkan **Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network**. Dalam model ini, **Retrieval-Augmented Diffusion Model** bertindak sebagai model generatif utama yang memodelkan distribusi probabilistik cuaca melalui proses *diffusion*, sehingga mampu menghasilkan beberapa kemungkinan skenario cuaca. Sementara itu, **Spatio-Temporal Graph Neural Network** digunakan sebagai komponen pengondisi (*conditioning*) yang memodelkan lima titik lokasi pengamatan sebagai graf untuk menangkap ketergantungan spasial dan evolusi temporal kondisi cuaca di wilayah pegunungan. Kombinasi kedua metode ini dirancang untuk menghasilkan ensemble prakiraan probabilistik yang realistis dan sensitif terhadap nilai ekstrem.
 
-Fokus penelitian ini dibatasi pada evaluasi metodologis model dalam memprediksi curah hujan, kecepatan angin, dan kelembapan relatif satu jam ke depan di kawasan Gunung Gede–Pangrango dengan menggunakan data ERA5. Dataset ERA5 merupakan data reanalisis global dari *European Centre for Medium-Range Weather Forecasts* (ECMWF) yang menggabungkan hasil model numerik atmosfer dengan berbagai pengamatan melalui proses asimilasi data. Data ini disajikan pada grid dengan resolusi horizontal sekitar 25 kilometer. Oleh karena itu, nilai ERA5 merupakan estimasi kondisi atmosfer pada grid tersebut dan tidak secara langsung merepresentasikan kondisi cuaca mikro pada titik ketinggian tertentu di puncak gunung [22], [23]. Dalam penelitian ini, ERA5 digunakan untuk menguji kinerja metodologis model pada skala grid yang tersedia, bukan untuk mengklaim representasi kondisi mikrocuaca secara presisi. Atas dasar tersebut, penelitian ini berorientasi pada mitigasi risiko dengan menganalisis hasil prediksi serta kepekaan model terhadap kejadian cuaca ekstrem [22], [23]. Selain itu, hasil prediksi dari model ini akan diintegrasikan ke dalam visualisasi berbasis web [24].
+Fokus penelitian ini dibatasi pada evaluasi metodologis model dalam memprediksi curah hujan, kecepatan angin, dan kelembapan relatif satu jam ke depan di kawasan Gunung Gede–Pangrango dengan menggunakan data ERA5. Dataset ERA5 merupakan data reanalisis global dari *European Centre for Medium-Range Weather Forecasts* (ECMWF) yang menggabungkan hasil model numerik atmosfer dengan berbagai pengamatan melalui proses asimilasi data. Data ini disajikan pada grid dengan resolusi horizontal sekitar 25 kilometer. Oleh karena itu, nilai ERA5 merupakan estimasi kondisi atmosfer pada grid tersebut dan tidak secara langsung merepresentasikan kondisi cuaca mikro pada titik ketinggian tertentu di puncak gunung [57]. Dalam penelitian ini, ERA5 digunakan untuk menguji kinerja metodologis model pada skala grid yang tersedia, bukan untuk mengklaim representasi kondisi mikrocuaca secara presisi. Atas dasar tersebut, penelitian ini berorientasi pada mitigasi risiko dengan menganalisis hasil prediksi serta kemampuan model dalam mendeteksi kejadian cuaca ekstrem [23]. Selain itu, hasil prediksi dari model ini dirancang untuk diintegrasikan ke dalam visualisasi berbasis web.
 
 ## 1.2 Rumusan Masalah
 
 Berdasarkan latar belakang yang telah diuraikan, penelitian ini merumuskan permasalahan sebagai berikut:
 
-1. Bagaimana kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam memprediksi kondisi hujan, angin, dan kelembapan pada skala waktu per jam di wilayah pegunungan Gunung Gede–Pangrango menggunakan data ERA5?
+1. Bagaimana kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam memprediksi curah hujan, kecepatan angin, dan kelembapan relatif pada skala waktu per jam di wilayah pegunungan Gunung Gede–Pangrango menggunakan data ERA5?
 2. Bagaimana kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dibandingkan dengan model deterministik dalam memprediksi kondisi cuaca dan kejadian ekstrem?
 3. Seberapa baik Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam memprediksi kejadian cuaca ekstrem, khususnya hujan dengan intensitas tinggi?
-4. Bagaimana hasil prediksi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dapat ditampilkan melalui visualisasi berbasis web untuk mendukung pengambilan keputusan dalam aktivitas pendakian?
+4. Bagaimana hasil prediksi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dapat ditampilkan melalui visualisasi berbasis web untuk menyajikan informasi cuaca pendukung bagi aktivitas pendakian?
 
 ## 1.3 Tujuan Penelitian
 
-Tujuan umum penelitian ini adalah mengevaluasi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network untuk nowcasting kondisi cuaca per jam di wilayah pegunungan Gunung Gede–Pangrango menggunakan data ERA5.
+Tujuan umum penelitian ini adalah mengevaluasi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network untuk nowcasting kondisi cuaca satu jam ke depan di wilayah pegunungan Gunung Gede–Pangrango menggunakan data ERA5.
 
 Tujuan khusus penelitian ini adalah:
 
-1. Mengevaluasi kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam memprediksi kondisi hujan, angin, dan kelembapan pada skala waktu per jam di wilayah pegunungan Gunung Gede–Pangrango menggunakan data ERA5.
-2. Membandingkan kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dengan model deterministik dalam memprediksi kondisi cuaca dan kejadian ekstrem.
+1. Mengevaluasi kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam memprediksi curah hujan, kecepatan angin, dan kelembapan relatif pada skala waktu per jam di wilayah pegunungan Gunung Gede–Pangrango menggunakan data ERA5.
+2. Membandingkan kinerja Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dan model deterministik dalam memprediksi kondisi cuaca dan kejadian ekstrem.
 3. Mengevaluasi kemampuan Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam memprediksi kejadian cuaca ekstrem, khususnya hujan dengan intensitas tinggi.
 4. Mengembangkan visualisasi berbasis web untuk menampilkan hasil prediksi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network sebagai informasi pendukung pengambilan keputusan dalam aktivitas pendakian.
 
@@ -46,9 +46,9 @@ Tujuan khusus penelitian ini adalah:
 Penelitian ini diharapkan dapat memberikan kontribusi dalam pengembangan metode *nowcasting* cuaca serta penerapannya dalam mendukung mitigasi risiko aktivitas pendakian di wilayah pegunungan. Manfaat yang diharapkan dari penelitian ini adalah sebagai berikut:
 
 1. Memberikan kontribusi dalam pengembangan dan evaluasi model *nowcasting* probabilistik berbasis *Retrieval-Augmented Diffusion Model* dan *Spatio-Temporal Graph Neural Network* untuk memodelkan dinamika curah hujan, kecepatan angin, dan kelembapan relatif pada skala waktu per jam di wilayah pegunungan.
-2. Memberikan pemahaman ilmiah mengenai efektivitas penggabungan pencarian cuaca historis serupa pada *Retrieval-Augmented Diffusion Model* dan representasi graf ruang-waktu pada *Spatio-Temporal Graph Neural Network* dalam menangkap ketidakpastian serta hubungan spasial-temporal cuaca.
+2. Memberikan pemahaman ilmiah mengenai efektivitas penggabungan pencarian kondisi cuaca historis yang serupa pada *Retrieval-Augmented Diffusion Model* dan representasi graf spasio-temporal pada *Spatio-Temporal Graph Neural Network* dalam menangkap ketidakpastian serta hubungan spasial-temporal cuaca.
 3. Menyajikan analisis empiris mengenai kemampuan model *Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network* dalam merepresentasikan ketidakpastian curah hujan yang sering kali bernilai nol (*zero-inflated*) dan memiliki nilai ekstrem (*heavy-tailed*), termasuk kepekaan prediksi terhadap kejadian hujan pada berbagai ambang intensitas.
-4. Menyajikan analisis terkait perbandingan antara akurasi prediksi rata-rata dan kepekaan model *Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network* terhadap kejadian ekstrem sebagai dasar dalam pengambilan keputusan berbasis risiko pada aktivitas pendakian di wilayah pegunungan.
+4. Menyajikan analisis terkait perbandingan antara akurasi prediksi rata-rata dan kemampuan model *Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network* dalam mendeteksi kejadian ekstrem sebagai dasar dalam pengambilan keputusan berbasis risiko pada aktivitas pendakian di wilayah pegunungan.
 5. Menghasilkan prediksi probabilistik dari model *Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network* yang dapat digunakan sebagai dasar pengembangan sistem visualisasi berbasis web untuk penyampaian informasi cuaca jangka pendek.
 
 ## 1.5 Batasan Masalah
@@ -66,15 +66,13 @@ Untuk menjaga fokus penelitian dan memastikan ketercapaian tujuan dalam ruang li
 
 # BAB II — TINJAUAN PUSTAKA
 
-BAB II TINJAUAN PUSTAKA
-
 ## 2.1 Penelitian Terdahulu
 
 Penelitian-penelitian yang telah dilakukan dan relevan dengan penelitian ini mencakup model generatif probabilistik, model graf spasio-temporal, mekanisme retrieval pada diffusion model, model recurrent berbasis attention, serta pendekatan ensemble untuk prakiraan cuaca. Sepuluh penelitian berikut digunakan sebagai landasan perbandingan konseptual. Tiga penelitian yang paling dekat dengan fokus penelitian dirangkum dalam Tabel 2.1, sedangkan penelitian yang diusulkan ditampilkan sebagai baris pembanding keempat. Penelitian yang diusulkan tidak dihitung sebagai penelitian terdahulu.
 
 1. Penelitian “Precipitation Nowcasting with Generative Diffusion Models”
 
-oleh Asperti et al. (2025) [25] Penelitian ini mengembangkan Generative Ensemble Diffusion (GED) berbasis DDIM dan denoiser U-Net untuk menghasilkan 15 sampel prediksi hujan berbasis ERA5. Ensemble dibentuk melalui proses sampling berulang dan dapat diproses menggunakan rata-rata atau post-processing U-Net. Penelitian tersebut relevan karena menunjukkan bahwa diffusion ensemble dapat merepresentasikan beberapa kemungkinan evolusi hujan. Perbedaannya terletak pada penggunaan grid Eropa, bukan lima node ERA5 dengan target `MAIN` di Gunung Gede–Pangrango.
+oleh Asperti et al. (2024) [25] Penelitian ini mengembangkan Generative Ensemble Diffusion (GED) berbasis DDIM dan denoiser U-Net untuk menghasilkan 15 sampel prediksi hujan berbasis ERA5. Ensemble dibentuk melalui proses sampling berulang dan dapat diproses menggunakan rata-rata atau post-processing U-Net. Penelitian tersebut relevan karena menunjukkan bahwa diffusion ensemble dapat merepresentasikan beberapa kemungkinan evolusi hujan. Perbedaannya terletak pada penggunaan grid Eropa, bukan lima node ERA5 dengan target `MAIN` di Gunung Gede–Pangrango.
 
 2. Penelitian   “Spatio-temporal      graph    neural    networks     to   improve
 
@@ -82,7 +80,7 @@ precipitation forecasts from numerical models” oleh Yousaf et al. (2025) [26] 
 
 3. Penelitian “Retrieval-Augmented Diffusion Models for Time Series
 
-Forecasting” oleh Liu et al. (2024) [27] Penelitian ini mengusulkan Retrieval-Augmented Time series Diffusion (RATD), yang mengambil urutan historis serupa melalui embedding retrieval dan memasukkannya ke proses denoising melalui Reference-Modulated Attention. Relevansinya adalah prinsip integrasi retrieval dan diffusion pada data deret waktu. RATD tidak menggunakan lima node, ERA5, target `MAIN`, atau STGNN, sehingga hasilnya tidak dapat dianggap sebagai bukti performa pada hujan lokal.
+Forecasting” oleh Liu et al. (2024) [27] Penelitian ini mengusulkan Retrieval-Augmented Time series Diffusion (RATD), yang mengambil urutan historis serupa melalui embedding retrieval dan memasukkannya ke proses denoising melalui Reference-Modulated Attention. Relevansinya adalah prinsip integrasi retrieval dan diffusion pada data deret waktu. RATD tidak menggunakan lima node, ERA5, target `MAIN`, atau Spatio-Temporal Graph Neural Network, sehingga hasilnya tidak dapat dianggap sebagai bukti performa pada hujan lokal.
 
 4. Penelitian “Skilful precipitation nowcasting using deep generative models
 
@@ -98,7 +96,7 @@ Nowcasting” oleh Zhao et al. (2023) [28] Penelitian ini memandang grid radar s
 
 7. Penelitian   “RSDF-AM-LSTM:          Regional    Scale    Division    Rainfall
 
-Forecasting Using Attention and LSTM” oleh Li et al. (2021) [29] Penelitian ini menggabungkan beberapa LSTM paralel dengan mekanisme attention untuk menangkap dependensi temporal-spasial pada ribuan stasiun meteorologi. Relevansinya terletak pada pemanfaatan attention dan LSTM untuk data multi-lokasi. Baseline Multi-node LSTM + Attention pada penelitian ini hanya merupakan adaptasi gagasan tersebut ke lima node ERA5 dan target `MAIN`, bukan reproduksi penuh RSDF-AM-LSTM.
+Forecasting Using Attention and LSTM” oleh Li et al. (2022) [29] Penelitian ini menggabungkan beberapa LSTM paralel dengan mekanisme attention untuk menangkap dependensi temporal-spasial pada ribuan stasiun meteorologi. Relevansinya terletak pada pemanfaatan attention dan LSTM untuk data multi-lokasi. Baseline Multi-node LSTM + Attention pada penelitian ini hanya merupakan adaptasi gagasan tersebut ke lima node ERA5 dan target `MAIN`, bukan reproduksi penuh RSDF-AM-LSTM.
 
 8. Penelitian “A Hybrid Approach to Physical and Deep Learning Models for
 
@@ -110,14 +108,14 @@ ensemble weather prediction” oleh Zhong et al. (2025) [17] FuXi-ENS menggunaka
 
 10. Penelitian “Beyond the horizon: A comprehensive analysis of artificial
 
-intelligence-based weather forecasting models” oleh Haji-Aghajany et al. (2025) [30] Penelitian ini merupakan tinjauan komprehensif terhadap model prakiraan cuaca berbasis AI, termasuk isu ketidakpastian, generalisasi, interpretabilitas, dan kendala fisik. Relevansinya adalah pemetaan konseptual posisi diffusion model, retrieval, graf, dan attention dalam perkembangan prakiraan cuaca berbasis AI. Artikel tinjauan ini bukan baseline dan tidak menyediakan eksperimen langsung pada lima node ERA5 atau Gunung Gede–Pangrango. Kesepuluh penelitian tersebut menunjukkan perkembangan pada diffusion ensemble, graf spasio-temporal, retrieval-augmented forecasting, attention-LSTM, dan ensemble weather prediction. Namun, belum terdapat penelitian pada daftar ini yang menguji integrasi Retrieval-Augmented Diffusion Model dan Spatio-Temporal Graph Neural Network secara simultan pada lima node ERA5 dengan target `MAIN`, horizon satu jam, dan konteks mikrocuaca Gunung Gede– Pangrango. Kebaruan penelitian ini dibatasi pada kombinasi metode, konfigurasi spasial, sumber data, horizon, dan wilayah studi; penelitian ini tidak mengklaim sebagai penelitian pertama di dunia. **Tabel 2.1 Penelitian Terdahulu**
+intelligence-based weather forecasting models” oleh Haji-Aghajany et al. (2025) [30] Penelitian ini merupakan tinjauan komprehensif terhadap model prakiraan cuaca berbasis AI, termasuk isu ketidakpastian, generalisasi, interpretabilitas, dan kendala fisik. Relevansinya adalah pemetaan konseptual posisi diffusion model, retrieval, graf, dan attention dalam perkembangan prakiraan cuaca berbasis AI. Artikel tinjauan ini bukan baseline dan tidak menyediakan eksperimen langsung pada lima node ERA5 atau Gunung Gede–Pangrango. Kesepuluh penelitian tersebut menunjukkan perkembangan pada diffusion ensemble, graf spasio-temporal, retrieval-augmented forecasting, attention-LSTM, dan ensemble weather prediction. Berdasarkan penelitian yang ditinjau dalam naskah ini, belum ditemukan penelitian yang menguji integrasi Retrieval-Augmented Diffusion Model dan Spatio-Temporal Graph Neural Network secara simultan pada lima node ERA5 dengan target `MAIN` dan horizon satu jam di kawasan Gunung Gede–Pangrango. Kebaruan penelitian ini dibatasi pada kombinasi metode, konfigurasi spasial, sumber data, horizon, dan wilayah studi; penelitian ini tidak mengklaim sebagai penelitian pertama di dunia. **Tabel 2.1 Penelitian Terdahulu**
 
 | No. | Judul dan Peneliti | Metode | Temuan Utama | Kedudukan terhadap Penelitian Ini |
 |---:|---|---|---|---|
-| 1 | Precipitation Nowcasting with Generative Diffusion Models — Asperti et al. (2025) [25] | Generative Ensemble Diffusion berbasis DDIM dan U-Net | Ensemble diffusion menghasilkan beberapa kemungkinan prediksi presipitasi berbasis ERA5. | Rujukan utama diffusion ensemble; berbeda pada grid, wilayah, dan konfigurasi spasial. |
+| 1 | Precipitation Nowcasting with Generative Diffusion Models — Asperti et al. (2024) [25] | Generative Ensemble Diffusion berbasis DDIM dan U-Net | Ensemble diffusion menghasilkan beberapa kemungkinan prediksi presipitasi berbasis ERA5. | Rujukan utama diffusion ensemble; berbeda pada grid, wilayah, dan konfigurasi spasial. |
 | 2 | Spatio-temporal graph neural networks to improve precipitation forecasts from numerical models — Yousaf et al. (2025) [26] | WRF-GNN dengan keluaran WRF dan rain gauge | Graf spasio-temporal digunakan untuk memperbaiki prakiraan presipitasi numerik. | Rujukan utama representasi graf; penelitian ini tidak menggunakan WRF atau 22 rain gauge. |
-| 3 | Retrieval-Augmented Diffusion Models for Time Series Forecasting — Liu et al. (2024) [27] | RATD dengan embedding retrieval dan Reference-Modulated Attention | Retrieval historis membantu diffusion model pada forecasting deret waktu. | Rujukan integrasi retrieval-diffusion; bukan penelitian cuaca lokal dan tidak memakai STGNN. |
-| 4 | Penelitian yang diusulkan | Retrieval-Augmented Diffusion Model dengan STGNN; ERA5/Open-Meteo; lima node; target MAIN | Hasil penelitian belum tersedia. | Model utama penelitian ini. |
+| 3 | Retrieval-Augmented Diffusion Models for Time Series Forecasting — Liu et al. (2024) [27] | RATD dengan embedding retrieval dan Reference-Modulated Attention | Retrieval historis membantu diffusion model pada forecasting deret waktu. | Rujukan integrasi retrieval-diffusion; bukan penelitian cuaca lokal dan tidak memakai Spatio-Temporal Graph Neural Network. |
+| 4 | Penelitian yang diusulkan | Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network; ERA5/Open-Meteo; lima node; target MAIN | Hasil penelitian belum tersedia. | Model utama penelitian ini. |
 
 ## 2.2 Landasan Teori
 
@@ -127,14 +125,14 @@ Landasan teori dalam penelitian ini disusun untuk memberikan dasar ilmiah bagi p
 
 *Nowcasting* merupakan prakiraan cuaca jangka sangat pendek yang menggunakan kondisi atmosfer terkini untuk memprediksi perubahan cuaca hingga sekitar enam jam ke depan [6]. Berbeda dengan prakiraan cuaca harian atau mingguan, *nowcasting* berfokus pada perubahan cuaca lokal yang berlangsung cepat. Dalam penelitian ini, *nowcasting* digunakan untuk memprediksi kondisi cuaca satu jam ke depan pada satu titik pengamatan utama yang disebut node `MAIN` di kawasan Gunung Gede–Pangrango.
 
-Target prediksi meliputi curah hujan, kecepatan angin, dan kelembapan relatif. Ketiga variabel tersebut digunakan untuk menggambarkan kondisi cuaca yang dapat memengaruhi paparan pendaki. Tabel 2.2 membandingkan *nowcasting* dengan prakiraan cuaca pada rentang waktu yang lebih panjang. Contoh keluaran pada tabel menggunakan presipitasi karena hujan merupakan salah satu fenomena cuaca yang dapat berubah dengan cepat. Keluaran model penelitian ini tetap mencakup tiga target, yaitu curah hujan, kecepatan angin, dan kelembapan relatif.
+Target prediksi meliputi curah hujan, kecepatan angin, dan kelembapan relatif. Ketiga variabel tersebut digunakan untuk menggambarkan kondisi cuaca yang dapat memengaruhi paparan pendaki. Tabel 2.2 membandingkan *nowcasting* dengan prakiraan cuaca pada rentang waktu yang lebih panjang. Contoh keluaran pada tabel menggunakan curah hujan karena hujan merupakan salah satu fenomena cuaca yang dapat berubah dengan cepat. Keluaran model penelitian ini tetap mencakup tiga target, yaitu curah hujan, kecepatan angin, dan kelembapan relatif.
 
 Konsep *nowcasting* ini menjadi dasar untuk membahas dinamika cuaca per jam, fitur temporal, keterbatasan pendekatan deterministik, dan pendekatan probabilistik pada subbab berikutnya.
 **Tabel 2.2 Perbandingan Skala Prakiraan Atmosfer [7] [16]**
 
 | Skala Prakiraan | Horizon | Karakteristik Utama | Contoh Keluaran |
 |---|---|---|---|
-| Nowcasting | 0–6 jam | Bergantung kuat pada kondisi awal dan observasi terkini; menargetkan fenomena lokal yang berubah cepat. | Prediksi presipitasi satu jam ke depan. |
+| Nowcasting | 0–6 jam | Bergantung kuat pada kondisi awal dan observasi terkini; menargetkan fenomena lokal yang berubah cepat. | Prediksi curah hujan satu jam ke depan. |
 | Short-range forecasting | 6–72 jam | Memadukan observasi dan prediksi numerik untuk evolusi cuaca jangka pendek. | Prakiraan hujan harian dan peringatan cuaca. |
 | Medium-range forecasting | Lebih dari 72 jam hingga sekitar 15 hari | Menekankan dinamika atmosfer skala besar dan prediksi ensemble. | Prakiraan probabilistik regional atau global. |
 
@@ -154,13 +152,13 @@ Rentang prediksi 0–6 jam pada *nowcasting* berkaitan erat dengan perubahan cua
 
 Di wilayah pegunungan tropis seperti Gunung Gede–Pangrango, dinamika tersebut menjadi lebih kompleks karena dipengaruhi oleh pengangkatan udara akibat topografi (*orographic lifting*), siklus harian pembentukan awan, dan interaksi angin dengan lereng. Faktor-faktor tersebut menyebabkan kondisi cuaca berbeda antarlokasi dan berubah dari waktu ke waktu [11], [14].
 
-Awan dan hujan yang terbentuk melalui proses tersebut dapat muncul dan berubah dalam waktu puluhan menit hingga beberapa jam [5]. Satu kelompok awan atau hujan dapat bertahan sekitar 30–60 menit, sedangkan kumpulan awan atau hujan yang lebih luas dapat bertahan selama 3–6 jam atau lebih. Oleh karena itu, prediksi cuaca satu jam ke depan perlu mempertimbangkan kemungkinan terbentuknya awan baru, pergerakan hujan, serta perubahan intensitas curah hujan [4], [20].
+Awan dan hujan yang terbentuk melalui proses tersebut dapat muncul dan berubah dalam waktu yang relatif singkat [11], [20]. Oleh karena itu, prediksi cuaca satu jam ke depan perlu mempertimbangkan kemungkinan terbentuknya awan baru, pergerakan hujan, serta perubahan intensitas curah hujan [4], [20].
 
 Perubahan kecil pada kondisi awal atmosfer, seperti kelembapan, suhu, dan kecepatan angin, dapat menghasilkan perubahan cuaca yang berbeda dalam waktu singkat. Akibatnya, kesalahan prakiraan dapat membesar seiring bertambahnya waktu prediksi (*rapid error growth*) [32]. Di kawasan Gunung Gede–Pangrango, perbedaan elevasi yang cukup besar dapat menyebabkan kondisi meteorologis yang berbeda dalam jarak horizontal yang relatif pendek [11], [14]. Kondisi ini membuat prediksi per jam penting untuk menggambarkan perubahan curah hujan, kecepatan angin, dan kelembapan relatif di sepanjang wilayah pendakian. Oleh karena itu, model *nowcasting* perlu mempertimbangkan perubahan kondisi cuaca yang berlangsung cepat, baik menurut waktu maupun lokasi [1].
 
 #### 2.2.1.3 Keterkaitan Waktu dalam Prediksi Curah Hujan
 
-Curah hujan dapat berlangsung dan berubah dalam rentang waktu puluhan menit hingga beberapa jam. Satu kelompok awan atau hujan dapat bertahan sekitar 30–60 menit, sedangkan sistem awan atau hujan yang lebih luas dapat bertahan selama 3–6 jam atau lebih [5]. Kondisi tersebut menunjukkan bahwa keadaan hujan pada waktu sebelumnya dapat memberikan informasi mengenai kemungkinan kondisi hujan pada waktu berikutnya [4], [20].
+Curah hujan dapat berubah dalam waktu yang relatif singkat [11], [20]. Kondisi tersebut menunjukkan bahwa keadaan hujan pada waktu sebelumnya dapat memberikan informasi mengenai kemungkinan kondisi hujan pada waktu berikutnya [4], [20].
 
 Dalam penelitian ini, keterkaitan waktu tersebut direpresentasikan melalui fitur curah hujan satu jam sebelumnya atau *lag-1*. Fitur ini digunakan sebagai salah satu fitur masukan pada setiap waktu pengamatan dan dirumuskan sebagai berikut:
 
@@ -174,7 +172,7 @@ dengan:
 
 - `Precipitation_{t-1}` = nilai curah hujan pada waktu `t-1`.
 
-Formula 2.1 hanya menunjukkan penggunaan curah hujan satu jam sebelumnya sebagai salah satu fitur temporal. Sementara itu, jendela pengamatan enam jam mencakup rangkaian kondisi cuaca dari waktu `t-6` hingga `t-1` untuk memprediksi kondisi cuaca pada waktu `t`. Jendela tersebut diproses sebagai rangkaian snapshot graf, sedangkan perubahan kondisi antarwaktu dipelajari melalui mekanisme *temporal attention* pada *Spatio-Temporal Graph Neural Network*. Mekanisme tersebut dibahas lebih lanjut pada Subbab 2.2.6. (noted [pertanyaan ke dosen nantinya])
+Formula 2.1 hanya menunjukkan penggunaan curah hujan satu jam sebelumnya sebagai salah satu fitur temporal. Sementara itu, jendela pengamatan enam jam mencakup rangkaian kondisi cuaca dari waktu `t-6` hingga `t-1` untuk memprediksi curah hujan, kecepatan angin, dan kelembapan relatif pada waktu `t`. Jendela tersebut diproses sebagai rangkaian snapshot graf, sedangkan perubahan kondisi antarwaktu dipelajari melalui mekanisme *temporal attention* pada *Spatio-Temporal Graph Neural Network*. Mekanisme tersebut dibahas lebih lanjut pada Subbab 2.2.6. (noted [pertanyaan ke dosen nantinya])
 
 #### 2.2.1.4 Transformasi dan Standardisasi Data Curah Hujan
 
@@ -212,7 +210,7 @@ Rata-rata dan simpangan baku dihitung hanya berdasarkan data pelatihan untuk men
 
 ### 2.2.2 Dinamika Hujan Orografis di Pegunungan Tropis
 
-Hujan orografis merupakan hujan yang terbentuk ketika udara lembap bergerak menuju pegunungan dan terdorong naik oleh permukaan lereng. Udara yang naik mengalami penurunan suhu sehingga uap air mengembun dan membentuk awan serta hujan [11], [35]. Di wilayah tropis, proses ini dipengaruhi oleh kelembapan udara yang tinggi dan kondisi atmosfer yang tidak stabil. Akibatnya, curah hujan dapat berbeda antara satu lokasi dan lokasi lainnya dalam jarak yang relatif dekat [11], [25].
+Hujan orografis merupakan hujan yang terbentuk ketika udara lembap bergerak menuju pegunungan dan terdorong naik oleh permukaan lereng. Udara yang naik mengalami penurunan suhu sehingga uap air mengembun dan membentuk awan serta hujan [11], [35]. Di wilayah tropis, proses ini dipengaruhi oleh kelembapan udara yang tinggi dan kondisi atmosfer yang tidak stabil. Akibatnya, curah hujan dapat berbeda antara satu lokasi dan lokasi lainnya dalam jarak yang relatif dekat [11], [14], [35].
 
 Di kawasan Gunung Gede–Pangrango, perbedaan elevasi, bentuk lereng, dan arah angin menyebabkan kondisi cuaca berubah menurut lokasi. Lereng yang berhadapan dengan arah datangnya angin (*windward slope*) cenderung menerima lebih banyak udara lembap, sedangkan lereng yang terlindung dari arah angin (*leeward slope*) dapat mengalami kondisi yang lebih kering atau bayangan hujan (*rain shadow*) [11], [36]. Selain itu, pemanasan permukaan pada siang hari dan perubahan angin dapat memengaruhi waktu serta intensitas terjadinya hujan [37].
 
@@ -222,7 +220,7 @@ Dinamika tersebut menyebabkan hujan di wilayah pegunungan dapat berubah dalam wa
 
 Mekanisme utama hujan orografis terjadi ketika udara lembap terdorong naik oleh permukaan lereng pegunungan. Ketika udara tersebut naik, suhunya menurun sehingga uap air dapat mengembun dan membentuk awan [36]. Di wilayah tropis, proses awal pembentukan awan dan hujan ini disebut inisiasi konveksi (*convective initiation*). Proses tersebut dipengaruhi oleh kelembapan udara, suhu, kestabilan atmosfer, serta kecepatan dan arah angin [11].
 
-Angin yang bergerak melintasi lereng (*cross-slope wind*) dapat memperkuat pengangkatan udara dan membawa uap air menuju lereng pegunungan. Namun, pengaruh angin terhadap pembentukan hujan tidak berdiri sendiri karena juga bergantung pada topografi, kelembapan, orientasi lereng, dan kondisi atmosfer [25], [36]. Dengan demikian, peningkatan kecepatan angin dapat meningkatkan potensi pembentukan hujan pada kondisi tertentu, tetapi besarnya pengaruh tersebut dapat berbeda menurut wilayah dan keadaan atmosfer.
+Angin yang bergerak melintasi lereng (*cross-slope wind*) dapat memperkuat pengangkatan udara dan membawa uap air menuju lereng pegunungan. Namun, pengaruh angin terhadap pembentukan hujan tidak berdiri sendiri karena juga bergantung pada topografi, kelembapan, orientasi lereng, dan kondisi atmosfer [36]. Dengan demikian, peningkatan kecepatan angin dapat meningkatkan potensi pembentukan hujan pada kondisi tertentu, tetapi besarnya pengaruh tersebut dapat berbeda menurut wilayah dan keadaan atmosfer.
 
 Hubungan konseptual antara intensitas hujan orografis dan faktor atmosfer serta topografi dapat dinyatakan sebagai berikut:
 
@@ -244,7 +242,7 @@ dengan:
 
 - `C` = kondisi atmosfer yang mendukung pembentukan awan dan hujan.
 
-Rumus tersebut merupakan representasi konseptual mengenai faktor-faktor yang berkaitan dengan pembentukan hujan orografis. Rumus ini bukan persamaan empiris untuk menghitung curah hujan di Gunung Gede–Pangrango dan tidak digunakan secara langsung dalam proses prediksi model. Hubungan antara angin, kelembapan, topografi, dan pembentukan hujan menjadi dasar teoritis untuk mempertimbangkan informasi dari beberapa titik pengamatan dalam penelitian ini [32].
+Rumus tersebut merupakan representasi konseptual mengenai faktor-faktor yang berkaitan dengan pembentukan hujan orografis. Rumus ini bukan persamaan empiris untuk menghitung curah hujan di Gunung Gede–Pangrango dan tidak digunakan secara langsung dalam proses prediksi model. Hubungan antara angin, kelembapan, topografi, dan pembentukan hujan menjadi dasar teoritis untuk mempertimbangkan informasi dari beberapa titik pengamatan dalam penelitian ini [11], [12], [36].
 
 Di kawasan Gunung Gede–Pangrango, interaksi antara faktor mekanis, seperti pengangkatan udara oleh lereng, dan faktor termal, seperti pemanasan permukaan, dapat menyebabkan hujan terbentuk secara tidak merata. Kondisi tersebut mendukung penggunaan representasi spasio-temporal untuk mempelajari hubungan kondisi cuaca antartitik pengamatan. Pembahasan mengenai variasi hujan menurut lokasi dan waktu dilanjutkan pada Subbab 2.2.2.2.
 
@@ -274,9 +272,9 @@ Informasi dari Spatio-Temporal Graph Neural Network kemudian digunakan sebagai i
 
 Risiko hipotermia merupakan salah satu ancaman keselamatan dalam aktivitas pendakian, termasuk di kawasan pegunungan tropis seperti Gunung Gede–Pangrango [1]. Hipotermia terjadi ketika suhu inti tubuh turun di bawah 35°C karena kehilangan panas tubuh lebih besar daripada panas yang dihasilkan [1].
 
-Di lingkungan pegunungan tropis, paparan hujan dapat membasahi pakaian dan kulit pendaki. Kondisi tersebut mengurangi kemampuan pakaian dalam mempertahankan panas tubuh. Angin juga dapat mempercepat kehilangan panas dari permukaan tubuh, sedangkan kelembapan relatif yang tinggi dapat mempertahankan kondisi basah pada pakaian dan lingkungan [1], [22]. Oleh karena itu, risiko hipotermia tidak hanya berkaitan dengan suhu udara, tetapi juga dengan kombinasi curah hujan, kecepatan angin, kelembapan relatif, dan durasi paparan.
+Di lingkungan pegunungan tropis, paparan hujan dapat membasahi pakaian dan kulit pendaki. Kondisi tersebut mengurangi kemampuan pakaian dalam mempertahankan panas tubuh. Angin juga dapat mempercepat kehilangan panas dari permukaan tubuh, sedangkan kelembapan relatif yang tinggi dapat mempertahankan kondisi basah pada pakaian dan lingkungan [1]. Oleh karena itu, risiko hipotermia tidak hanya berkaitan dengan suhu udara, tetapi juga dengan kombinasi curah hujan, kecepatan angin, kelembapan relatif, dan durasi paparan.
 
-Kelelahan akibat aktivitas pendakian yang berlangsung lama juga dapat meningkatkan kerentanan pendaki terhadap hipotermia. Dalam kondisi lelah, kemampuan tubuh untuk menghasilkan dan mempertahankan panas dapat menurun [22]. Gejala awal seperti menggigil, kelelahan, dan menurunnya koordinasi tubuh juga dapat dianggap sebagai kelelahan biasa sehingga berpotensi terlambat dikenali [1].
+Kelelahan akibat aktivitas pendakian yang berlangsung lama juga dapat meningkatkan kerentanan pendaki terhadap hipotermia. Dalam kondisi lelah, kemampuan tubuh untuk menghasilkan dan mempertahankan panas dapat menurun. Gejala awal seperti menggigil, kelelahan, dan menurunnya koordinasi tubuh juga dapat dianggap sebagai kelelahan biasa sehingga berpotensi terlambat dikenali [1].
 
 Ketiga variabel tersebut, yaitu curah hujan, kecepatan angin, dan kelembapan relatif, merupakan kondisi cuaca yang relevan untuk diprediksi dalam penelitian ini. Hubungan antara prediksi cuaca dan mitigasi risiko dibahas lebih lanjut pada Subbab 2.2.3.3.
 
@@ -284,9 +282,9 @@ Ketiga variabel tersebut, yaitu curah hujan, kecepatan angin, dan kelembapan rel
 
 Hipotermia terjadi ketika tubuh kehilangan panas lebih cepat daripada kemampuan tubuh untuk menghasilkan panas. Di lingkungan pegunungan tropis, kondisi tersebut dapat dipicu oleh hujan, pakaian basah, angin, dan durasi paparan yang panjang, meskipun suhu udara tidak serendah wilayah pegunungan bersalju [1].
 
-Kehilangan panas tubuh dapat terjadi melalui beberapa mekanisme. **Konduksi** merupakan perpindahan panas melalui kontak langsung antara tubuh dan permukaan yang lebih dingin, termasuk pakaian atau kulit yang basah. **Konveksi** merupakan kehilangan panas akibat pergerakan udara di sekitar tubuh dan dapat meningkat ketika pendaki terpapar angin. Sementara itu, **evaporasi** merupakan kehilangan panas ketika air menguap dari permukaan kulit atau pakaian yang basah [1], [22].
+Kehilangan panas tubuh dapat terjadi melalui beberapa mekanisme. **Konduksi** merupakan perpindahan panas melalui kontak langsung antara tubuh dan permukaan yang lebih dingin, termasuk pakaian atau kulit yang basah. **Konveksi** merupakan kehilangan panas akibat pergerakan udara di sekitar tubuh dan dapat meningkat ketika pendaki terpapar angin. Sementara itu, **evaporasi** merupakan kehilangan panas ketika air menguap dari permukaan kulit atau pakaian yang basah [1].
 
-Hujan dan pakaian basah dapat memperbesar kehilangan panas melalui konduksi dan evaporasi. Pakaian yang basah juga memiliki kemampuan perlindungan yang lebih rendah dibandingkan pakaian dalam kondisi kering. Selain itu, angin dapat mempercepat perpindahan udara di sekitar tubuh sehingga kehilangan panas melalui konveksi menjadi lebih besar [1], [22].
+Hujan dan pakaian basah dapat memperbesar kehilangan panas melalui konduksi dan evaporasi. Pakaian yang basah juga memiliki kemampuan perlindungan yang lebih rendah dibandingkan pakaian dalam kondisi kering. Selain itu, angin dapat mempercepat perpindahan udara di sekitar tubuh sehingga kehilangan panas melalui konveksi menjadi lebih besar [1].
 
 Di kawasan Gunung Gede–Pangrango, perubahan kondisi cuaca dapat terjadi antarlokasi dan dalam waktu yang relatif singkat karena pengaruh topografi, elevasi, arah angin, dan pembentukan hujan orografis [11], [35]. Perubahan tersebut dapat menyebabkan pendaki mengalami paparan hujan, angin, dan kelembapan yang berbeda sepanjang jalur pendakian, mulai dari elevasi rendah hingga elevasi yang lebih tinggi.
 
@@ -294,9 +292,9 @@ Dengan demikian, prediksi curah hujan, kecepatan angin, dan kelembapan relatif d
 
 #### 2.2.3.2 Faktor Meteorologis yang Berkaitan dengan Risiko Hipotermia
 
-Faktor meteorologis yang berkaitan dengan risiko hipotermia di wilayah pegunungan tropis meliputi curah hujan, kecepatan angin, dan kelembapan relatif [1], [7]. Curah hujan yang tinggi dapat membasahi pakaian pendaki dan meningkatkan kehilangan panas melalui konduksi serta evaporasi. Kecepatan angin dapat memperbesar kehilangan panas melalui pergerakan udara di sekitar tubuh, sedangkan kelembapan relatif yang tinggi dapat mempertahankan kondisi basah pada pakaian dan lingkungan [11], [35].
+Faktor meteorologis yang berkaitan dengan paparan dingin di wilayah pegunungan tropis meliputi curah hujan, kecepatan angin, dan kelembapan relatif [1]. Curah hujan yang tinggi dapat membasahi pakaian pendaki dan memperbesar kehilangan panas. Kecepatan angin dapat mempercepat perpindahan udara di sekitar tubuh. Kelembapan relatif digunakan sebagai informasi tambahan untuk menilai kondisi lingkungan yang berkaitan dengan kebasahan pakaian dan paparan dingin.
 
-**Tabel 2.5 Faktor Meteorologis terkait Paparan Dingin Pendaki [1], [22]**
+**Tabel 2.3 Faktor Meteorologis terkait Paparan Dingin Pendaki [1], [58]**
 
 | Faktor | Dampak Potensial | Variabel Model | Peran Informasi Nowcasting |
 |---|---|---|---|
@@ -310,27 +308,29 @@ Pendekatan probabilistik digunakan untuk merepresentasikan beberapa kemungkinan 
 
 #### 2.2.3.3 Relevansi Nowcasting Probabilistik sebagai Mitigasi Risiko
 
-Nowcasting probabilistik dengan horizon satu jam ke depan dapat menyediakan informasi mengenai kemungkinan perubahan curah hujan, kecepatan angin, dan kelembapan relatif. Informasi tersebut dapat mendukung tindakan preventif, seperti mencari tempat berteduh, mengganti pakaian basah, atau mempertimbangkan untuk turun sebelum kondisi cuaca memburuk [1], [46].
+Nowcasting probabilistik dengan horizon satu jam ke depan dapat menyediakan informasi mengenai kemungkinan perubahan curah hujan, kecepatan angin, dan kelembapan relatif. Informasi tersebut dapat menjadi bahan pertimbangan dalam menilai kondisi cuaca selama aktivitas pendakian [1], [46].
 
 Hasil keluaran model berupa distribusi probabilitas pada node `MAIN` dapat menjadi masukan bagi pengembangan indeks risiko hipotermia multi-faktor pada penelitian lanjutan. Indeks tersebut tidak menjadi keluaran langsung dalam penelitian ini. Penelitian ini berfokus pada prediksi kondisi meteorologis yang berpotensi meningkatkan paparan dingin pendaki.
 
-Integrasi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Conditioning digunakan untuk menghasilkan prediksi probabilistik dengan memanfaatkan informasi historis dan hubungan kondisi cuaca antarlokasi [7], [25]. Pendekatan tersebut diharapkan dapat membantu model merepresentasikan ketidakpastian dan perubahan cuaca, termasuk kemungkinan terjadinya hujan berintensitas tinggi. Kemampuan model dalam mendeteksi kejadian ekstrem dan menghasilkan prediksi yang bermanfaat perlu dievaluasi berdasarkan hasil eksperimen.
+Integrasi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network digunakan untuk menghasilkan prediksi probabilistik dengan memanfaatkan informasi historis dan hubungan kondisi cuaca antarlokasi [7], [25]. Pendekatan tersebut diharapkan dapat membantu model merepresentasikan ketidakpastian dan perubahan cuaca, termasuk kemungkinan terjadinya hujan berintensitas tinggi. Kemampuan model dalam mendeteksi kejadian ekstrem dan menghasilkan prediksi yang bermanfaat perlu dievaluasi berdasarkan hasil eksperimen.
 
-Dalam penerapannya, hasil nowcasting dapat menjadi dasar pengembangan sistem pendukung keputusan bagi pengelola kawasan dan pendaki. Namun, penelitian ini tidak mengukur penurunan kejadian hipotermia, perubahan perilaku pendaki, atau efektivitas sistem peringatan dini secara operasional. Oleh karena itu, kontribusi model terhadap mitigasi risiko dipahami sebagai penyediaan informasi cuaca pendukung bagi keselamatan aktivitas pendakian [1], [5], [46].
+Dalam penerapannya, hasil nowcasting dapat menjadi dasar pengembangan sistem pendukung keputusan bagi pengelola kawasan dan pendaki. Namun, penelitian ini tidak mengukur penurunan kejadian hipotermia, perubahan perilaku pendaki, atau efektivitas sistem peringatan dini secara operasional. Oleh karena itu, kontribusi model terhadap mitigasi risiko dipahami sebagai penyediaan informasi cuaca pendukung bagi keselamatan aktivitas pendakian [1], [22], [46].
 
-### 2.2.4 Model Generatif Probabilistik dengan Diffusion Models
+### 2.2.4 Model Generatif Probabilistik dengan Diffusion Model
+
+*Diffusion model* banyak digunakan dalam pembangkitan data, termasuk citra. Namun, prinsip *diffusion model* tidak terbatas pada data citra. Model ini juga dapat diterapkan pada data noncitra, seperti data tabel dan deret waktu, dengan menambahkan serta mengurangi *noise* pada bentuk data yang sesuai [39], [48]. Dalam penelitian ini, data yang diproses berupa vektor tiga variabel cuaca pada node `MAIN`, bukan citra radar.
 
 Model generatif probabilistik, seperti *diffusion model*, digunakan untuk menghasilkan beberapa kemungkinan kondisi cuaca masa depan, bukan hanya satu nilai prediksi. Pendekatan ini relevan dalam *nowcasting* karena kondisi atmosfer dapat berubah dan tidak selalu dapat diprakirakan secara pasti. Dengan menghasilkan beberapa kemungkinan prediksi, model dapat memberikan informasi mengenai ketidakpastian kondisi cuaca yang diprakirakan [6], [25].
 
 Salah satu pendekatan generatif probabilistik yang digunakan dalam penelitian ini adalah *diffusion model*. Model ini bekerja melalui dua tahap utama. Pada tahap pertama, *noise* ditambahkan secara bertahap ke data asli. Pada tahap kedua, model mempelajari cara mengurangi *noise* tersebut secara bertahap untuk menghasilkan sampel prediksi. Proses pertama disebut *forward diffusion*, sedangkan proses kedua disebut *reverse denoising* [16], [25].
 
-Dalam penelitian ini, *diffusion model* digunakan untuk menghasilkan prediksi probabilistik tiga variabel cuaca pada node `MAIN`, yaitu curah hujan, kecepatan angin, dan kelembapan relatif. Target prediksi berbentuk vektor, sedangkan informasi dari kondisi cuaca sebelumnya, representasi spasio-temporal, dan analog historis digunakan sebagai informasi tambahan selama proses pembentukan prediksi. Proses penambahan noise secara bertahap pada data dapat dinyatakan sebagai berikut [25]:
+Dalam penelitian ini, *diffusion model* digunakan untuk menghasilkan prediksi probabilistik tiga variabel cuaca pada node `MAIN`, yaitu curah hujan, kecepatan angin, dan kelembapan relatif. Target prediksi berbentuk vektor, sedangkan informasi dari kondisi cuaca sebelumnya, representasi spasio-temporal, dan analog historis digunakan sebagai informasi tambahan selama proses pembentukan prediksi. Proses penambahan noise secara bertahap pada data dapat dinyatakan sebagai berikut [25], [39]:
 
 $$
 q(x_t \mid x_{t-1}) = \mathcal{N}\left(x_t;\sqrt{1-\beta_t}\,x_{t-1},\beta_t I\right) \tag{2.5}
 $$
 
-Selanjutnya, fungsi loss untuk meminimalkan perbedaan antara noise aktual dan noise prediksi dapat dinyatakan sebagai berikut [25]:
+Selanjutnya, fungsi loss untuk meminimalkan perbedaan antara noise aktual dan noise prediksi dapat dinyatakan sebagai berikut [25], [39]:
 
 $$
 L_{diff} = \mathbb{E}_{x_0,\epsilon,t}\left[\left\|\epsilon-\epsilon_\theta(x_t,t,c)\right\|_2^2\right] \tag{2.6}
@@ -358,7 +358,15 @@ Sejumlah penelitian melaporkan bahwa diffusion models memiliki kualitas sampel d
 
 #### 2.2.4.1 Prinsip Kerja Diffusion Model untuk Nowcasting
 
-Diffusion models terdiri dari dua proses utama, yaitu *forward diffusion process* dan *reverse denoising process*. *Forward diffusion process* adalah proses penambahan noise secara bertahap pada data. *Reverse denoising process* adalah proses pengurangan noise secara bertahap untuk membentuk kembali sampel prediksi berdasarkan informasi kondisi [6], [16], [25]. Pada penelitian ini, data yang diberi noise berbentuk vektor target cuaca ternormalisasi pada node `MAIN`, bukan citra radar. Proses *forward diffusion* dapat dituliskan sebagai berikut:
+Diffusion models terdiri dari dua proses utama, yaitu *forward diffusion process* dan *reverse denoising process*. *Forward diffusion process* adalah proses penambahan noise secara bertahap pada data. *Reverse denoising process* adalah proses pengurangan noise secara bertahap untuk membentuk kembali sampel prediksi berdasarkan informasi kondisi [6], [16], [25]. Pada penelitian ini, data yang diberi noise berbentuk vektor target cuaca ternormalisasi pada node `MAIN`, bukan citra radar.
+
+![Gambar 2.X — Ilustrasi forward diffusion dan reverse diffusion pada data citra](diffusion_model_geeksforgeeks.webp)
+
+**Gambar 2.X Ilustrasi *Forward Diffusion* dan *Reverse Diffusion* pada Data Citra**
+
+Gambar 2.X menggunakan citra kucing sebagai ilustrasi agar tahapan penambahan dan pengurangan *noise* mudah dipahami. Pada *forward diffusion*, citra awal secara bertahap diberi *noise* hingga menjadi citra yang hampir acak. Pada *reverse diffusion*, model memprediksi *noise* dan menguranginya secara bertahap untuk menghasilkan data baru. Gambar ini hanya menjelaskan prinsip umum diffusion model; bentuk data pada penelitian ini bukan citra, melainkan vektor tiga variabel cuaca pada node `MAIN`. Sumber: GeeksforGeeks, “What are Diffusion Models?”, diperbarui 14 April 2026, https://www.geeksforgeeks.org/artificial-intelligence/what-are-diffusion-models/.
+
+Proses *forward diffusion* pada data cuaca dapat dituliskan sebagai berikut:
 
 $$
 x_t = \sqrt{\bar{\alpha}_t}\,x_0 + \sqrt{1-\bar{\alpha}_t}\,\varepsilon \tag{2.7}
@@ -384,13 +392,19 @@ $$
 
 dengan `y_{t+1}^{MAIN}` sebagai vektor target cuaca satu jam ke depan, `X_{\leq t}` sebagai informasi historis hingga waktu pengamatan `t`, `h_t^G` sebagai representasi graf, dan `R_t` sebagai representasi analog historis.
 
-Proses sampling bertahap memungkinkan *diffusion model* menghasilkan beberapa sampel dengan variasi yang berbeda. Keragaman sampel tersebut dapat mengurangi kecenderungan *mode collapse*, yaitu kondisi ketika model generatif menghasilkan keluaran yang kurang beragam, pada konfigurasi tertentu [25], [30]. Dalam nowcasting hujan, *multiple plausible realizations* berarti beberapa sampel prediksi yang mungkin untuk merepresentasikan ketidakpastian kondisi cuaca. Kemampuan tersebut menjadi bagian dari evaluasi probabilistik dan evaluasi berbasis kejadian [7], [31].
+Proses sampling bertahap memungkinkan *diffusion model* menghasilkan beberapa sampel dengan variasi yang berbeda. Dalam *nowcasting* hujan, *multiple plausible realizations* berarti beberapa sampel prediksi yang mungkin untuk merepresentasikan ketidakpastian kondisi cuaca. Keragaman sampel dan kualitas representasi ketidakpastian tersebut perlu dinilai melalui evaluasi probabilistik dan evaluasi berbasis kejadian [7], [25], [31].
 
-Diffusion models dapat dikondisikan terhadap variabel tambahan melalui informasi yang dimasukkan ke dalam denoising network. Dalam penelitian ini, kondisi cuaca sebelumnya, angin, kelembapan, informasi spasial elevasi, dan hasil retrieval digunakan sebagai informasi tambahan [6], [25]. Informasi spasio-temporal dari beberapa node diringkas melalui Spatio-Temporal Graph Conditioning untuk membantu proses pembentukan prediksi pada node `MAIN` [7], [16].
+Diffusion models dapat dikondisikan terhadap variabel tambahan melalui informasi yang dimasukkan ke dalam denoising network. Dalam penelitian ini, kondisi cuaca sebelumnya, angin, kelembapan, informasi spasial elevasi, dan hasil retrieval digunakan sebagai informasi tambahan [6], [25]. Informasi spasio-temporal dari beberapa node diringkas melalui Spatio-Temporal Graph Neural Network untuk membantu proses pembentukan prediksi pada node `MAIN` [7], [16].
 
 #### 2.2.4.2 MLP sebagai Denoiser pada Diffusion Model
 
-Denoiser penelitian ini menggunakan multilayer perceptron (MLP) pada diffusion model. MLP merupakan jaringan yang tersusun atas beberapa lapisan terhubung penuh dan digunakan untuk mempelajari hubungan nonlinier antara target bernoise dan informasi pengondisi. Target yang diberi noise, informasi cuaca, retrieval, representasi graf, dan timestep diproses sebagai representasi vektor. Penggunaan MLP sebagai denoiser pada data berbentuk tabel juga diterapkan dalam diffusion model untuk data noncitra [39], [48]. Pada proses ini, MLP memperkirakan noise dari target bernoise dan kondisi tambahan, bukan langsung menghasilkan nilai cuaca akhir. Dalam penelitian ini, hubungan antarnode telah diringkas lebih dahulu oleh STGNN sehingga denoiser MLP memproses representasi vektor tersebut.
+Denoiser penelitian ini menggunakan multilayer perceptron (MLP) pada diffusion model. MLP merupakan jaringan yang tersusun atas beberapa lapisan terhubung penuh dan digunakan untuk mempelajari hubungan nonlinier antara target bernoise dan informasi pengondisi. Target yang diberi noise, informasi cuaca, retrieval, representasi graf, dan timestep diproses sebagai representasi vektor. Penggunaan MLP sebagai denoiser pada data berbentuk tabel juga diterapkan dalam diffusion model untuk data noncitra [39], [48]. Pada proses ini, MLP memperkirakan noise dari target bernoise dan kondisi tambahan, bukan langsung menghasilkan nilai cuaca akhir. Dalam penelitian ini, hubungan antarnode telah diringkas lebih dahulu oleh Spatio-Temporal Graph Neural Network sehingga denoiser MLP memproses representasi vektor tersebut.
+
+![Gambar 2.X — Arsitektur dasar multilayer perceptron](mlp_diagram.svg)
+
+**Gambar 2.X Arsitektur Dasar Multilayer Perceptron**
+
+Gambar 2.X menunjukkan MLP yang terdiri atas lapisan masukan, beberapa lapisan tersembunyi, dan lapisan keluaran. Setiap neuron pada satu lapisan terhubung dengan neuron pada lapisan berikutnya melalui bobot yang dipelajari selama pelatihan. Pada penelitian ini, MLP digunakan untuk memproses vektor target bernoise bersama informasi pengondisi dan menghasilkan estimasi noise. Gambar ini merupakan ilustrasi struktur umum MLP, bukan konfigurasi jumlah neuron pada model penelitian. Sumber: K3 AI, “MLP Diagram,” https://k3-production-bucket.s3.us-east-1.amazonaws.com/uploads/htWd3Jv7ccGxgcFQS_mlp_diagram.svg.
 
 Lebar lapisan MLP dapat diperbesar atau diperkecil sesuai kebutuhan representasi. Pelebaran lapisan, misalnya dari 64 menjadi 128 unit, menyediakan ruang representasi yang lebih besar untuk mempelajari hubungan nonlinier yang lebih beragam. Penyempitan lapisan, misalnya dari 128 menjadi 64 unit, meringkas informasi ke representasi yang lebih ringkas sebelum diteruskan ke lapisan berikutnya atau ke lapisan hasil akhir. Pemilihan jumlah lapisan dan unit tersembunyi merupakan bagian dari desain arsitektur MLP dan dapat memengaruhi kinerja model serta risiko *overfitting* [52]. DiffImpute menunjukkan bahwa diffusion model untuk data tabular dapat menggunakan beberapa pilihan arsitektur denoiser, termasuk MLP, sehingga bentuk dan kapasitas denoiser merupakan bagian dari rancangan model [48].
 
@@ -440,7 +454,7 @@ Hasil pemrosesan tersebut merupakan representasi spasial pada satu waktu. Bebera
 
 
 $$
-X_t=\left\{x_{t-6},x_{t-5},\ldots,x_{t-1}\right\} \tag{2.15}
+X_t=\left(x_{t-6},x_{t-5},\ldots,x_{t-1}\right) \tag{2.13}
 $$
 
 Dengan:
@@ -452,7 +466,7 @@ Dengan:
 Urutan graf spasio-temporal dinyatakan sebagai:
 
 $$
-\mathcal{G}=\left\{G_{t-6},G_{t-5},\ldots,G_{t-1}\right\} \tag{2.16}
+\mathcal{G}=\left(G_{t-6},G_{t-5},\ldots,G_{t-1}\right) \tag{2.14}
 $$
 
 dengan:
@@ -464,15 +478,15 @@ dengan:
 Secara umum, node merepresentasikan lokasi pengamatan, sedangkan edge menyatakan hubungan yang digunakan untuk pertukaran informasi. Pada implementasi, pemrosesan graf dilakukan pada setiap snapshot secara berurutan. Setelah representasi setiap node dibentuk melalui pengodean spasial, representasi tersebut dapat diringkas dengan *global mean pooling*, yaitu perataan representasi seluruh node:
 
 $$
-g_\tau=\frac{1}{|V|}\sum_{i\in V}H_{\tau,i} \tag{2.17}
+g_\tau=\frac{1}{|V|}\sum_{i\in V}H_{\tau,i} \tag{2.15}
 $$
 
-Dengan `g_τ` sebagai representasi graf pada waktu `τ`, `V` sebagai himpunan node, dan `H_{τ,i}` sebagai representasi node ke-`i` setelah pengodean spasial. *Global mean pooling* mengubah representasi seluruh node menjadi satu *graph-level embedding* (representasi tingkat graf). Pada implementasi, pengodean spasial dilakukan oleh GAT pada setiap *graph snapshot*, kemudian hasilnya diringkas melalui *global mean pooling*. Operasi *global mean pooling* pada representasi graf multi-lokasi sejalan dengan alur pemrosesan STGNN pada penelitian terdahulu [43]. Enam representasi graf kemudian disusun sebagai urutan waktu untuk diproses oleh *temporal attention* (mekanisme pemberian bobot pada waktu pengamatan).
+Dengan `g_τ` sebagai representasi graf pada waktu `τ`, `V` sebagai himpunan node, dan `H_{τ,i}` sebagai representasi node ke-`i` setelah pengodean spasial. *Global mean pooling* mengubah representasi seluruh node menjadi satu *graph-level embedding* (representasi tingkat graf). Pada implementasi, pengodean spasial dilakukan oleh GAT pada setiap *graph snapshot*, kemudian hasilnya diringkas melalui *global mean pooling*. Operasi *global mean pooling* pada representasi graf multi-lokasi sejalan dengan alur pemrosesan *Spatio-Temporal Graph Neural Network* pada penelitian terdahulu [43]. Enam representasi graf kemudian disusun sebagai urutan waktu untuk diproses oleh *temporal attention* (mekanisme pemberian bobot pada waktu pengamatan).
 
 
 #### 2.2.6.2 Graph Attention Network untuk Hubungan Antar-Node
 
-Graph Attention Network (GAT) merupakan pengembangan GNN yang menggunakan *attention mechanism*. Dalam GAT, *attention mechanism* memberikan bobot berbeda pada informasi dari node tetangga untuk menentukan kontribusi relatifnya dalam membentuk representasi node. Mekanisme ini bersifat statistik dan tidak dimaknai sebagai bukti hubungan sebab-akibat antarnode [30], [32]. Pada setiap pasangan node yang saling terhubung, GAT menghitung skor attention berdasarkan fitur kedua node. Skor tersebut dihitung menggunakan transformasi linear dan fungsi aktivasi *LeakyReLU* [44]:
+Graph Attention Network (GAT) merupakan pengembangan GNN yang menggunakan *attention mechanism*. Dalam GAT, *attention mechanism* memberikan bobot berbeda pada informasi dari node tetangga untuk menentukan kontribusi relatifnya dalam membentuk representasi node. Mekanisme ini menghasilkan bobot berdasarkan pola statistik pada data dan tidak dimaknai sebagai bukti hubungan sebab-akibat antarnode [44]. Pada setiap pasangan node yang saling terhubung, GAT menghitung skor attention berdasarkan fitur kedua node. Skor tersebut dihitung menggunakan transformasi linear dan fungsi aktivasi *LeakyReLU* [44]:
 
 $$
 e_{ij}=\operatorname{LeakyReLU}\left(\mathbf{a}^{\mathsf{T}}[W\mathbf{h}_i\mathbin{\|}W\mathbf{h}_j]\right)
@@ -495,31 +509,31 @@ $$
 dengan `α_{ij}` sebagai bobot attention dari node `j` terhadap node `i` dan `\mathcal{N}_i` sebagai himpunan node tetangga dari node `i`. Pengodean spasial oleh GAT dirumuskan secara umum sebagai:
 
 $$
-H_\tau=GAT(G_\tau,X_\tau) \tag{2.18}
+H_\tau=GAT(G_\tau,X_\tau) \tag{2.16}
 $$
 
-dengan `G_τ` sebagai graf pada waktu `τ`, `X_τ` sebagai fitur node pada waktu tersebut, dan `H_τ` sebagai kumpulan representasi seluruh node setelah pengodean spasial. Representasi tingkat graf pada Formula 2.17 diperoleh dengan merata-ratakan representasi node `H_τ`. Pada mekanisme *multi-head attention*, beberapa hasil attention dapat digabungkan melalui konkatenasi [44].
+dengan `G_τ` sebagai graf pada waktu `τ`, `X_τ` sebagai fitur node pada waktu tersebut, dan `H_τ` sebagai kumpulan representasi seluruh node setelah pengodean spasial. Representasi tingkat graf pada Formula 2.15 diperoleh dengan merata-ratakan representasi node `H_τ`. Pada mekanisme *multi-head attention*, beberapa hasil attention dapat digabungkan melalui konkatenasi [44].
 
 #### 2.2.6.3 Pemodelan Temporal dalam Spatio-Temporal Graph Neural Network
 
 *Spatio-Temporal Graph Neural Network* menyusun representasi spasial dari beberapa *graph snapshot* untuk mempelajari perubahan kondisi cuaca dari waktu ke waktu. Pada penelitian ini, enam representasi graf historis diringkas menggunakan *temporal attention* (mekanisme pemberian bobot pada beberapa waktu pengamatan) [7], [16]:
 
 $$
-h_{t-1}^G=\mathrm{TemporalAttention}\left(g_{t-L},\ldots,g_{t-1}\right),\quad L=6 \tag{2.19}
+h_{t-1}^G=\mathrm{TemporalAttention}\left(g_{t-L},\ldots,g_{t-1}\right),\quad L=6 \tag{2.17}
 $$
 
 dengan `h_{t-1}^G` sebagai representasi spasio-temporal akhir dari jendela historis, `g_τ` sebagai representasi graf pada waktu `τ`, dan `L` sebagai panjang jendela historis. *Temporal attention* menggunakan *scaled dot-product attention* (perhitungan bobot perhatian berdasarkan kesamaan representasi) dengan *causal mask*:
 
 $$
-\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_K}}+M\right)V \tag{2.20}
+\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_K}}+M\right)V \tag{2.18}
 $$
 
-Pada Formula 2.20, `Q` (*query*) digunakan untuk mencari informasi yang relevan, `K` (*key*) digunakan sebagai pembanding, dan `V` (*value*) berisi informasi yang diringkas. Simbol `d_K` menyatakan dimensi *key*, sedangkan `M` merupakan *causal mask*. *Causal mask* `M` mencegah representasi pada suatu langkah waktu mengakses informasi dari waktu yang lebih baru atau masa depan. Representasi pada waktu terakhir digunakan sebagai ringkasan urutan graf historis. Secara keseluruhan, GNN membentuk representasi spasial, GAT mengatur penggabungan informasi antarnode, dan *temporal attention* mengolah perubahan representasi tersebut dari waktu ke waktu. Dengan demikian, *Spatio-Temporal Graph Neural Network* menggabungkan informasi antarlokasi dan antarwaktu menjadi representasi spasio-temporal `h_{t-1}^G`, kemudian menggunakannya sebagai informasi pengondisi bagi *diffusion model* untuk menghasilkan prediksi cuaca pada waktu target [43], [44].
+Pada Formula 2.18, `Q` (*query*) digunakan untuk mencari informasi yang relevan, `K` (*key*) digunakan sebagai pembanding, dan `V` (*value*) berisi informasi yang diringkas. Simbol `d_K` menyatakan dimensi *key*, sedangkan `M` merupakan *causal mask*. Dalam implementasi, `M` membatasi setiap langkah waktu agar hanya menggunakan representasi pada waktu yang sama atau lebih awal dalam urutan historis. Karena seluruh masukan berasal dari waktu `t-6` hingga `t-1`, pembatasan ini menjaga urutan temporal tetap kausal dan tidak menggunakan informasi dari waktu yang lebih baru dalam jendela tersebut. Representasi pada waktu terakhir digunakan sebagai ringkasan urutan graf historis. Secara keseluruhan, GNN membentuk representasi spasial, GAT mengatur penggabungan informasi antarnode, dan *temporal attention* mengolah perubahan representasi tersebut dari waktu ke waktu. Dengan demikian, *Spatio-Temporal Graph Neural Network* menggabungkan informasi antarlokasi dan antarwaktu menjadi representasi spasio-temporal `h_{t-1}^G`, kemudian menggunakannya sebagai informasi pengondisi bagi *diffusion model* untuk menghasilkan prediksi cuaca pada waktu target [43], [44].
 
 Pada mekanisme GAT, penggabungan informasi dari beberapa *attention head* dapat dituliskan sebagai:
 
 $$
-h_i'=\mathbin{\|}_{k=1}^{4}\sum_{j\in\mathcal{N}_i}\alpha_{ij}^{k}W^{k}h_j \tag{2.21}
+h_i'=\mathbin{\|}_{k=1}^{4}\sum_{j\in\mathcal{N}_i}\alpha_{ij}^{k}W^{k}h_j \tag{2.19}
 $$
 
 dengan `\mathcal{N}_i` sebagai himpunan node tetangga dari node `i`, `\alpha_{ij}^{k}` sebagai bobot perhatian dari node `j` ke node `i` pada *attention head* ke-`k`, `W^k` sebagai matriks transformasi pada *attention head* ke-`k`, `h_j` sebagai representasi node `j`, dan `\|` sebagai operator konkatenasi. Batas `k=1` hingga `4` menunjukkan penggunaan empat *attention head*.
@@ -533,7 +547,7 @@ Evaluasi prediksi perlu menilai lebih dari satu aspek. Prediksi titik dinilai be
 Mean Absolute Error (MAE), Root Mean Square Error (RMSE), dan Pearson Correlation Coefficient (`r`) merupakan metrik evaluasi *deterministic forecast* atau prediksi titik [53], [55]. Pada penelitian ini, prediksi titik diringkas menggunakan median ensemble. MAE mengukur rata-rata nilai absolut selisih antara prediksi dan observasi:
 
 $$
-\mathrm{MAE}=\frac{1}{N}\sum_{i=1}^{N}|\hat{y}_i-y_i| \tag{2.22}
+\mathrm{MAE}=\frac{1}{N}\sum_{i=1}^{N}|\hat{y}_i-y_i| \tag{2.20}
 $$
 
 dengan `\hat{y}_i` sebagai prediksi, `y_i` sebagai observasi, dan `N` sebagai jumlah waktu evaluasi. Nilai MAE yang lebih kecil menunjukkan kesalahan absolut rata-rata yang lebih kecil.
@@ -541,13 +555,13 @@ dengan `\hat{y}_i` sebagai prediksi, `y_i` sebagai observasi, dan `N` sebagai ju
 Root Mean Square Error (RMSE) memberikan bobot lebih besar pada kesalahan yang besar:
 
 $$
-\mathrm{RMSE}=\sqrt{\frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i-y_i)^2} \tag{2.23}
+\mathrm{RMSE}=\sqrt{\frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i-y_i)^2} \tag{2.21}
 $$
 
 Pearson Correlation Coefficient (`r`) mengukur keeratan hubungan linear antara prediksi dan observasi:
 
 $$
-r=\frac{\sum_{i=1}^{N}(\hat{y}_i-\bar{\hat{y}})(y_i-\bar{y})}{\sqrt{\sum_{i=1}^{N}(\hat{y}_i-\bar{\hat{y}})^2}\sqrt{\sum_{i=1}^{N}(y_i-\bar{y})^2}} \tag{2.24}
+r=\frac{\sum_{i=1}^{N}(\hat{y}_i-\bar{\hat{y}})(y_i-\bar{y})}{\sqrt{\sum_{i=1}^{N}(\hat{y}_i-\bar{\hat{y}})^2}\sqrt{\sum_{i=1}^{N}(y_i-\bar{y})^2}} \tag{2.22}
 $$
 
 dengan `\bar{\hat{y}}` dan `\bar{y}` sebagai rata-rata prediksi dan observasi. MAE menilai rata-rata besar kesalahan tanpa membedakan arahnya, sedangkan RMSE memberikan pengaruh lebih besar pada kesalahan yang besar. Pearson Correlation Coefficient (`r`) menilai kesesuaian pola perubahan prediksi terhadap observasi, bukan jarak absolut antara keduanya [53], [55].
@@ -557,7 +571,7 @@ dengan `\bar{\hat{y}}` dan `\bar{y}` sebagai rata-rata prediksi dan observasi. M
 Continuous Ranked Probability Score (CRPS) dan Brier Score merupakan metrik evaluasi probabilistik. CRPS menilai kualitas distribusi prediksi kontinu, sedangkan Brier Score menilai ketepatan probabilitas untuk kejadian biner [53], [54]. Continuous Ranked Probability Score (CRPS) menilai jarak antara distribusi prediksi dan nilai observasi. Untuk sampel ensemble `x_1,\ldots,x_M`, bentuk estimator ensemble yang digunakan dalam implementasi adalah:
 
 $$
-\mathrm{CRPS}=\frac{1}{M}\sum_{m=1}^{M}|x_m-y|-\frac{1}{2M(M-1)}\sum_{m=1}^{M}\sum_{n=1,\,n\neq m}^{M}|x_m-x_n| \tag{2.25}
+\mathrm{CRPS}=\frac{1}{M}\sum_{m=1}^{M}|x_m-y|-\frac{1}{2M(M-1)}\sum_{m=1}^{M}\sum_{n=1,\,n\neq m}^{M}|x_m-x_n| \tag{2.23}
 $$
 
 dengan `M` sebagai jumlah anggota ensemble, `x_m` sebagai sampel prediksi, dan `y` sebagai observasi. CRPS mempertimbangkan kedekatan sampel terhadap observasi serta penyebaran antarsampel. Formula tersebut berlaku untuk `M>1`. Untuk ensemble satu anggota, CRPS dihitung sebagai `|x_1-y|`, sehingga sama dengan kesalahan absolut. CRPS yang lebih kecil menunjukkan distribusi prediksi yang lebih baik [54].
@@ -565,7 +579,7 @@ dengan `M` sebagai jumlah anggota ensemble, `x_m` sebagai sampel prediksi, dan `
 Brier Score digunakan untuk menilai probabilitas suatu kejadian biner, misalnya curah hujan yang melampaui ambang `u`. Nilai ini menghukum perbedaan kuadrat antara probabilitas yang diprediksi dan hasil kejadian aktual:
 
 $$
-\mathrm{BS}=\frac{1}{N}\sum_{i=1}^{N}(p_i-o_i)^2 \tag{2.26}
+\mathrm{BS}=\frac{1}{N}\sum_{i=1}^{N}(p_i-o_i)^2 \tag{2.24}
 $$
 
 dengan `p_i` sebagai probabilitas prediksi kejadian, yang dihitung dari proporsi anggota ensemble dengan nilai di atas `u`, dan `o_i` sebagai indikator observasi. Nilai `o_i` adalah `1` jika `y_i>u` dan `0` jika `y_i\leq u`. Nilai Brier Score yang lebih kecil menunjukkan probabilitas yang lebih dekat dengan kejadian aktual [53].
@@ -575,18 +589,18 @@ dengan `p_i` sebagai probabilitas prediksi kejadian, yang dihitung dari proporsi
 Probability of Detection (POD), False Alarm Ratio (FAR), dan Critical Success Index (CSI) merupakan metrik *event-based verification* atau evaluasi berbasis kejadian. Ketiganya digunakan untuk menilai deteksi hujan setelah kejadian ditentukan berdasarkan ambang curah hujan dan ambang probabilitas prediksi [55]. Untuk mengevaluasi deteksi kejadian, probabilitas ensemble dibandingkan dengan ambang probabilitas `p_0`. Hasilnya diringkas dalam empat jumlah: `H` (*hit*), `M` (*miss*), `F` (*false alarm*), dan `C` (*correct negative*). Metrik yang digunakan adalah:
 
 $$
-\mathrm{POD}=\frac{H}{H+M} \tag{2.27}
+\mathrm{POD}=\frac{H}{H+M} \tag{2.25}
 $$
 
 $$
-\mathrm{FAR}=\frac{F}{H+F} \tag{2.28}
+\mathrm{FAR}=\frac{F}{H+F} \tag{2.26}
 $$
 
 $$
-\mathrm{CSI}=\frac{H}{H+M+F} \tag{2.29}
+\mathrm{CSI}=\frac{H}{H+M+F} \tag{2.27}
 $$
 
-POD menunjukkan proporsi kejadian aktual yang berhasil terdeteksi. FAR menunjukkan proporsi prediksi kejadian yang ternyata tidak terjadi. CSI menggabungkan hit, miss, dan false alarm untuk menilai keberhasilan deteksi secara keseluruhan. POD dan CSI yang lebih besar lebih baik, sedangkan FAR yang lebih kecil lebih baik [55].
+POD menunjukkan proporsi kejadian aktual yang berhasil terdeteksi. FAR menunjukkan proporsi prediksi kejadian yang ternyata tidak terjadi. CSI menggabungkan hit, miss, dan false alarm untuk menilai keberhasilan deteksi secara keseluruhan. POD dan CSI yang lebih besar lebih baik, sedangkan FAR yang lebih kecil lebih baik. Jika penyebut suatu metrik bernilai nol, nilai metrik tidak didefinisikan dan dikeluarkan dari agregasi sesuai penanganan pada implementasi evaluasi [55].
 
 #### 2.2.7.4 Reliability Diagram
 
@@ -598,13 +612,13 @@ Visualisasi berbasis web digunakan untuk menyajikan hasil prediksi cuaca kepada 
 
 Dalam rancangan penelitian ini, FastAPI menyalurkan hasil prediksi dari model, sedangkan Vue.js menyajikan hasil tersebut kepada pengguna. Visualisasi berbasis web berfungsi sebagai media penyampaian informasi, bukan sebagai bagian dari evaluasi kinerja model.
 
-## 2.3 Keterbatasan Penelitian Terdahulu dan Posisi Penelitian
+## 2.3 Analisis Celah Penelitian
 
-Penelitian tentang *nowcasting* hujan telah berkembang melalui penggunaan model generatif probabilistik, termasuk *diffusion models* yang dapat menghasilkan beberapa kemungkinan prediksi [6], [25], [56]. Nai et al. menunjukkan bahwa model difusi probabilistik dapat meningkatkan kualitas prediksi probabilistik dan reliabilitas estimasi ketidakpastian pada *precipitation nowcasting* [56]. Kualitas prediksi tersebut tetap bergantung pada karakteristik data, metode evaluasi, dan kemampuan model dalam merepresentasikan kejadian ekstrem [7], [16].
+Penelitian *nowcasting* hujan telah mengembangkan model generatif probabilistik, termasuk *diffusion models*, untuk menghasilkan beberapa kemungkinan prediksi dan merepresentasikan ketidakpastian prakiraan [6], [25], [56]. Hasil penelitian tersebut menunjukkan potensi pendekatan probabilistik, tetapi kualitas prediksi tetap dipengaruhi oleh karakteristik data, metode evaluasi, dan kemampuan model dalam merepresentasikan kejadian ekstrem [7], [16]. Dengan demikian, penggunaan model generatif saja belum menjelaskan bagaimana hubungan kondisi cuaca antarlokasi dan antarwaktu pada wilayah pegunungan direpresentasikan.
 
-Dalam konteks pegunungan tropis, representasi hubungan spasial dan temporal masih perlu disesuaikan dengan perbedaan elevasi, arah pengaruh, dan perubahan cuaca antarwaktu. Pendekatan berbasis grid atau urutan data tidak selalu merepresentasikan hubungan antarlokasi secara eksplisit [14], [32]. Selain itu, distribusi curah hujan yang *heavy-tailed* dapat menyebabkan sebagian model menghasilkan prediksi lebih rendah pada kejadian hujan lebat [25], [31]. Informasi historis yang serupa berpotensi membantu mengenali pola cuaca yang pernah terjadi, tetapi integrasi *retrieval-based historical analogs* dengan proses *denoising* pada *diffusion model* untuk *nowcasting* satu jam berbasis data *reanalysis* masih terbatas dalam penelitian yang ditinjau [27], [30].
+Celah penelitian berikutnya terletak pada integrasi informasi spasial, temporal, dan historis dalam *nowcasting* cuaca pegunungan. Representasi berbasis grid atau urutan data belum tentu menggambarkan hubungan antarlokasi secara eksplisit, terutama pada wilayah dengan perbedaan elevasi dan perubahan cuaca yang cepat [14], [32]. Selain itu, informasi kondisi historis yang serupa berpotensi membantu proses prediksi, tetapi integrasi *retrieval-based historical analogs* dengan proses *denoising* pada *diffusion model* untuk *nowcasting* satu jam berbasis data *reanalysis* masih terbatas dalam penelitian yang ditinjau [27], [30]. Berdasarkan tinjauan tersebut, belum ditemukan penelitian yang secara bersamaan mengintegrasikan model generatif probabilistik, pencarian analog historis, dan representasi graf spasio-temporal pada lima node ERA5 untuk prediksi cuaca di kawasan Gunung Gede–Pangrango.
 
-Berdasarkan keterbatasan tersebut, penelitian ini menggunakan *Retrieval-Augmented Diffusion Model* dengan *Spatio-Temporal Graph Neural Network* untuk menggabungkan prediksi probabilistik, analog historis, serta hubungan cuaca antarlokasi dan antarwaktu pada data ERA5. Node `MAIN` digunakan sebagai target prediksi. Kontribusi metodologis dinilai melalui akurasi prediksi titik, kualitas distribusi probabilistik, dan kemampuan deteksi kejadian hujan. Model tidak memprediksi indeks hipotermia; hasil prediksi curah hujan, kecepatan angin, dan kelembapan relatif hanya diposisikan sebagai informasi pendukung keselamatan pendakian, sedangkan manfaatnya ditafsirkan berdasarkan hasil evaluasi [22], [46].
+Penelitian ini menempatkan *Retrieval-Augmented Diffusion Model* dengan *Spatio-Temporal Graph Neural Network* sebagai pendekatan untuk mengisi celah tersebut. Model menggabungkan analog historis dengan representasi hubungan cuaca antarlokasi dan antarwaktu, kemudian menghasilkan prediksi probabilistik pada node `MAIN` untuk curah hujan, kecepatan angin, dan kelembapan relatif. Posisi penelitian dinilai melalui akurasi prediksi titik, kualitas distribusi probabilistik, dan kemampuan mendeteksi kejadian hujan. Model tidak memprediksi indeks hipotermia; hasil prediksi hanya digunakan sebagai informasi pendukung keselamatan pendakian, sedangkan manfaatnya ditafsirkan berdasarkan hasil evaluasi [46].
 
 ---
 
@@ -613,7 +627,7 @@ Berdasarkan keterbatasan tersebut, penelitian ini menggunakan *Retrieval-Augment
 
 ## 3.1 Tahapan Penelitian
 
-Tahapan penelitian disusun secara berurutan untuk mengembangkan dan mengevaluasi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Conditioning dalam nowcasting probabilistik hujan satu jam ke depan. Tahapan tersebut mencakup studi literatur, pengambilan data, preprocessing, pembagian dataset temporal, pembentukan fitur dan representasi graf, perancangan arsitektur model, pelatihan, inferensi, evaluasi, serta skenario eksperimen. Alur keseluruhan tahapan penelitian ditunjukkan pada Gambar 3.1.
+Tahapan penelitian disusun secara berurutan untuk mengembangkan dan mengevaluasi Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Neural Network dalam nowcasting probabilistik hujan satu jam ke depan. Tahapan tersebut mencakup studi literatur, pengambilan data, preprocessing, pembagian dataset temporal, pembentukan fitur dan representasi graf, perancangan arsitektur model, pelatihan, inferensi, evaluasi, serta skenario eksperimen. Alur keseluruhan tahapan penelitian ditunjukkan pada Gambar 3.1.
 
 ![Gambar 3.1 — placeholder gambar: Alur Tahapan Penelitian](gambar-3-1-placeholder)
 
@@ -629,7 +643,7 @@ Kemudian dilakukan Pembagian Dataset secara temporal (time-based split) untuk me
 
 Tahap Pembentukan Fitur dan Graf melibatkan rekayasa fitur serta pembuatan struktur graph spatio-temporal dengan lima node di mana node MAIN menjadi target prediksi utama. Graf ini merepresentasikan ketergantungan spasial multidirectional antar node.
 
-Selanjutnya adalah Perancangan Arsitektur Model yang mendefinisikan keseluruhan komponen Retrieval-Augmented Diffusion Model, termasuk mekanisme retrieval historical analogs dan Spatio-Temporal Graph Conditioning menggunakan Graph Attention Network (GAT).
+Selanjutnya adalah Perancangan Arsitektur Model yang mendefinisikan keseluruhan komponen Retrieval-Augmented Diffusion Model, termasuk mekanisme retrieval historical analogs dan Spatio-Temporal Graph Neural Network menggunakan Graph Attention Network (GAT).
 
 Proses Proses Pelatihan Model dilakukan dengan menggunakan weighted denoising loss untuk meningkatkan sensitivitas model terhadap kejadian hujan ekstrem serta teknik conditional diffusion berdasarkan observasi historis dan struktur graph.
 
@@ -1238,12 +1252,12 @@ Pada tahap implementasi lanjutan, dashboard perlu memvalidasi respons API, menam
 
 ## Catatan verifikasi DOCX
 
-Sebanyak 13 persamaan (2.5, 2.6, 2.10, 2.12–2.21) dan isi visual/data Tabel 3.3 tidak dapat diverifikasi karena elemen tersebut tidak tersimpan sebagai struktur OMML/tabel yang dapat dibaca dalam DOCX. Marker tetap dipertahankan. Rujukan konfigurasi Tabel 3.4/Tabel 3.5 tetap ambigu di sumber.
+Sebagian persamaan, termasuk Formula 2.5, 2.6, 2.10, dan 2.12–2.19, serta isi visual/data Tabel 3.3 tidak dapat diverifikasi karena elemen tersebut tidak tersimpan sebagai struktur OMML atau tabel yang dapat dibaca dalam DOCX. Marker tetap dipertahankan. Rujukan konfigurasi Tabel 3.4/Tabel 3.5 tetap ambigu di sumber.
 
 
 # Daftar Pustaka
 
-[1] E. Procter, H. Brugger, and M. Burtscher, “Accidental hypothermia in recreational activities in the mountains : A narrative review,” no. August, pp. 2464–2472, 2018, doi: 10.1111/sms.13294.
+[1] E. Procter, H. Brugger, and M. Burtscher, “Accidental hypothermia in recreational activities in the mountains: A narrative review,” *Scandinavian Journal of Medicine & Science in Sports*, vol. 28, no. 11, pp. 2464–2472, 2018, doi: 10.1111/sms.13294.
 
 [2] Aminullah, A. Ayumar, A. Y. Kasma, and E. Samaliwu, “Overview Of Knowledge About First Aid For Hypothermia In Mountain Climbers In Makassar,” vol. XVI, pp. 180–190, 2025.
 
@@ -1251,15 +1265,15 @@ Sebanyak 13 persamaan (2.5, 2.6, 2.10, 2.12–2.21) dan isi visual/data Tabel 3.
 
 [4] P. Chavula, F. Kayusi, G. Lungu, and A. Uwimbabazi, “The Current Landscape of Early Warning Systems and Traditional Approaches to Disaster Detection,” 2025, doi: 10.62486/latia202577.
 
-[5] M. Reichstein et al., “Early warning of complex climate risk with integrated artificial intelligence,” Nat. Commun., no. May 2024, 2025, doi: 10.1038/s41467-025-57640-w.
+[5] M. Reichstein et al., “Early warning of complex climate risk with integrated artificial intelligence,” *Nature Communications*, 2025, doi: 10.1038/s41467-025-57640-w.
 
-[6] S. Ravuri et al., “Skilful precipitation nowcasting using deep generative models of radar,” Nature, vol. 597, no. February, 2021, doi: 10.1038/s41586-021-03854-z.
+[6] S. Ravuri et al., “Skilful precipitation nowcasting using deep generative models of radar,” *Nature*, vol. 597, 2021, doi: 10.1038/s41586-021-03854-z.
 
-[7] Y. Zhang, M. Long, K. Chen, L. Xing, and R. Jin, “Skilful nowcasting of extreme precipitation with NowcastNet,” vol. 619, no. September 2022, 2023, doi: 10.1038/s41586-023-06184-4.
+[7] Y. Zhang, M. Long, K. Chen, L. Xing, and R. Jin, “Skilful nowcasting of extreme precipitation with NowcastNet,” *Nature*, vol. 619, 2023, doi: 10.1038/s41586-023-06184-4.
 
 [8] A. Mazza, A. Antonini, S. Melani, and A. Ortolani, “A Radar-Based Fast Code for Rainfall Nowcasting over the Tuscany Region,” pp. 1–24, 2025.
 
-[9] A. P. Lakspriyanti, M. Ekayani, and A. Sunkar, “CARRYING CAPACITY ASSESSMENT OF CIBEUREUM WATERFALL TOURISM IN GUNUNG GEDE PANGRANGO NATIONAL PARK,” vol. 25, no. 3, pp. 203–211, 2020, doi: 10.29244/medkon.25.3.203-211.
+[9] A. P. Lakspriyanti, M. Ekayani, and A. Sunkar, “Carrying capacity assessment of Cibeureum waterfall tourism in Gunung Gede Pangrango National Park,” *Media Konservasi*, vol. 25, no. 3, pp. 203–211, 2020, doi: 10.29244/medkon.25.3.203-211.
 
 [10] D. Sun, J. Wu, H. Huang, R. Wang, F. Liang, and H. Xinhua, “Prediction of Short-Time Rainfall Based on Deep Learning,” vol. 2021, 2021, doi: 10.1155/2021/6664413.
 
@@ -1285,13 +1299,13 @@ Sebanyak 13 persamaan (2.5, 2.6, 2.10, 2.12–2.21) dan isi visual/data Tabel 3.
 
 [21] Z. Zhang, Q. Song, M. Duan, H. Liu, and J. Huo, “Deep Learning Model for Precipitation Nowcasting Based on Residual and Attention Mechanisms,” pp. 1–17, 2025.
 
-[22] J. H. Meltzer and J. D. Forrester, “Human-Factor Risk Mitigation in Outdoor Climbing Areas : Survey of Existing Policies in Regulated Climbing Areas,” vol. 32, no. 4, 2021, doi: 10.1016/j.wem.2021.08.001.
+[22] J. H. Meltzer and J. D. Forrester, “Human-factor risk mitigation in outdoor climbing areas: Survey of existing policies in regulated climbing areas,” *Wilderness & Environmental Medicine*, vol. 32, no. 4, 2021, doi: 10.1016/j.wem.2021.08.001.
 
 [23] E. Rahmah, E. K. S. H. Muntasib, and S. B. Rushayati, “Tourism Hazard Mitigation in Mount Rinjani National Park ,” vol. 2, no. 2, pp. 5–19, 2021, doi: 10.22158/sshsr.v2n2p5.
 
-[24] K. Hanly and G. Mcdowell, “The Evolution of ‘ Riskscapes ’: 100 years of climate change and mountaineering activity in the Lake Louise area of the Canadian Rockies,” pp. 1–25, 2023.
+[24] K. Hanly and G. McDowell, “The evolution of ‘riskscapes’: 100 years of climate change and mountaineering activity in the Lake Louise area of the Canadian Rockies,” 2023.
 
-[25] A. Asperti, F. Merizzi, A. Paparella, and G. Pedrazzi, “Precipitation nowcasting with generative diffusion models,” Appl. Intell., 2024, doi: https://doi.org/10.1007/s10489-024-06048-y.
+[25] A. Asperti, F. Merizzi, A. Paparella, and G. Pedrazzi, “Precipitation nowcasting with generative diffusion models,” Appl. Intell., 2024, doi: 10.1007/s10489-024-06048-y.
 
 [26] U. Yousaf, A. De Rango, G. Mendicino, L. Furnari, D. D. Ambrosio, and A. Senatore, “Spatio-temporal graph neural networks to improve precipitation forecasts from numerical models,” Soft Comput., vol. 29, no. 9, pp. 4481–4494, 2025, doi: 10.1007/s00500-025-10635-7.
 
@@ -1355,9 +1369,13 @@ Sebanyak 13 persamaan (2.5, 2.6, 2.10, 2.12–2.21) dan isi visual/data Tabel 3.
 
 [56] C. Nai, B. Pan, et al., “Reliable precipitation nowcasting using probabilistic diffusion models,” *Environmental Research Letters*, vol. 19, no. 3, 034039, 2024, doi: 10.1088/1748-9326/ad2891.
 
+[57] H. Hersbach et al., “The ERA5 global reanalysis,” *Quarterly Journal of the Royal Meteorological Society*, vol. 146, no. 730, pp. 1999–2049, 2020, doi: 10.1002/qj.3803.
+
+[58] L. T. Hagen et al., “Effect of wet clothing removal on skin temperature in subjects exposed to cold and wrapped in a vapor barrier: A human, randomized, crossover field study,” *BMC Emergency Medicine*, vol. 24, article 18, 2024, doi: 10.1186/s12873-024-00937-8.
+
 ## Ringkasan Konversi
 
-- Jumlah entri: **55**.
+- Jumlah entri: **58**.
 - Urutan, penomoran, penulis, tahun, judul, DOI/URL, dan detail bibliografis dipertahankan sesuai sumber.
 - Line-wrap di dalam entri digabungkan.
 - Penanda halaman PDF (`70`, `71`, `72`, `73`, `74`) dan karakter form-feed tidak dimasukkan karena merupakan artefak pemisah halaman, bukan bagian daftar pustaka.
@@ -1366,12 +1384,12 @@ Sebanyak 13 persamaan (2.5, 2.6, 2.10, 2.12–2.21) dan isi visual/data Tabel 3.
 
 Berikut bagian yang tampak ambigu atau metadata-nya tidak lengkap pada hasil ekstraksi sumber. Isinya tidak ditebak atau dilengkapi:
 
-- [1] `no. August` tanpa nama jurnal/terbitan yang lebih jelas.
+- [1] Metadata jurnal, volume, dan nomor edisi telah dilengkapi dari DOI.
 - [2] `vol. XVI` tanpa nama jurnal/terbitan.
 - [4] Tidak ada nama jurnal/prosiding atau volume/halaman.
-- [5] `no. May 2024` dan tahun `2025` dipertahankan apa adanya.
-- [6] `no. February` tanpa nomor edisi numerik.
-- [7] `no. September 2022` dan tahun `2023` dipertahankan apa adanya.
+- [5] Metadata sebelumnya memuat artefak bulan; entri telah dirapikan berdasarkan DOI.
+- [6] Metadata sebelumnya memuat artefak bulan; entri telah dirapikan.
+- [7] Metadata sebelumnya memuat artefak bulan; entri telah dirapikan berdasarkan DOI.
 - [8] Tidak ada nama jurnal/prosiding atau volume.
 - [12] Tidak ada nama jurnal/prosiding atau volume/halaman.
 - [13] Tidak ada nama jurnal/prosiding; hanya `vol. 48` dan halaman.

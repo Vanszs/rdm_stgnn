@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background and title -->
+  <rect width="800" height="500" fill="#f9f9f9" rx="10" ry="10"/>
+  <text x="400" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">Multi-Layer Perceptron (MLP) Architecture</text>
+  
+  <!-- Layer labels -->
+  <text x="90" y="80" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#555">Input Layer</text>
+  <text x="290" y="80" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#555">Hidden Layer 1</text>
+  <text x="500" y="80" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#555">Hidden Layer 2</text>
+  <text x="700" y="80" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#555">Output Layer</text>
+  
+  <!-- Nodes: Input Layer -->
+  <circle cx="90" cy="150" r="25" fill="#6ab7ff" stroke="#333" stroke-width="2"/>
+  <circle cx="90" cy="230" r="25" fill="#6ab7ff" stroke="#333" stroke-width="2"/>
+  <circle cx="90" cy="310" r="25" fill="#6ab7ff" stroke="#333" stroke-width="2"/>
+  <circle cx="90" cy="390" r="25" fill="#6ab7ff" stroke="#333" stroke-width="2"/>
+  
+  <!-- Input Layer Labels -->
+  <text x="90" y="155" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">x₁</text>
+  <text x="90" y="235" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">x₂</text>
+  <text x="90" y="315" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">x₃</text>
+  <text x="90" y="395" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">x₄</text>
+  
+  <!-- Nodes: Hidden Layer 1 -->
+  <circle cx="290" cy="150" r="25" fill="#ff9e6a" stroke="#333" stroke-width="2"/>
+  <circle cx="290" cy="230" r="25" fill="#ff9e6a" stroke="#333" stroke-width="2"/>
+  <circle cx="290" cy="310" r="25" fill="#ff9e6a" stroke="#333" stroke-width="2"/>
+  <circle cx="290" cy="390" r="25" fill="#ff9e6a" stroke="#333" stroke-width="2"/>
+  
+  <!-- Hidden Layer 1 Activation -->
+  <text x="290" y="155" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  <text x="290" y="235" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  <text x="290" y="315" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  <text x="290" y="395" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  
+  <!-- Nodes: Hidden Layer 2 -->
+  <circle cx="500" cy="190" r="25" fill="#a66aff" stroke="#333" stroke-width="2"/>
+  <circle cx="500" cy="270" r="25" fill="#a66aff" stroke="#333" stroke-width="2"/>
+  <circle cx="500" cy="350" r="25" fill="#a66aff" stroke="#333" stroke-width="2"/>
+  
+  <!-- Hidden Layer 2 Activation -->
+  <text x="500" y="195" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  <text x="500" y="275" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  <text x="500" y="355" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  
+  <!-- Nodes: Output Layer -->
+  <circle cx="700" cy="270" r="25" fill="#6aff9e" stroke="#333" stroke-width="2"/>
+  
+  <!-- Output Layer Activation -->
+  <text x="700" y="275" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">σ</text>
+  
+  <!-- Connections: Input to Hidden Layer 1 -->
+  <!-- Each input connects to all neurons in the first hidden layer -->
+  <!-- Input 1 connections -->
+  <line x1="115" y1="150" x2="265" y2="150" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="150" x2="265" y2="230" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="150" x2="265" y2="310" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="150" x2="265" y2="390" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Input 2 connections -->
+  <line x1="115" y1="230" x2="265" y2="150" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="230" x2="265" y2="230" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="230" x2="265" y2="310" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="230" x2="265" y2="390" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Input 3 connections -->
+  <line x1="115" y1="310" x2="265" y2="150" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="310" x2="265" y2="230" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="310" x2="265" y2="310" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="310" x2="265" y2="390" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Input 4 connections -->
+  <line x1="115" y1="390" x2="265" y2="150" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="390" x2="265" y2="230" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="390" x2="265" y2="310" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="115" y1="390" x2="265" y2="390" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Connections: Hidden Layer 1 to Hidden Layer 2 -->
+  <!-- Each neuron in hidden layer 1 connects to all neurons in hidden layer 2 -->
+  <!-- Hidden 1, Neuron 1 connections -->
+  <line x1="315" y1="150" x2="475" y2="190" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="150" x2="475" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="150" x2="475" y2="350" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Hidden 1, Neuron 2 connections -->
+  <line x1="315" y1="230" x2="475" y2="190" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="230" x2="475" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="230" x2="475" y2="350" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Hidden 1, Neuron 3 connections -->
+  <line x1="315" y1="310" x2="475" y2="190" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="310" x2="475" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="310" x2="475" y2="350" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Hidden 1, Neuron 4 connections -->
+  <line x1="315" y1="390" x2="475" y2="190" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="390" x2="475" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="315" y1="390" x2="475" y2="350" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Connections: Hidden Layer 2 to Output Layer -->
+  <line x1="525" y1="190" x2="675" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="525" y1="270" x2="675" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="525" y1="350" x2="675" y2="270" stroke="#ccc" stroke-width="1.5"/>
+  
+  <!-- Legend -->
+  <rect x="50" y="440" width="700" height="50" fill="#fff" stroke="#ddd" stroke-width="1" rx="5" ry="5"/>
+  
+  <!-- Input Layer Legend -->
+  <circle cx="85" cy="465" r="10" fill="#6ab7ff" stroke="#333" stroke-width="1"/>
+  <text x="105" y="470" font-family="Arial, sans-serif" font-size="14" fill="#333">Input Layer</text>
+  
+  <!-- Hidden Layer 1 Legend -->
+  <circle cx="205" cy="465" r="10" fill="#ff9e6a" stroke="#333" stroke-width="1"/>
+  <text x="225" y="470" font-family="Arial, sans-serif" font-size="14" fill="#333">Hidden Layer 1</text>
+  
+  <!-- Hidden Layer 2 Legend -->
+  <circle cx="345" cy="465" r="10" fill="#a66aff" stroke="#333" stroke-width="1"/>
+  <text x="365" y="470" font-family="Arial, sans-serif" font-size="14" fill="#333">Hidden Layer 2</text>
+  
+  <!-- Output Layer Legend -->
+  <circle cx="485" cy="465" r="10" fill="#6aff9e" stroke="#333" stroke-width="1"/>
+  <text x="505" y="470" font-family="Arial, sans-serif" font-size="14" fill="#333">Output Layer</text>
+  
+  <!-- Connection Legend -->
+  <line x1="600" y1="465" x2="640" y2="465" stroke="#ccc" stroke-width="1.5"/>
+  <text x="655" y="470" font-family="Arial, sans-serif" font-size="14" fill="#333">Weights</text>
+  
+  <!-- Data flow description -->
+  <text x="400" y="110" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#555">Data flows from left to right through the network</text>
+  <path d="M250,120 L550,120" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow definition for data flow -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+    </marker>
+  </defs>
+</svg>
