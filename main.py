@@ -12,7 +12,7 @@ if PROJECT_ROOT not in sys.path:
 if CORE_DIR not in sys.path:
     sys.path.insert(0, CORE_DIR)
 
-from api.routers import dashboard, metrics, nowcast, stations
+from api.routers import dashboard, metrics
 
 app = FastAPI(
     title="RA-Diffusion Gede-Pangrango Weather Nowcasting API",
@@ -30,9 +30,7 @@ app.add_middleware(
 )
 
 # Include Routers
-app.include_router(stations.router)
 app.include_router(metrics.router)
-app.include_router(nowcast.router)
 app.include_router(dashboard.router)
 
 # Mount plots static files if core/results/result_test/plots exists
@@ -47,9 +45,7 @@ def root():
         "system": "RA-Diffusion Gede-Pangrango Weather Nowcasting API",
         "docs": "/docs",
         "endpoints": [
-            "/api/v1/stations",
             "/api/v1/metrics",
-            "/api/v1/nowcast/predict",
             "/api/v1/dashboard/live"
         ]
     }
