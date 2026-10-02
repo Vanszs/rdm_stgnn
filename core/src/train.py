@@ -24,7 +24,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.config import (  # noqa: E402
     FINAL_FEATURE_COLS,
     FINAL_TARGET_COLS,
+    DIFFUSION_TRAIN_TIMESTEPS,
+    LOG_PRECIP_MAX,
     MAIN_NODE_NAME,
+    ZSCORE_EPSILON,
     NODE_COORDINATES,
     NODE_NAMES,
     OPEN_METEO_MODEL,
@@ -221,7 +224,7 @@ def _extract_precip_mm_from_normalized_targets(
     Convert normalized precipitation target back to mm/h.
     """
     precip_log = targets[:, precip_idx] * t_std_precip + t_mean_precip
-    precip_mm = torch.expm1(torch.clamp(precip_log, max=20.0))
+    precip_mm = torch.expm1(torch.clamp(precip_log, max=LOG_PRECIP_MAX))
     return torch.clamp(precip_mm, min=0.0)
 
 
@@ -427,7 +430,7 @@ def train_pipeline(
 
     train_features = main_train[feature_cols].values
     train_features_norm = (
-        (train_features - stats["c_mean"].numpy()) / (stats["c_std"].numpy() + 1e-5)
+        (train_features - stats["c_mean"].numpy()) / (stats["c_std"].numpy() + ZSCORE_EPSILON)
     ).astype(np.float32)
 
     # Retrieval values are the NEXT-STEP outcome (target at tau+1), normalized like training targets.
@@ -435,7 +438,7 @@ def train_pipeline(
     train_targets_g = train_targets_raw.copy()
     train_targets_g[:, precip_idx] = np.log1p(train_targets_g[:, precip_idx])
     train_targets_norm = (
-        (train_targets_g - stats["t_mean"].numpy()) / (stats["t_std"].numpy() + 1e-5)
+        (train_targets_g - stats["t_mean"].numpy()) / (stats["t_std"].numpy() + ZSCORE_EPSILON)
     ).astype(np.float32)
 
     context_dim = len(feature_cols)
@@ -550,7 +553,7 @@ def train_pipeline(
                     graph_emb = graph_emb * g_keep
                     retrieved = retrieved * r_keep
                 noise = torch.randn_like(targets)
-                timesteps = torch.randint(0, 1000, (targets.shape[0],), device=device).long()
+                timesteps = torch.randint(0, DIFFUSION_TRAIN_TIMESTEPS, (targets.shape[0],), device=device).long()
                 noisy_target = forecaster.scheduler.add_noise(targets, noise, timesteps)
                 if effective_rain_specialization:
                     noise_pred, wet_logit = forecaster.model(
@@ -641,7 +644,7 @@ def train_pipeline(
                 retrieved = retrieved.to(device, non_blocking=True)
                 graph_emb = st_gnn(batched_graphs)
                 noise = torch.randn_like(targets)
-                timesteps = torch.randint(0, 1000, (targets.shape[0],), device=device).long()
+                timesteps = torch.randint(0, DIFFUSION_TRAIN_TIMESTEPS, (targets.shape[0],), device=device).long()
                 noisy_target = forecaster.scheduler.add_noise(targets, noise, timesteps)
                 if effective_rain_specialization:
                     noise_pred, wet_logit = forecaster.model(

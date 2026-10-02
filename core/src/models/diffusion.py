@@ -3,7 +3,7 @@ import torch.nn as nn
 import math
 from diffusers import DDPMScheduler, DDIMScheduler
 
-from src.config import FINAL_TARGET_COLS
+from src.config import DIFFUSION_TRAIN_TIMESTEPS, FINAL_TARGET_COLS
 
 class SinusoidalPositionEmbeddings(nn.Module):
     def __init__(self, dim):
@@ -94,8 +94,11 @@ class ConditionalDiffusionModel(nn.Module):
         
         self.mid = nn.Sequential(nn.Linear(hidden_dim * 2, hidden_dim * 2), nn.SiLU())
         
-        self.up1 = nn.Sequential(nn.Linear(hidden_dim * 4, hidden_dim), nn.SiLU())
-        self.out = nn.Linear(hidden_dim, input_dim)
+        self.up_mlp = nn.Sequential(
+            nn.Linear(hidden_dim * 4, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, input_dim),
+        )
 
     def _encode_condition(self, context, retrieved=None, graph_emb=None):
         """
@@ -150,8 +153,7 @@ class ConditionalDiffusionModel(nn.Module):
         h_mid = self.mid(h2)
         
         h_up = torch.cat([h_mid, h2], dim=-1)  # Skip connection
-        output = self.up1(h_up)
-        noise_pred = self.out(output)
+        noise_pred = self.up_mlp(h_up)
 
         if return_wet_logit:
             wet_logit = self.wet_head(cond_emb)
@@ -170,8 +172,9 @@ class RainForecaster:
     def __init__(self, model, device='cpu'):
         self.model = model.to(device)
         self.device = device
+        self._ddim_cache = None
         # clip_sample=False: weather z-scores range [-4, +8], not [-1, 1] like images
-        self.scheduler = DDPMScheduler(num_train_timesteps=1000, clip_sample=False)
+        self.scheduler = DDPMScheduler(num_train_timesteps=DIFFUSION_TRAIN_TIMESTEPS, clip_sample=False)
 
     @staticmethod
     def weighted_noise_loss(noise_pred, noise, target_reference):
@@ -238,9 +241,9 @@ class RainForecaster:
         self.model.eval()
         
         # Cache DDIM scheduler to avoid re-creating each call
-        if not hasattr(self, '_ddim_cache') or self._ddim_cache[0] != num_inference_steps:
+        if self._ddim_cache is None or self._ddim_cache[0] != num_inference_steps:
             # clip_sample=False: weather z-scores range [-4, +8], not [-1, 1] like images
-            ddim = DDIMScheduler(num_train_timesteps=1000, clip_sample=False)
+            ddim = DDIMScheduler(num_train_timesteps=DIFFUSION_TRAIN_TIMESTEPS, clip_sample=False)
             ddim.set_timesteps(num_inference_steps)
             self._ddim_cache = (num_inference_steps, ddim)
         ddim = self._ddim_cache[1]
@@ -252,7 +255,7 @@ class RainForecaster:
         retr_expanded = retrieved.repeat(num_samples, 1, 1).to(self.device) if retrieved is not None else None
         graph_expanded = graph_emb.repeat(num_samples, 1).to(self.device) if graph_emb is not None else None
         
-        use_amp = self.device != 'cpu' and str(self.device) != 'cpu'
+        use_amp = str(self.device) != 'cpu'
         
         for t in ddim.timesteps:
             t_batch = torch.full((num_samples,), t, device=self.device, dtype=torch.long)

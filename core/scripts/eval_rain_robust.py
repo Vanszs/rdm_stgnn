@@ -3,7 +3,7 @@ Reproducible weekly one-step nowcasting crosscheck (3 variables).
 
 Single source for the weekly artifacts under result_test/nowcasting_hourly_week/.
 - Variables: precipitation, wind_speed_10m, relative_humidity_2m
-- Models compared: full RA-Diffusion model, persistence, MLP baseline
+- Models compared: full RA-Diffusion model
 - Windows: driest / median / wettest week (chosen on test split)
 - Protocol: one-step hourly with actual update (no recursive closed loop)
 
@@ -26,24 +26,26 @@ import torch
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.config import (  # noqa: E402
+    DDIM_INFERENCE_STEPS,
     FINAL_FEATURE_COLS,
     FINAL_TARGET_COLS,
+    LOG_PRECIP_MAX,
     MAIN_NODE_NAME,
     NODE_NAMES,
     PRECIP_PHYSICAL_MAX_MM,
+    ZSCORE_EPSILON,
     harmonize_weather_columns,
     validate_feature_schema,
     validate_feature_values,
 )
 from src.data.ingest import CANONICAL_DATA_PATH  # noqa: E402
 from src.inference import create_inference_graphs, load_model_and_stats  # noqa: E402
-from src.models.mlp_baseline import MLPBaseline  # noqa: E402
 from src.train import compute_stats_from_training, temporal_split  # noqa: E402
 
 
 WINDOW_HOURS = 24 * 7
 EVENT_THRESHOLDS = (0.1, 1.0)
-VAR_NAMES = ["precipitation", "wind_speed_10m", "relative_humidity_2m"]
+VAR_NAMES = FINAL_TARGET_COLS
 SEED = 1234
 OUT_DIR = "result_test/nowcasting_hourly_week"
 
@@ -78,7 +80,7 @@ def _event_metrics(actual: np.ndarray, pred: np.ndarray, threshold: float) -> Di
     # NOTE: deterministic point-based event detection (pred_point >= thr), where pred is the
     # ensemble median. This differs intentionally from run_eval_final.py which uses probabilistic
     # detection (P(ensemble > thr) >= 0.5). The weekly crosscheck is a point-forecast comparison
-    # vs persistence/MLP, so point-based detection is the consistent choice here.
+    # Point-based detection is the consistent choice for this single-model crosscheck.
     act = actual >= threshold
     pdn = pred >= threshold
     tp = float(np.logical_and(act, pdn).sum())
@@ -165,22 +167,8 @@ def _get_per_node_sequence(per_node_data, idx, seq_len, feature_cols, stats) -> 
             node_feats.append(feat)
         sequences.append(np.stack(node_feats))
     seq = np.stack(sequences)
-    seq_norm = (seq - c_mean) / (c_std + 1e-5)
+    seq_norm = (seq - c_mean) / (c_std + ZSCORE_EPSILON)
     return torch.tensor(seq_norm, dtype=torch.float32)
-
-
-def _load_mlp(device):
-    path = "models/mlp_baseline_chkpt.pth"
-    if not os.path.exists(path):
-        return None
-    ckpt = torch.load(path, map_location=device, weights_only=False)
-    cfg = ckpt["config"]
-    model = MLPBaseline(
-        input_dim=cfg["input_dim"], hidden_dim=cfg["hidden_dim"], num_targets=cfg["num_targets"]
-    ).to(device)
-    model.load_state_dict(ckpt["model_state"])
-    model.eval()
-    return model
 
 
 def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, device: str):
@@ -193,7 +181,6 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
     config = model_wrapper.config
     st_gnn = model_wrapper.st_gnn
     forecaster = model_wrapper.forecaster
-    mlp = _load_mlp(device)
 
     main_df, per_node_data, feature_cols, stats = _build_test_frames(data_path)
     c_mean = stats["c_mean"].numpy()
@@ -205,7 +192,7 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
     seq_len = int(config["seq_len"])
 
     features_raw = main_df[feature_cols].values.astype(np.float32)
-    features_norm = (features_raw - c_mean) / (c_std + 1e-5)
+    features_norm = (features_raw - c_mean) / (c_std + ZSCORE_EPSILON)
     timestamps = pd.to_datetime(main_df["date"]).reset_index(drop=True)
     targets_raw = main_df[VAR_NAMES].values.astype(np.float32)
 
@@ -223,13 +210,10 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
 
         actuals = np.zeros((len(eval_range), 3), dtype=np.float32)
         model_preds = np.zeros((len(eval_range), 3), dtype=np.float32)
-        persist_preds = np.zeros((len(eval_range), 3), dtype=np.float32)
-        mlp_preds = np.full((len(eval_range), 3), np.nan, dtype=np.float32)
         wet_probs = np.full(len(eval_range), np.nan, dtype=np.float32)
 
         for j, idx in enumerate(eval_range):
             actuals[j] = targets_raw[idx]
-            persist_preds[j] = targets_raw[idx - 1]
 
             main_ctx_seq = torch.tensor(features_norm[idx - seq_len : idx], dtype=torch.float32, device=device)
             context_last = main_ctx_seq[-1].unsqueeze(0)
@@ -247,7 +231,7 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
                     num_inference_steps=num_inference_steps,
                 )
                 sd = samples * t_std_t + t_mean_t
-                sd[:, 0] = torch.clamp(torch.expm1(torch.clamp(sd[:, 0], max=20.0)), min=0.0, max=PRECIP_PHYSICAL_MAX_MM)
+                sd[:, 0] = torch.clamp(torch.expm1(torch.clamp(sd[:, 0], max=LOG_PRECIP_MAX)), min=0.0, max=PRECIP_PHYSICAL_MAX_MM)
                 sd[:, 1] = torch.clamp(sd[:, 1], min=0.0)  # wind speed >= 0
                 sd[:, 2] = torch.clamp(sd[:, 2], min=0.0, max=100.0)
                 model_preds[j] = torch.median(sd, dim=0).values.cpu().numpy()
@@ -257,15 +241,6 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
                         context=context_last, retrieved=retrieved, graph_emb=graph_emb
                     )
                     wet_probs[j] = float(wet_prob.squeeze().item())
-
-                if mlp is not None:
-                    x = features_norm[idx - seq_len : idx].flatten()
-                    x_t = torch.tensor(x, dtype=torch.float32, device=device).unsqueeze(0)
-                    out = mlp(x_t).cpu().numpy()[0] * t_std + t_mean
-                    out[0] = np.clip(np.expm1(min(out[0], 20.0)), 0.0, PRECIP_PHYSICAL_MAX_MM)
-                    out[1] = np.clip(out[1], 0.0, None)  # wind speed >= 0
-                    out[2] = np.clip(out[2], 0.0, 100.0)
-                    mlp_preds[j] = out
 
         # FIX #5: rain gate with anti-degenerate guard (applied per window, post-loop).
         gated = False
@@ -289,12 +264,6 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
                 "pred_model_precipitation": model_preds[:, 0],
                 "pred_model_wind_speed_10m": model_preds[:, 1],
                 "pred_model_relative_humidity_2m": model_preds[:, 2],
-                "pred_persistence_precipitation": persist_preds[:, 0],
-                "pred_persistence_wind_speed_10m": persist_preds[:, 1],
-                "pred_persistence_relative_humidity_2m": persist_preds[:, 2],
-                "pred_mlp_precipitation": mlp_preds[:, 0],
-                "pred_mlp_wind_speed_10m": mlp_preds[:, 1],
-                "pred_mlp_relative_humidity_2m": mlp_preds[:, 2],
                 "wet_probability": wet_probs,
             }
         )
@@ -304,9 +273,7 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
         row = {"window": window.name, "precip_sum_mm": float(window.precip_sum), "n_samples": int(len(eval_range))}
         for vi, var in enumerate(VAR_NAMES):
             act = actuals[:, vi]
-            preds_by_model = {"model": model_preds[:, vi], "persistence": persist_preds[:, vi]}
-            if mlp is not None:
-                preds_by_model["mlp"] = mlp_preds[:, vi]
+            preds_by_model = {"model": model_preds[:, vi]}
             var_metrics = {}
             for mname, pr in preds_by_model.items():
                 rmse = float(np.sqrt(np.mean((pr - act) ** 2)))
@@ -342,7 +309,7 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
         "num_inference_steps": int(num_inference_steps),
         "device": str(device),
         "variables": VAR_NAMES,
-        "models_compared": ["model", "persistence"] + (["mlp"] if mlp is not None else []),
+        "models_compared": ["model"],
         "protocol": "one_step_hourly_with_actual_update",
         "rain_specialization_enabled": rain_enabled,
         "wet_probability_threshold": wet_threshold,
@@ -358,7 +325,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-path", type=str, default=CANONICAL_DATA_PATH)
     parser.add_argument("--num-ensemble", type=int, default=30)
-    parser.add_argument("--num-inference-steps", type=int, default=20)
+    parser.add_argument("--num-inference-steps", type=int, default=DDIM_INFERENCE_STEPS)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     return parser.parse_args()
 

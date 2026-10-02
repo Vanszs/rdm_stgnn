@@ -4,7 +4,7 @@ Central configuration and canonical system contract for the 5-node migration.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import pandas as pd
 import torch
@@ -93,6 +93,23 @@ FINAL_TARGET_COLS = [
 # cap is numerical hygiene only (prevents expm1 blow-up on out-of-distribution inputs),
 # well above any real value so it never distorts healthy predictions.
 PRECIP_PHYSICAL_MAX_MM = 60.0
+
+# Shared numerical hygiene constants (single source; previously duplicated literals).
+ZSCORE_EPSILON = 1e-5
+DDIM_INFERENCE_STEPS = 20
+
+# Diffusion training horizon (number of noising steps). Must match between the
+# training-time random timestep draw and both schedulers.
+DIFFUSION_TRAIN_TIMESTEPS = 1000
+
+# Log-space ceiling applied before expm1 when converting predicted precipitation
+# back to mm/h. Protects against overflow (e^20 ~ 4.85e8); NOT a physical bound —
+# that is PRECIP_PHYSICAL_MAX_MM above.
+LOG_PRECIP_MAX = 20.0
+
+# Heavy-rain event definition used by all probabilistic skill scores.
+HEAVY_RAIN_THRESHOLD_MM = 10.0
+PROB_EVENT_THRESHOLD = 0.5
 
 FINAL_FEATURE_COLS = [
     "temperature_2m",

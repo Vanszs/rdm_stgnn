@@ -16,6 +16,7 @@ from src.config import (
     FINAL_TARGET_COLS,
     MAIN_NODE_NAME,
     NODE_NAMES,
+    ZSCORE_EPSILON,
     build_star_edge_attr,
     build_star_edge_index,
     get_node_index_map,
@@ -160,7 +161,8 @@ class TemporalGraphDataset(Dataset):
 
     def _normalize(self):
         self.targets_transformed = self.targets.clone()
-        self.targets_transformed[:, :, 0] = torch.log1p(self.targets[:, :, 0])
+        precip_idx = self.target_cols.index("precipitation")
+        self.targets_transformed[:, :, precip_idx] = torch.log1p(self.targets[:, :, precip_idx])
 
         # Stats are main-node-based by contract, but still vectorized by feature/target dimension.
         t_mean = self.stats.get("t_mean")
@@ -170,8 +172,8 @@ class TemporalGraphDataset(Dataset):
         if t_mean is None or t_std is None or c_mean is None or c_std is None:
             raise ValueError("Normalization stats missing required keys t_mean/t_std/c_mean/c_std")
 
-        self.targets_norm = (self.targets_transformed - t_mean) / (t_std + 1e-5)
-        self.features_norm = (self.features - c_mean) / (c_std + 1e-5)
+        self.targets_norm = (self.targets_transformed - t_mean) / (t_std + ZSCORE_EPSILON)
+        self.features_norm = (self.features - c_mean) / (c_std + ZSCORE_EPSILON)
 
     def set_precomputed_retrieval(self, retrieved_tensor: torch.Tensor) -> None:
         if retrieved_tensor.ndim == 3:
@@ -184,8 +186,7 @@ class TemporalGraphDataset(Dataset):
         Return [num_samples, feature_dim] contexts from main node at t-1.
         """
         t_minus_1 = np.array(self.valid_indices) - 1
-        feats = self.features_norm if hasattr(self, "features_norm") else self.features
-        return feats[t_minus_1, self.main_node_idx, :]
+        return self.features_norm[t_minus_1, self.main_node_idx, :]
 
     def __len__(self) -> int:
         return len(self.valid_indices)
@@ -195,14 +196,12 @@ class TemporalGraphDataset(Dataset):
         graphs = []
         for i in range(self.seq_len):
             t_idx = t - self.seq_len + i
-            node_feats = self.features_norm[t_idx] if hasattr(self, "features_norm") else self.features[t_idx]
+            node_feats = self.features_norm[t_idx]
             graph = Data(x=node_feats, edge_index=self.edge_index, edge_attr=self.edge_attr)
             graphs.append(graph)
 
-        targets = self.targets_norm if hasattr(self, "targets_norm") else self.targets
-        feats = self.features_norm if hasattr(self, "features_norm") else self.features
-        target = targets[t, self.main_node_idx, :]  # main-node-only target
-        context = feats[t - 1, self.main_node_idx, :]  # main-node-only context
+        target = self.targets_norm[t, self.main_node_idx, :]  # main-node-only target
+        context = self.features_norm[t - 1, self.main_node_idx, :]  # main-node-only context
 
         if hasattr(self, "precomputed_retrieval") and self.precomputed_retrieval is not None:
             return graphs, target, context, self.precomputed_retrieval[idx]

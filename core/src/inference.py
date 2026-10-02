@@ -7,13 +7,16 @@ import torch
 from torch_geometric.data import Batch, Data
 
 from src.config import (
+    DDIM_INFERENCE_STEPS,
     FINAL_FEATURE_COLS,
+    LOG_PRECIP_MAX,
     FINAL_TARGET_COLS,
     MAIN_NODE_NAME,
     NODE_NAMES,
     PRECIP_PHYSICAL_MAX_MM,
     STAR_EDGE_COUNT,
     TARGET_NODE_POLICY,
+    ZSCORE_EPSILON,
     build_star_edge_attr,
     build_star_edge_index,
     harmonize_weather_columns,
@@ -160,7 +163,15 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
         graph_dim=config["graph_dim"],
         hidden_dim=config["hidden_dim"],
     )
-    missing, unexpected = diff_model.load_state_dict(checkpoint["diffusion_state"], strict=False)
+    diffusion_state = dict(checkpoint["diffusion_state"])
+    # Keep existing checkpoints loadable after merging up1 and out into up_mlp.
+    if "up1.0.weight" in diffusion_state:
+        diffusion_state["up_mlp.0.weight"] = diffusion_state.pop("up1.0.weight")
+        diffusion_state["up_mlp.0.bias"] = diffusion_state.pop("up1.0.bias")
+    if "out.weight" in diffusion_state:
+        diffusion_state["up_mlp.2.weight"] = diffusion_state.pop("out.weight")
+        diffusion_state["up_mlp.2.bias"] = diffusion_state.pop("out.bias")
+    missing, unexpected = diff_model.load_state_dict(diffusion_state, strict=False)
     invalid_missing = sorted([k for k in missing if not k.startswith("wet_head.")])
     if invalid_missing:
         raise RuntimeError(f"Checkpoint missing unexpected diffusion keys: {invalid_missing}")
@@ -192,7 +203,7 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
         train_features = main_train[feature_cols].values
         c_mean = stats["c_mean"].numpy()
         c_std = stats["c_std"].numpy()
-        train_features_norm = (train_features - c_mean) / (c_std + 1e-5)
+        train_features_norm = (train_features - c_mean) / (c_std + ZSCORE_EPSILON)
 
         # Retrieval value = next-step outcome (target at tau+1), normalized like training targets.
         precip_idx = list(target_cols).index("precipitation")
@@ -200,7 +211,7 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
         train_targets_g[:, precip_idx] = np.log1p(train_targets_g[:, precip_idx])
         t_mean = stats["t_mean"].numpy()
         t_std = stats["t_std"].numpy()
-        train_targets_norm = ((train_targets_g - t_mean) / (t_std + 1e-5)).astype(np.float32)
+        train_targets_norm = ((train_targets_g - t_mean) / (t_std + ZSCORE_EPSILON)).astype(np.float32)
 
         retrieval_db.add_items(
             train_features_norm[:-1].astype(np.float32),
@@ -265,16 +276,22 @@ def run_inference_real(
             retrieved=retrieved,
             graph_emb=graph_emb,
             num_samples=num_samples,
-            num_inference_steps=20,
+            num_inference_steps=DDIM_INFERENCE_STEPS,
         )
 
         t_mean = stats["t_mean"].to(device)
         t_std = stats["t_std"].to(device)
+        target_cols = list(config.get("target_cols", FINAL_TARGET_COLS))
+        precip_idx = target_cols.index("precipitation")
+        wind_idx = target_cols.index("wind_speed_10m")
+        humidity_idx = target_cols.index("relative_humidity_2m")
         samples_denorm = samples * t_std + t_mean
-        samples_denorm[:, 0] = torch.expm1(torch.clamp(samples_denorm[:, 0], max=20.0))
-        samples_denorm[:, 0] = torch.clamp(samples_denorm[:, 0], min=0.0, max=PRECIP_PHYSICAL_MAX_MM)
-        samples_denorm[:, 1] = torch.clamp(samples_denorm[:, 1], min=0.0)  # wind speed >= 0
-        samples_denorm[:, 2] = torch.clamp(samples_denorm[:, 2], min=0.0, max=100.0)
+        samples_denorm[:, precip_idx] = torch.expm1(torch.clamp(samples_denorm[:, precip_idx], max=LOG_PRECIP_MAX))
+        samples_denorm[:, precip_idx] = torch.clamp(
+            samples_denorm[:, precip_idx], min=0.0, max=PRECIP_PHYSICAL_MAX_MM
+        )
+        samples_denorm[:, wind_idx] = torch.clamp(samples_denorm[:, wind_idx], min=0.0)  # wind speed >= 0
+        samples_denorm[:, humidity_idx] = torch.clamp(samples_denorm[:, humidity_idx], min=0.0, max=100.0)
         rain_cfg = config.get("rain_specialization", {})
         wet_prob_value = None
         wet_prob_threshold = float(rain_cfg.get("wet_probability_threshold", 0.5))
@@ -286,14 +303,12 @@ def run_inference_real(
             )
             wet_prob_value = float(wet_prob.squeeze().item())
             if wet_prob_value < wet_prob_threshold:
-                samples_denorm[:, 0] = 0.0
+                samples_denorm[:, precip_idx] = 0.0
         result = samples_denorm.cpu().numpy()
         return {
             "main_node_name": main_name,
             "target_node_policy": config.get("target_node_policy", TARGET_NODE_POLICY),
-            "precipitation": result[:, 0],
-            "wind_speed": result[:, 1],
-            "humidity": result[:, 2],
+            **{col: result[:, i] for i, col in enumerate(target_cols)},
             "rain_specialization_enabled": bool(rain_cfg.get("enabled", False)),
             "rain_occurrence_probability": wet_prob_value,
             "rain_occurrence_probability_threshold": wet_prob_threshold,

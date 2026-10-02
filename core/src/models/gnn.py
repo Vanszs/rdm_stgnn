@@ -46,12 +46,10 @@ class TemporalAttention(nn.Module):
         x = x + self.pos_embedding[:, :seq_len, :]
 
         # Causal mask ensures timestep t cannot attend to future timesteps > t.
-        attn_mask = None
-        if self.causal:
-            attn_mask = torch.triu(
-                torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
-                diagonal=1,
-            )
+        attn_mask = torch.triu(
+            torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool),
+            diagonal=1,
+        )
 
         # Self-attention
         attn_out, _ = self.attention(x, x, x, attn_mask=attn_mask)

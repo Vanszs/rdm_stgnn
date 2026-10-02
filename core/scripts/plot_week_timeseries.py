@@ -1,5 +1,5 @@
 """
-Plot 1-week hourly timeseries (actual vs model vs persistence vs MLP) for 3 targets.
+Plot 1-week hourly timeseries (actual vs model) for 3 targets.
 Reads the reproducible weekly CSV produced by scripts/eval_rain_robust.py.
 """
 from __future__ import annotations
@@ -29,9 +29,6 @@ def plot_week(window: str):
     for ax, (var, label) in zip(axes, VARS):
         ax.plot(t, df[f"actual_{var}"], color="#000000", lw=1.6, label="Actual")
         ax.plot(t, df[f"pred_model_{var}"], color="#d62728", lw=1.2, label="Full model")
-        ax.plot(t, df[f"pred_persistence_{var}"], color="#1f77b4", lw=1.0, ls="--", alpha=0.8, label="Persistence")
-        if f"pred_mlp_{var}" in df.columns and df[f"pred_mlp_{var}"].notna().any():
-            ax.plot(t, df[f"pred_mlp_{var}"], color="#2ca02c", lw=1.0, ls=":", alpha=0.8, label="MLP")
         ax.set_ylabel(label)
         ax.grid(True, alpha=0.3)
         ax.legend(loc="upper right", fontsize=9)

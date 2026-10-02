@@ -1,5 +1,5 @@
 """
-Comprehensive 6-scenario evaluation on canonical main-node-only target.
+Comprehensive RDM-STGNN ablation evaluation on canonical main-node-only target.
 """
 
 from __future__ import annotations
@@ -21,14 +21,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.config import (  # noqa: E402
     CONTEXT_POLICY,
+    DDIM_INFERENCE_STEPS,
     FINAL_FEATURE_COLS,
     FINAL_TARGET_COLS,
+    LOG_PRECIP_MAX,
     MAIN_NODE_NAME,
     NODE_COORDINATES,
     NODE_NAMES,
     OPEN_METEO_MODEL,
     PRECIP_PHYSICAL_MAX_MM,
     TARGET_NODE_POLICY,
+    ZSCORE_EPSILON,
     harmonize_weather_columns,
     validate_feature_schema,
     validate_feature_values,
@@ -45,13 +48,12 @@ from src.evaluation.probabilistic_metrics import (  # noqa: E402
     compute_rmse,
 )
 from src.inference import create_inference_graphs, load_model_and_stats  # noqa: E402
-from src.models.mlp_baseline import MLPBaseline  # noqa: E402
 from src.train import compute_stats_from_training, temporal_split  # noqa: E402
 
 matplotlib.use("Agg")
 
 TARGET_COLS = FINAL_TARGET_COLS
-VAR_NAMES = ["precipitation", "wind_speed", "humidity"]
+VAR_NAMES = FINAL_TARGET_COLS
 THRESHOLDS_PRECIP = [2.0, 5.0, 10.0]
 PALETTE = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -115,72 +117,19 @@ def get_per_node_sequence(per_node_data, idx, seq_len, feature_cols, stats):
                 node_feats.append(feat)
         sequences.append(np.stack(node_feats))
     seq = np.stack(sequences)
-    seq_norm = (seq - c_mean) / (c_std + 1e-5)
+    seq_norm = (seq - c_mean) / (c_std + ZSCORE_EPSILON)
     return torch.tensor(seq_norm, dtype=torch.float32)
 
 
 def _eval_indices(main_df, seq_len, eval_step, max_eval_samples=0):
     """
     Single source of evaluation indices so every scenario uses identical samples.
-    idx-1 (persistence) and idx-seq_len (windows) are always valid since idx>=seq_len>=1.
+    idx-seq_len (windows) is always valid since idx>=seq_len>=1.
     """
     idxs = list(range(seq_len, len(main_df), eval_step))
     if max_eval_samples and max_eval_samples > 0:
         idxs = idxs[:max_eval_samples]
     return idxs
-
-
-def run_persistence(main_df, eval_step, seq_len, max_eval_samples=0):
-    targets_all = []
-    preds_all = []
-    for idx in _eval_indices(main_df, seq_len, eval_step, max_eval_samples):
-        target = np.array([main_df.iloc[idx][c] for c in TARGET_COLS], dtype=np.float32)
-        pred = np.array([main_df.iloc[idx - 1][c] for c in TARGET_COLS], dtype=np.float32)
-        targets_all.append(target)
-        preds_all.append(pred)
-    targets = np.stack(targets_all)
-    preds = np.stack(preds_all)
-    ensemble = np.stack([preds] * 1, axis=1)
-    return targets, preds, ensemble
-
-
-def run_mlp_baseline(main_df, feature_cols, stats, eval_step, seq_len, num_ensemble, max_eval_samples=0):
-    ckpt = torch.load("models/mlp_baseline_chkpt.pth", map_location=DEVICE, weights_only=False)
-    cfg = ckpt["config"]
-    model = MLPBaseline(
-        input_dim=cfg["input_dim"],
-        hidden_dim=cfg["hidden_dim"],
-        num_targets=cfg["num_targets"],
-    ).to(DEVICE)
-    model.load_state_dict(ckpt["model_state"])
-
-    c_mean = stats["c_mean"].numpy()[: len(feature_cols)]
-    c_std = stats["c_std"].numpy()[: len(feature_cols)]
-    t_mean = stats["t_mean"].numpy()
-    t_std = stats["t_std"].numpy()
-
-    features_raw = main_df[feature_cols].values.astype(np.float32)
-    features_norm = (features_raw - c_mean) / (c_std + 1e-5)
-    targets_raw = main_df[TARGET_COLS].values.astype(np.float32)
-
-    targets_all, preds_all, ensemble_all = [], [], []
-    # MLP baseline is a DETERMINISTIC regressor: single eval() forward pass.
-    # Ensemble size = 1 so CRPS reduces to MAE (fair vs persistence; no MC-dropout spread).
-    model.eval()
-    for idx in _eval_indices(main_df, seq_len, eval_step, max_eval_samples):
-        x = features_norm[idx - seq_len : idx].flatten()
-        x_t = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(DEVICE)
-        target = targets_raw[idx]
-        with torch.no_grad():
-            pred = model(x_t).cpu().numpy()[0]
-        pred_denorm = pred * t_std + t_mean
-        pred_denorm[0] = np.clip(np.expm1(np.clip(pred_denorm[0], a_min=None, a_max=20.0)), 0, PRECIP_PHYSICAL_MAX_MM)
-        pred_denorm[1] = np.clip(pred_denorm[1], 0, None)  # wind speed >= 0
-        pred_denorm[2] = np.clip(pred_denorm[2], 0, 100)
-        targets_all.append(target)
-        preds_all.append(pred_denorm)
-        ensemble_all.append(pred_denorm[None, :])  # ensemble size = 1
-    return np.stack(targets_all), np.stack(preds_all), np.stack(ensemble_all)
 
 
 def run_diffusion_scenario(
@@ -209,7 +158,7 @@ def run_diffusion_scenario(
     t_std_t = stats["t_std"].to(DEVICE)
 
     features_raw = main_df[feature_cols].values.astype(np.float32)
-    features_norm = (features_raw - c_mean) / (c_std + 1e-5)
+    features_norm = (features_raw - c_mean) / (c_std + ZSCORE_EPSILON)
     targets_raw = main_df[TARGET_COLS].values.astype(np.float32)
 
     targets_all, preds_all, ensemble_all = [], [], []
@@ -242,10 +191,10 @@ def run_diffusion_scenario(
                 retrieved=retrieved,
                 graph_emb=graph_emb,
                 num_samples=num_ensemble,
-                num_inference_steps=20,
+                num_inference_steps=DDIM_INFERENCE_STEPS,
             )
             samples_denorm = samples * t_std_t + t_mean_t
-            samples_denorm[:, 0] = torch.clamp(torch.expm1(torch.clamp(samples_denorm[:, 0], max=20.0)), min=0.0, max=PRECIP_PHYSICAL_MAX_MM)
+            samples_denorm[:, 0] = torch.clamp(torch.expm1(torch.clamp(samples_denorm[:, 0], max=LOG_PRECIP_MAX)), min=0.0, max=PRECIP_PHYSICAL_MAX_MM)
             samples_denorm[:, 1] = torch.clamp(samples_denorm[:, 1], min=0.0)  # wind speed >= 0
             samples_denorm[:, 2] = torch.clamp(samples_denorm[:, 2], min=0.0, max=100.0)
             if rain_enabled:
@@ -461,38 +410,28 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
     all_results: Dict[str, Dict[str, Dict[str, float]]] = {}
     all_data: Dict[str, Tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
 
-    print("\n[2/8] Scenario 1: Persistence...")
-    t, p, e = run_persistence(main_df, eval_step, seq_len, max_eval_samples)
-    all_results["persistence"] = compute_scenario_metrics(t, p, e)
-    all_data["persistence"] = (t, p, e)
-
-    print("\n[3/8] Scenario 2: MLP baseline...")
-    t, p, e = run_mlp_baseline(main_df, feature_cols, stats, eval_step, seq_len, num_ensemble, max_eval_samples)
-    all_results["mlp_baseline"] = compute_scenario_metrics(t, p, e)
-    all_data["mlp_baseline"] = (t, p, e)
-
-    print("\n[4/8] Scenario 3: Diffusion only...")
+    print("\n[2/8] Scenario 1: Diffusion only...")
     t, p, e = run_diffusion_scenario(
         main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, False, False, max_eval_samples
     )
     all_results["diff_only"] = compute_scenario_metrics(t, p, e)
     all_data["diff_only"] = (t, p, e)
 
-    print("\n[5/8] Scenario 4: Diffusion + Retrieval...")
+    print("\n[3/8] Scenario 2: Diffusion + Retrieval...")
     t, p, e = run_diffusion_scenario(
         main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, True, False, max_eval_samples
     )
     all_results["diff_retrieval"] = compute_scenario_metrics(t, p, e)
     all_data["diff_retrieval"] = (t, p, e)
 
-    print("\n[6/8] Scenario 5: Diffusion + GNN...")
+    print("\n[4/8] Scenario 3: Diffusion + GNN...")
     t, p, e = run_diffusion_scenario(
         main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, False, True, max_eval_samples
     )
     all_results["diff_gnn"] = compute_scenario_metrics(t, p, e)
     all_data["diff_gnn"] = (t, p, e)
 
-    print("\n[7/8] Scenario 6: Full model...")
+    print("\n[5/8] Scenario 4: Full model...")
     t, p, e = run_diffusion_scenario(
         main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, True, True, max_eval_samples
     )
@@ -524,7 +463,6 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
         "seq_len": seq_len,
         "seed": int(seed),
         "crps_estimator": "fair_unbiased",
-        "mlp_crps_type": "deterministic_single_pass",
         "rain_specialization_enabled": bool(rain_cfg.get("enabled", False)),
         "rain_occurrence_threshold_mm": rain_cfg.get("rain_occurrence_threshold_mm"),
         "rain_probability_threshold": rain_cfg.get("wet_probability_threshold"),

@@ -19,7 +19,9 @@ Referensi:
 """
 
 import numpy as np
-from typing import Dict, Optional
+
+from src.config import HEAVY_RAIN_THRESHOLD_MM, PROB_EVENT_THRESHOLD
+from typing import Dict, Optional, Tuple
 
 
 # ==============================================================================
@@ -113,7 +115,7 @@ def compute_crps(ensemble_samples: np.ndarray, observations: np.ndarray) -> floa
 
 
 def compute_brier_score(ensemble_samples: np.ndarray, observations: np.ndarray,
-                         threshold: float = 10.0) -> float:
+                         threshold: float = HEAVY_RAIN_THRESHOLD_MM) -> float:
     """
     Brier Score untuk event hujan lebat.
     
@@ -150,8 +152,26 @@ def compute_brier_score(ensemble_samples: np.ndarray, observations: np.ndarray,
     return float(np.mean(brier_values))
 
 
+def _contingency(ensemble_samples: np.ndarray, observations: np.ndarray,
+                 threshold: float, prob_threshold: float) -> Tuple[int, int, int]:
+    """Shared hit/miss/false-alarm tally used by POD, FAR and CSI."""
+    hits = misses = false_alarms = 0
+    for t in range(len(observations)):
+        obs_event = observations[t] > threshold
+        pred_event = float(np.mean(ensemble_samples[t] > threshold)) >= prob_threshold
+
+        if obs_event and pred_event:
+            hits += 1
+        elif obs_event and not pred_event:
+            misses += 1
+        elif not obs_event and pred_event:
+            false_alarms += 1
+    return hits, misses, false_alarms
+
+
 def compute_pod(ensemble_samples: np.ndarray, observations: np.ndarray,
-                threshold: float = 10.0, prob_threshold: float = 0.5) -> float:
+                threshold: float = HEAVY_RAIN_THRESHOLD_MM,
+                prob_threshold: float = PROB_EVENT_THRESHOLD) -> float:
     """
     Probability of Detection (POD) / Hit Rate.
     
@@ -166,28 +186,15 @@ def compute_pod(ensemble_samples: np.ndarray, observations: np.ndarray,
     Returns:
         float: POD (0-1, 1 = sempurna)
     """
-    hits = 0
-    misses = 0
-    
-    for t in range(len(observations)):
-        obs_event = observations[t] > threshold
-        pred_prob = np.mean(ensemble_samples[t] > threshold)
-        pred_event = pred_prob >= prob_threshold
-        
-        if obs_event:
-            if pred_event:
-                hits += 1
-            else:
-                misses += 1
-    
+    hits, misses, _ = _contingency(ensemble_samples, observations, threshold, prob_threshold)
     if hits + misses == 0:
         return float('nan')  # Tidak ada event hujan lebat
-    
     return float(hits / (hits + misses))
 
 
 def compute_far(ensemble_samples: np.ndarray, observations: np.ndarray,
-                threshold: float = 10.0, prob_threshold: float = 0.5) -> float:
+                threshold: float = HEAVY_RAIN_THRESHOLD_MM,
+                prob_threshold: float = PROB_EVENT_THRESHOLD) -> float:
     """
     False Alarm Ratio (FAR).
     
@@ -202,28 +209,15 @@ def compute_far(ensemble_samples: np.ndarray, observations: np.ndarray,
     Returns:
         float: FAR (0-1, 0 = sempurna)
     """
-    hits = 0
-    false_alarms = 0
-    
-    for t in range(len(observations)):
-        obs_event = observations[t] > threshold
-        pred_prob = np.mean(ensemble_samples[t] > threshold)
-        pred_event = pred_prob >= prob_threshold
-        
-        if pred_event:
-            if obs_event:
-                hits += 1
-            else:
-                false_alarms += 1
-    
+    hits, _, false_alarms = _contingency(ensemble_samples, observations, threshold, prob_threshold)
     if hits + false_alarms == 0:
         return float('nan')  # Tidak ada prediksi positif
-    
     return float(false_alarms / (hits + false_alarms))
 
 
 def compute_csi(ensemble_samples: np.ndarray, observations: np.ndarray,
-                threshold: float = 10.0, prob_threshold: float = 0.5) -> float:
+                threshold: float = HEAVY_RAIN_THRESHOLD_MM,
+                prob_threshold: float = PROB_EVENT_THRESHOLD) -> float:
     """
     Critical Success Index (CSI) / Threat Score.
     
@@ -238,26 +232,10 @@ def compute_csi(ensemble_samples: np.ndarray, observations: np.ndarray,
     Returns:
         float: CSI (0-1, 1 = sempurna)
     """
-    hits = 0
-    misses = 0
-    false_alarms = 0
-    
-    for t in range(len(observations)):
-        obs_event = observations[t] > threshold
-        pred_prob = np.mean(ensemble_samples[t] > threshold)
-        pred_event = pred_prob >= prob_threshold
-        
-        if obs_event and pred_event:
-            hits += 1
-        elif obs_event and not pred_event:
-            misses += 1
-        elif not obs_event and pred_event:
-            false_alarms += 1
-    
+    hits, misses, false_alarms = _contingency(ensemble_samples, observations, threshold, prob_threshold)
     denominator = hits + misses + false_alarms
     if denominator == 0:
         return float('nan')
-    
     return float(hits / denominator)
 
 
@@ -268,8 +246,8 @@ def compute_csi(ensemble_samples: np.ndarray, observations: np.ndarray,
 def compute_all_metrics(ensemble_samples: np.ndarray, 
                         observations: np.ndarray,
                         deterministic_predictions: Optional[np.ndarray] = None,
-                        heavy_rain_threshold: float = 10.0,
-                        prob_threshold: float = 0.5) -> Dict[str, float]:
+                        heavy_rain_threshold: float = HEAVY_RAIN_THRESHOLD_MM,
+                        prob_threshold: float = PROB_EVENT_THRESHOLD) -> Dict[str, float]:
     """
     Hitung semua metrik evaluasi sekaligus.
     
@@ -304,7 +282,7 @@ def compute_all_metrics(ensemble_samples: np.ndarray,
 
 
 def compute_reliability_data(ensemble_samples: np.ndarray, observations: np.ndarray,
-                              threshold: float = 10.0, n_bins: int = 10) -> Dict:
+                              threshold: float = HEAVY_RAIN_THRESHOLD_MM, n_bins: int = 10) -> Dict:
     """
     Hitung data untuk reliability diagram.
     
