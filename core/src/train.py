@@ -49,7 +49,15 @@ from src.retrieval.base import RetrievalDatabase  # noqa: E402
 matplotlib.use("Agg")
 
 
-def temporal_split(df, train_end="2018-12-31", val_end="2021-12-31"):
+def temporal_split(df, train_end="2018-12-31 16:00", val_end="2021-12-31 16:00"):
+    """
+    Split into train/validation/test on UTC timestamps.
+
+    Boundaries follow the PDF Tabel 3.10 (p064) partition: the dataset starts
+    2004-12-31 17:00 UTC, so whole-period windows are 14y / 3y / 4y ending at
+    16:00 UTC on the final day. That yields 613.560 / 131.520 / 175.320 rows.
+    A date-only cutoff (<= 2018-12-31) truncates mid-day and loses 16 timestamps.
+    """
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"])
     if df["date"].dt.tz is not None:
@@ -264,8 +272,8 @@ def train_pipeline(
     graph_dim: int = 64,
     k_neighbors: int = 3,
     amp: bool = False,
-    train_end: str = "2018-12-31",
-    val_end: str = "2021-12-31",
+    train_end: str = "2018-12-31 16:00",
+    val_end: str = "2021-12-31 16:00",
     start_year: int = 2005,
     end_year: int = 2025,
     grad_clip_norm: float = 1.0,
@@ -868,8 +876,8 @@ def _parse_args():
     parser.add_argument("--graph-dim", type=int, default=64)
     parser.add_argument("--k-neighbors", type=int, default=3)
     parser.add_argument("--amp", action="store_true")
-    parser.add_argument("--train-end", type=str, default="2018-12-31")
-    parser.add_argument("--val-end", type=str, default="2021-12-31")
+    parser.add_argument("--train-end", type=str, default="2018-12-31 16:00")
+    parser.add_argument("--val-end", type=str, default="2021-12-31 16:00")
     parser.add_argument("--start-year", type=int, default=2005)
     parser.add_argument("--end-year", type=int, default=2025)
     parser.add_argument("--grad-clip-norm", type=float, default=1.0)

@@ -29,8 +29,8 @@ class ConditionalDiffusionModel(nn.Module):
     
     MULTI-OUTPUT: Predicts 3 variables:
     - precipitation (mm/jam)
-        - wind_speed_10m (m/s)
-    - relative_humidity_2m (%)
+        - wind_speed (m/s)
+    - relative_humidity (%)
     
     This satisfies the thesis requirement:
     "Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Conditioning"

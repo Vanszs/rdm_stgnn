@@ -34,8 +34,8 @@ function samples(center: number, spread: number): number[] {
 
 export const SAMPLE_NOWCAST = {
   precipitation: makeDistribution('precipitation', 'mm/jam', samples(12.8, 5.4), 14.8),
-  wind_speed_10m: makeDistribution('wind_speed_10m', 'm/s', samples(8.4, 2.1)),
-  relative_humidity_2m: makeDistribution('relative_humidity_2m', '%', samples(94.0, 3.5), 98),
+  wind_speed: makeDistribution('wind_speed', 'm/s', samples(8.4, 2.1)),
+  relative_humidity: makeDistribution('relative_humidity', '%', samples(94.0, 3.5), 98),
 };
 
 export const CURRENT_MODEL_METRICS: ModelMetrics = {

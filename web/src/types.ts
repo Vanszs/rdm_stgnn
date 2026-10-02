@@ -35,7 +35,7 @@ export interface NowcastDistribution {
   p90: number;
   observedNow?: number;
   unit: string;
-  variable: 'precipitation' | 'wind_speed_10m' | 'relative_humidity_2m';
+  variable: 'precipitation' | 'wind_speed' | 'relative_humidity';
 }
 
 export interface TimelineFrame {
@@ -48,8 +48,8 @@ export interface TimelineFrame {
 export type DashboardDataSource = 'live' | 'sample';
 export type NowcastVariableSet = {
   precipitation: NowcastDistribution;
-  wind_speed_10m: NowcastDistribution;
-  relative_humidity_2m: NowcastDistribution;
+  wind_speed: NowcastDistribution;
+  relative_humidity: NowcastDistribution;
 };
 export interface DashboardLiveSnapshot {
   source: DashboardDataSource;

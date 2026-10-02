@@ -69,8 +69,8 @@ def load_test_data(data_path: str):
 
     ckpt = torch.load("models/diffusion_chkpt.pth", map_location="cpu", weights_only=False)
     feature_cols = ckpt["config"].get("feature_cols", FINAL_FEATURE_COLS)
-    train_end = ckpt["config"].get("train_end", "2018-12-31")
-    val_end = ckpt["config"].get("val_end", "2021-12-31")
+    train_end = ckpt["config"].get("train_end", "2018-12-31 16:00")
+    val_end = ckpt["config"].get("val_end", "2021-12-31 16:00")
 
     train_df, _, test_df = temporal_split(df, train_end, val_end)
     stats = compute_stats_from_training(train_df, feature_cols, main_node_name=MAIN_NODE_NAME)

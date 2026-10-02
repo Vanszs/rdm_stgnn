@@ -113,7 +113,7 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
         "rain_occurrence_threshold_mm": float(rain_cfg.get("rain_occurrence_threshold_mm", 0.1)),
         "wet_loss_weight": float(rain_cfg.get("wet_loss_weight", 0.7)),
         "wet_pos_weight": float(rain_cfg.get("wet_pos_weight", 1.0)),
-        "wet_probability_threshold": float(rain_cfg.get("wet_probability_threshold", 0.5)),
+        "wet_probability_threshold": float(rain_cfg.get("wet_probability_threshold", 0.6)),
         "calibration_metric": str(rain_cfg.get("calibration_metric", "csi")),
         "calibration_split": str(rain_cfg.get("calibration_split", "validation")),
     }
@@ -194,7 +194,7 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
         df["date"] = pd.to_datetime(df["date"])
         if df["date"].dt.tz is not None:
             df["date"] = df["date"].dt.tz_localize(None)
-        train_end = config.get("train_end", "2018-12-31")
+        train_end = config.get("train_end", "2018-12-31 16:00")
         main_name = config.get("main_node_name", MAIN_NODE_NAME)
         main_train = df[(df["date"] <= pd.to_datetime(train_end)) & (df["node"] == main_name)].copy()
         main_train = main_train.sort_values("date")
@@ -283,8 +283,8 @@ def run_inference_real(
         t_std = stats["t_std"].to(device)
         target_cols = list(config.get("target_cols", FINAL_TARGET_COLS))
         precip_idx = target_cols.index("precipitation")
-        wind_idx = target_cols.index("wind_speed_10m")
-        humidity_idx = target_cols.index("relative_humidity_2m")
+        wind_idx = target_cols.index("wind_speed")
+        humidity_idx = target_cols.index("relative_humidity")
         samples_denorm = samples * t_std + t_mean
         samples_denorm[:, precip_idx] = torch.expm1(torch.clamp(samples_denorm[:, precip_idx], max=LOG_PRECIP_MAX))
         samples_denorm[:, precip_idx] = torch.clamp(

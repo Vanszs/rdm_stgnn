@@ -19,7 +19,7 @@ function isNowcast(value: unknown): value is NowcastDistribution {
 function isNowcastSet(value: unknown): value is NowcastVariableSet {
   if (!value || typeof value !== 'object') return false;
   const set = value as Partial<NowcastVariableSet>;
-  return isNowcast(set.precipitation) && isNowcast(set.wind_speed_10m) && isNowcast(set.relative_humidity_2m);
+  return isNowcast(set.precipitation) && isNowcast(set.wind_speed) && isNowcast(set.relative_humidity);
 }
 
 function isDashboardLiveSnapshot(value: unknown): value is DashboardLiveSnapshot {

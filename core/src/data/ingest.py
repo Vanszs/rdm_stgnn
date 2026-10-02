@@ -56,6 +56,10 @@ def derive_land_sea_mask(elevation: float) -> int:
 def _extract_hourly_response(response):
     """
     Convert one Open-Meteo response object to dict of arrays.
+
+    Emits analysis names (PDF Tabel 3.5): the measurement-height suffix
+    (_2m/_10m) is dropped from the API field name. The request still uses the
+    API field names (see fetch_era5_data params["hourly"]).
     """
     hourly = response.Hourly()
     return {
@@ -66,12 +70,12 @@ def _extract_hourly_response(response):
             inclusive="left",
         ),
         "precipitation": hourly.Variables(0).ValuesAsNumpy(),
-        "temperature_2m": hourly.Variables(1).ValuesAsNumpy(),
-        "relative_humidity_2m": hourly.Variables(2).ValuesAsNumpy(),
-        "dewpoint_2m": hourly.Variables(3).ValuesAsNumpy(),
+        "temperature": hourly.Variables(1).ValuesAsNumpy(),
+        "relative_humidity": hourly.Variables(2).ValuesAsNumpy(),
+        "dewpoint": hourly.Variables(3).ValuesAsNumpy(),
         "surface_pressure": hourly.Variables(4).ValuesAsNumpy(),
-        "wind_speed_10m": hourly.Variables(5).ValuesAsNumpy(),
-        "wind_direction_10m": hourly.Variables(6).ValuesAsNumpy(),
+        "wind_speed": hourly.Variables(5).ValuesAsNumpy(),
+        "wind_direction": hourly.Variables(6).ValuesAsNumpy(),
         "cloud_cover": hourly.Variables(7).ValuesAsNumpy(),
     }
 

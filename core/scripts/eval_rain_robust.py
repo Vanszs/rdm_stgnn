@@ -2,7 +2,7 @@
 Reproducible weekly one-step nowcasting crosscheck (3 variables).
 
 Single source for the weekly artifacts under result_test/nowcasting_hourly_week/.
-- Variables: precipitation, wind_speed_10m, relative_humidity_2m
+- Variables: precipitation, wind_speed, relative_humidity
 - Models compared: full RA-Diffusion model
 - Windows: driest / median / wettest week (chosen on test split)
 - Protocol: one-step hourly with actual update (no recursive closed loop)
@@ -125,8 +125,8 @@ def _build_test_frames(data_path: str):
     ckpt = torch.load("models/diffusion_chkpt.pth", map_location="cpu", weights_only=False)
     cfg = ckpt["config"]
     feature_cols = cfg.get("feature_cols", FINAL_FEATURE_COLS)
-    train_end = cfg.get("train_end", "2018-12-31")
-    val_end = cfg.get("val_end", "2021-12-31")
+    train_end = cfg.get("train_end", "2018-12-31 16:00")
+    val_end = cfg.get("val_end", "2021-12-31 16:00")
 
     train_df, _, test_df = temporal_split(df, train_end, val_end)
     stats = compute_stats_from_training(train_df, feature_cols, main_node_name=MAIN_NODE_NAME)
@@ -259,11 +259,11 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
             {
                 "timestamp": [timestamps.iloc[i] for i in eval_range],
                 "actual_precipitation": actuals[:, 0],
-                "actual_wind_speed_10m": actuals[:, 1],
-                "actual_relative_humidity_2m": actuals[:, 2],
+                "actual_wind_speed": actuals[:, 1],
+                "actual_relative_humidity": actuals[:, 2],
                 "pred_model_precipitation": model_preds[:, 0],
-                "pred_model_wind_speed_10m": model_preds[:, 1],
-                "pred_model_relative_humidity_2m": model_preds[:, 2],
+                "pred_model_wind_speed": model_preds[:, 1],
+                "pred_model_relative_humidity": model_preds[:, 2],
                 "wet_probability": wet_probs,
             }
         )

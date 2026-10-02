@@ -43,7 +43,7 @@ export default function App() {
   const dataStatus = liveSnapshot?.source === 'live'
     ? `Data API diperbarui ${new Date(liveSnapshot.generatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`
     : isLiveLoading ? 'Menghubungkan sumber API…' : 'Contoh data — sumber API belum terhubung';
-  const nowcastRows = useMemo(() => ({ precipitation: nowcast.precipitation, wind: nowcast.wind_speed_10m, humidity: nowcast.relative_humidity_2m }), [nowcast]);
+  const nowcastRows = useMemo(() => ({ precipitation: nowcast.precipitation, wind: nowcast.wind_speed, humidity: nowcast.relative_humidity }), [nowcast]);
   const handleExportData = useCallback(() => {
     const blob = new Blob([JSON.stringify({ app: 'Pangrango Weather Desk', selectedNode: selectedNodeId, nowcast, modelMetrics: CURRENT_MODEL_METRICS }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `Pangrango_ERA5_${selectedNodeId}_T+1h.json`; anchor.click(); URL.revokeObjectURL(url);

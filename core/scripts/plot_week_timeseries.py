@@ -16,8 +16,8 @@ matplotlib.use("Agg")
 OUT_DIR = "result_test/nowcasting_hourly_week"
 VARS = [
     ("precipitation", "Precipitation (mm/h)"),
-    ("wind_speed_10m", "Wind speed 10m (m/s)"),
-    ("relative_humidity_2m", "Relative humidity 2m (%)"),
+    ("wind_speed", "Wind speed 10m (m/s)"),
+    ("relative_humidity", "Relative humidity 2m (%)"),
 ]
 
 

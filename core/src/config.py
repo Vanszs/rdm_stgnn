@@ -85,8 +85,8 @@ STAR_EDGE_COUNT = len(STAR_EDGES)
 
 FINAL_TARGET_COLS = [
     "precipitation",
-    "wind_speed_10m",
-    "relative_humidity_2m",
+    "wind_speed",
+    "relative_humidity",
 ]
 
 # Physical upper bound for hourly precipitation (mm/h). Dataset max ~21.5; this generous
@@ -112,20 +112,28 @@ HEAVY_RAIN_THRESHOLD_MM = 10.0
 PROB_EVENT_THRESHOLD = 0.5
 
 FINAL_FEATURE_COLS = [
-    "temperature_2m",
-    "relative_humidity_2m",
-    "dewpoint_2m",
+    "temperature",
+    "relative_humidity",
+    "dewpoint",
     "surface_pressure",
-    "wind_speed_10m",
-    "wind_direction_10m",
+    "wind_speed",
+    "wind_direction",
     "cloud_cover",
     "precipitation_lag1",
     "elevation",
 ]
 
+# PDF Sec 3.4.2 (p059) + Tabel 3.5 (p059-p060): harmonisation strips the
+# measurement-height suffix (_2m/_10m) from the analysis names, keeping the API
+# field name as the source key.
 OPTIONAL_LEGACY_RENAMES = {
+    "temperature_2m": "temperature",
+    "relative_humidity_2m": "relative_humidity",
+    "dew_point_2m": "dewpoint",
+    "dewpoint_2m": "dewpoint",
+    "wind_speed_10m": "wind_speed",
+    "wind_direction_10m": "wind_direction",
     "cloudcover": "cloud_cover",
-    "dew_point_2m": "dewpoint_2m",
 }
 
 
