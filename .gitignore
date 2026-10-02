@@ -34,3 +34,6 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Node dependencies (locked by package-lock.json / bun.lock)
+node_modules/

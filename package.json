@@ -8,6 +8,7 @@
     "dev:web": "npm --prefix web run dev",
     "build:web": "npm --prefix web run build",
     "test:api": "python -c \"import main; print('Root FastAPI check OK')\"",
+    "test:core": "cd core && python -m pytest tests -q",
     "test:eval": "python core/scripts/run_eval_final.py --help"
   },
   "devDependencies": {
