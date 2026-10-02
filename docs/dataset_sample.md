@@ -1,16 +1,40 @@
-# Sampel Dataset Skripsi Gede–Pangrango (10 Baris Pertama)
+# Sampel Dataset Penelitian Gede–Pangrango
 
-Berikut adalah 10 baris pertama dari file dataset utama yang digunakan (`data/raw/pangrango_era5_5node_2005_2025.parquet`).
+Berikut adalah 3 baris pertama data asli (raw data) dari dataset utama (`data/raw/pangrango_era5_5node_2005_2025.parquet`). Kolom koordinat, alias, dan metadata lainnya telah dihapus untuk menyederhanakan visualisasi.
 
-|    | date                      | node   | node_role   | node_alias   |   is_main_node |   requested_lat |   requested_lon |   grid_center_lat |   grid_center_lon | model_mode   |   temperature_2m |   relative_humidity_2m |   dewpoint_2m |   surface_pressure |   wind_speed_10m |   wind_direction_10m |   cloud_cover |   precipitation_lag1 |   elevation |   land_sea_mask |   precipitation |
-|---:|:--------------------------|:-------|:------------|:-------------|---------------:|----------------:|----------------:|------------------:|------------------:|:-------------|-----------------:|-----------------------:|--------------:|-------------------:|-----------------:|---------------------:|--------------:|---------------------:|------------:|----------------:|----------------:|
-|  0 | 2004-12-31 17:00:00+00:00 | MAIN   | main        | Puncak       |              1 |           -6.75 |          107    |             -6.75 |            107    | era5         |          15.195  |                95.5914 |       14.495  |            847.151 |          5.5887  |              194.931 |            73 |                    0 |        1529 |               1 |               0 |
-|  1 | 2004-12-31 17:00:00+00:00 | UP     | surrounding | Up           |              0 |           -6.5  |          107    |             -6.5  |            107    | era5         |          23.688  |                94.7079 |       22.788  |            992.947 |          5.11656 |              219.289 |            97 |                    0 |         162 |               1 |               0 |
-|  2 | 2004-12-31 17:00:00+00:00 | DOWN   | surrounding | Down         |              0 |           -7    |          107    |             -7    |            107    | era5         |          25.3435 |                96.7756 |       24.7935 |           1012.7   |          3.25994 |              186.34  |            74 |                    0 |           0 |               0 |               0 |
-|  3 | 2004-12-31 17:00:00+00:00 | LEFT   | surrounding | Left         |              0 |           -6.75 |          106.75 |             -6.75 |            106.75 | era5         |          19.6295 |                97.2402 |       19.1795 |            920.68  |          4.51079 |              208.61  |            99 |                    0 |         823 |               1 |               0 |
-|  4 | 2004-12-31 17:00:00+00:00 | RIGHT  | surrounding | Right        |              0 |           -6.75 |          107.25 |             -6.75 |            107.25 | era5         |          23.5705 |                96.1494 |       22.9205 |            979.096 |          4.68    |              180     |            67 |                    0 |         288 |               1 |               0 |
-|  5 | 2004-12-31 18:00:00+00:00 | MAIN   | main        | Puncak       |              1 |           -6.75 |          107    |             -6.75 |            107    | era5         |          14.595  |                97.7636 |       14.245  |            846.675 |          6.0347  |              197.354 |            76 |                    0 |        1529 |               1 |               0 |
-|  6 | 2004-12-31 18:00:00+00:00 | UP     | surrounding | Up           |              0 |           -6.5  |          107    |             -6.5  |            107    | era5         |          23.188  |                96.4309 |       22.588  |            992.621 |          5.62338 |              219.806 |            98 |                    0 |         162 |               1 |               0 |
-|  7 | 2004-12-31 18:00:00+00:00 | DOWN   | surrounding | Down         |              0 |           -7    |          107    |             -7    |            107    | era5         |          24.8435 |                97.9298 |       24.4935 |           1012.4   |          3.61796 |              185.71  |            77 |                    0 |           0 |               0 |               0 |
-|  8 | 2004-12-31 18:00:00+00:00 | LEFT   | surrounding | Left         |              0 |           -6.75 |          106.75 |             -6.75 |            106.75 | era5         |          19.3295 |                98.4549 |       19.0795 |            920.318 |          4.51079 |              208.61  |            99 |                    0 |         823 |               1 |               0 |
-|  9 | 2004-12-31 18:00:00+00:00 | RIGHT  | surrounding | Right        |              0 |           -6.75 |          107.25 |             -6.75 |            107.25 | era5         |          22.7705 |                98.4944 |       22.5205 |            978.718 |          5.80483 |              187.125 |            73 |                    0 |         288 |               1 |               0 |
+### Tabel Data Mentah (Raw Data - 3 Baris Pertama)
+
+| Tanggal & Waktu (UTC) | Node | Suhu (°C) | Kelembapan (%) | Titik Embun (°C) | ... | Ketinggian (m) | **[Target 1] Curah Hujan** | **[Target 2] Kecepatan Angin** | **[Target 3] Kelembapan** |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 2004-12-31 17:00:00 | **MAIN** | 15.20 | 95.59 | 14.49 | ... | 1529.0 | **0.00** | **5.59** | **95.59** |
+| 2004-12-31 17:00:00 | **UP** | 23.69 | 94.71 | 22.79 | ... | 162.0 | *(diabaikan)* | *(diabaikan)* | *(diabaikan)* |
+| 2004-12-31 17:00:00 | **RIGHT** | 23.57 | 96.15 | 22.92 | ... | 288.0 | *(diabaikan)* | *(diabaikan)* | *(diabaikan)* |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
+
+---
+
+## TL;DR Penjelasan Struktur & Peran Data
+
+### 1. Peran Node (Spasial)
+- **`MAIN` (Node Utama)**: Berperan sebagai pusat prediksi (Puncak Gunung Gede-Pangrango). Hanya node `MAIN` yang memiliki nilai **Target** yang akan diprediksi oleh model.
+- **Node Sekitar (`UP`, `DOWN`, `LEFT`, `RIGHT`)**: Hanya digunakan sebagai **Fitur Input Spasial** untuk memberikan konteks kondisi cuaca di sekeliling wilayah target. Nilai target pada node sekitar diabaikan selama pelatihan (*main-node-only policy*).
+
+### 2. Fitur Input (9 Fitur Utama)
+Sembilan fitur masukan ($X$) digunakan untuk menangkap kondisi atmosfer pada 6 jam sebelumnya ($t-6$ s.d. $t-1$):
+- **Suhu (`temperature_2m`)**: Suhu udara pada ketinggian 2 meter (°C).
+- **Kelembapan (`relative_humidity_2m`)**: Kelembapan relatif udara pada ketinggian 2 meter (%).
+- **Titik Embun (`dewpoint_2m`)**: Suhu titik embun pada ketinggian 2 meter (°C).
+- **Tekanan Permukaan (`surface_pressure`)**: Tekanan udara di permukaan tanah (hPa).
+- **Kecepatan Angin (`wind_speed_10m`)**: Kecepatan angin pada ketinggian 10 meter (m/s).
+- **Arah Angin (`wind_direction_10m`)**: Arah hembusan angin dalam derajat kompas (0-360°).
+- **Tutupan Awan (`cloud_cover`)**: Persentase langit yang tertutup awan (%).
+- **Lag Curah Hujan (`precipitation_lag1`)**: Nilai curah hujan 1 jam sebelumnya untuk mendeteksi autokorelasi hujan (mm/jam).
+- **Ketinggian (`elevation`)**: Ketinggian geografis node di atas permukaan laut (meter).
+
+### 3. Variabel Target (3 Output)
+Target prediksi ($Y$) berada di ujung kanan tabel, hanya dihitung untuk node **`MAIN`** pada jam yang diprediksi ($t$):
+- **[Target 1] Curah Hujan (`precipitation`)**: Intensitas hujan satu jam ke depan (mm/jam).
+- **[Target 2] Kecepatan Angin (`wind_speed_10m`)**: Kecepatan angin satu jam ke depan (m/s).
+- **[Target 3] Kelembapan (`relative_humidity_2m`)**: Kelembapan relatif udara satu jam ke depan (%).
+
+*Catatan: Pembagian target 3-output ini dinormalisasi selama proses training agar model diffusion belajar memprediksi pada distribusi skala yang stabil, kemudian dikembalikan ke satuan aslinya saat pengujian menggunakan denormalisasi.*
