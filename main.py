@@ -33,8 +33,10 @@ app.add_middleware(
 app.include_router(metrics.router)
 app.include_router(dashboard.router)
 
-# Mount plots static files if core/results/result_test/plots exists
-plots_dir = os.path.join(CORE_DIR, "results", "result_test", "plots")
+# Mount plots static files from the canonical evaluation artifact directory
+# (core/results/fix_lag1/eval/plots), overridable via EVAL_OUT_DIR.
+eval_out_dir = os.environ.get("EVAL_OUT_DIR", "fix_lag1/eval")
+plots_dir = os.path.join(CORE_DIR, "results", eval_out_dir, "plots")
 if os.path.exists(plots_dir):
     app.mount("/static/plots", StaticFiles(directory=plots_dir), name="plots")
 

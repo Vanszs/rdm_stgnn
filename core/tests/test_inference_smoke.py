@@ -25,13 +25,13 @@ class InferenceSmokeTest(unittest.TestCase):
 
         arr_norm = (arr - stats["c_mean"].numpy()) / (stats["c_std"].numpy() + 1e-5)
 
-        # FIX #6: inference graphs must carry edge_attr (per-edge distance).
+        # FIX #6: inference graphs must carry edge_attr (per-edge haversine attributes).
         import torch
         cond_seq = torch.tensor(arr_norm, dtype=torch.float32)
         graphs = create_inference_graphs(cond_seq, cfg, device="cpu")
         self.assertTrue(hasattr(graphs[0], "edge_attr"))
         self.assertIsNotNone(graphs[0].edge_attr)
-        self.assertEqual(graphs[0].edge_attr.shape[-1], 1)
+        self.assertEqual(graphs[0].edge_attr.shape[-1], 2)
 
         # FIX #1: retrieved analogs must be outcomes shaped [*, k, num_targets].
         num_targets = cfg.get("num_targets", 3)

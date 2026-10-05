@@ -13,6 +13,10 @@ data/raw/
 data/processed/
 models/*.pth
 models/*.pt
+core/csdi_baseline/eval_shards/
+core/csdi_baseline/data/
+core/csdi_baseline/save/
+core/results/tabel_3_17/sken_*/model.pth
 
 # Archive (old/unused files)
 _archive/

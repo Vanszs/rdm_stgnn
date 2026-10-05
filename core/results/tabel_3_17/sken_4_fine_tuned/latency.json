@@ -1,0 +1,7 @@
+{
+  "eval_total_seconds": 34.0,
+  "n_samples": 35058,
+  "num_ensemble": 40,
+  "ddim_steps": 30,
+  "latency_per_sample_s": 0.0009698214387586285
+}

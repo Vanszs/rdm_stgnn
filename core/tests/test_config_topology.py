@@ -28,11 +28,12 @@ class ConfigTopologyTest(unittest.TestCase):
         self.assertEqual(len(STAR_EDGES), 8)
 
     def test_star_edge_attr_shape_and_positivity(self):
-        # FIX #6: per-edge distance attribute must align with edge index.
-        # NOTE: distance is constant (0.25 deg) on the equidistant grid by design.
+        # Per-edge haversine attributes must align with the edge index and be non-negative.
         edge_attr = build_star_edge_attr(NODE_NAMES)
-        self.assertEqual(tuple(edge_attr.shape), (STAR_EDGE_COUNT, 1))
-        self.assertTrue(bool((edge_attr > 0).all()))
+        self.assertEqual(tuple(edge_attr.shape), (STAR_EDGE_COUNT, 2))
+        self.assertTrue(bool((edge_attr >= 0).all()))
+        # feature 0 is normalised distance: 1.0 at the farthest neighbour, < 1 closer in.
+        self.assertAlmostEqual(float(edge_attr[:, 0].max().item()), 1.0, places=5)
 
 
 class CRPSNumericTest(unittest.TestCase):

@@ -88,7 +88,7 @@ Alasan metodologis: split kronologis dipilih untuk mencegah leakage lintas waktu
 #### 3.3 Pemilihan Metode dan Alasan
 Model utama dipilih sebagai gabungan tiga komponen:
 
-**Catatan keterbatasan graph conditioning.** Pada konfigurasi 5-node star dengan grid ERA5 0.25°, jarak euclidean antar MAIN dan setiap node tetangga adalah konstan 0.25°. Oleh karena itu, atribut edge (`edge_attr`) yang digunakan pada `GATConv(edge_dim=1)` bersifat non-informatif karena bernilai identik untuk semua edge. Spatial conditioning berasal dari (i) topologi graf bintang yang memperkenalkan hubungan MAIN–tetangga, dan (ii) fitur node yang berbeda antar lokasi. Eksperimen dengan atribut edge tambahan (misal, perbedaan elevasi) telah dicoba tetapi menyebabkan training divergen, sehingga dipertahankan pendekatan edge-attribute konstan yang didokumentasikan secara transparan.
+**Catatan keterbatasan graph conditioning.** Pada konfigurasi 5-node star dengan grid ERA5 0.25°, jarak haversine antar MAIN dan setiap node tetangga praktis seragam: 27.799 km untuk node meridional (UP/DOWN) dan 27.606 km untuk node zonal (LEFT/RIGHT), selisih hanya ~0.7%. Konsekuensinya atribut edge tidak membawa kontras geografis yang besar, dan spatial conditioning utama tetap berasal dari (i) topologi graf bintang dan (ii) fitur node yang berbeda antar lokasi. Audit arsitektur menunjukkan bahwa pada atribut edge yang **benar-benar konstan**, seluruh cabang edge `GATConv` kolaps menjadi satu skalar per attention head (terbukti secara eksak), sehingga 640 parameter edge per layer tidak bermakna. Karena itu `edge_attr` sekarang memakai haversine ternormalisasi + transformasi heavy-tail pada `edge_dim=2`, yang setidaknya memisahkan kelas jarak meridional dari zonal; eksperimen sebelumnya dengan atribut Δelevasi menyebabkan training divergen, sehingga elevasi tetap disimpan sebagai node feature, bukan edge weight.
 1. **Spatio-Temporal GNN** untuk menangkap ketergantungan antar node dan antar waktu.
 2. **Retrieval k-NN berbasis FAISS** untuk mengambil analog historis dari kondisi saat ini.
 3. **Conditional Diffusion** untuk menghasilkan prediksi probabilistik multi-target.
@@ -174,11 +174,13 @@ Alasan: distribusi curah hujan sangat skewed dan zero-inflated; transformasi log
 
 #### 4.3 Komponen Spasial-Temporal (STGNN)
 Pada tiap timestep, node features diproses menggunakan Graph Attention Network (GAT) dengan
-`edge_attr` konstan yang dialirkan ke `GATConv(edge_dim=1)`. Pada grid ERA5 0.25°, jarak
-lat/lon antar MAIN dan setiap node tetangga identik (0.25°), sehingga `edge_attr` bersifat
-non-informatif; spatial conditioning utama berasal dari topologi graf bintang dan perbedaan
+`edge_attr` haversine ternormalisasi + transformasi heavy-tail yang dialirkan ke
+`GATConv(edge_dim=2)`. Pada grid ERA5 0.25°, jarak haversine antar MAIN dan tiap tetangga
+hanya berbeda ~0.7% (27.799 km meridional vs 27.606 km zonal), sehingga atribut edge
+praktis seragam; spatial conditioning utama berasal dari topologi graf bintang dan perbedaan
 fitur node antar lokasi. Hasil representasi per waktu kemudian diagregasi oleh temporal
-self-attention kausal, sehingga informasi masa depan tidak bocor ke masa lalu.
+self-attention kausal dengan *learned-query pooling* atas seluruh sekuens, sehingga informasi
+masa depan tidak bocor ke masa lalu dan tidak ada timestep yang dibuang.
 
 Secara konseptual:
 1. Spatial encoding per \(\tau\):

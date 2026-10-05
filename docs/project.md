@@ -93,10 +93,11 @@ Topologi ini terdiri dari **8 edge terarah**: `MAIN ↔ UP`, `MAIN ↔ DOWN`, `M
    $$X_t = \{x_{t-L+1}, \dots, x_t\}, \quad g = \{G_{t-L+1}, \dots, G_t\}$$
 2. **Spatial Graph Attention Network (GAT)** (Eq 3.6):
    $$h_\tau = \text{GAT}(G_\tau)$$
-   Menggunakan 2 layer `GATConv` dengan 4 attention heads dan `edge_dim=1`.
+   Menggunakan 2 layer `GATConv` dengan 4 attention heads dan `edge_dim=2`
+   (jarak haversine ternormalisasi + transformasi heavy-tail).
 3. **Temporal Attention Aggregation** (Eq 3.7):
    $$h_t^G = \text{TemporalAttention}(h_{t-L+1}, \dots, h_t)$$
-   Self-attention berpenanda posisi (*positional embedding*) dengan *causal mask* untuk mencegah bocornya informasi masa depan.
+   Self-attention berpenanda posisi (*positional embedding*) dengan *causal mask* untuk mencegah bocornya informasi masa depan. Seluruh sekuens diagregasi dengan *learned-query pooling* (`pool_query`), bukan potongan timestep terakhir.
 
 ### D. Retrieval-Augmented Historical Analogs (FAISS L2) (Eq 2.4 & 3.8)
 1. **Euclidean Distance L2 Index** (Eq 2.4):

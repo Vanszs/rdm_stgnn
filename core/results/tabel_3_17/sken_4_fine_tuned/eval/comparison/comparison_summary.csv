@@ -1,0 +1,4 @@
+scenario,variable,rmse,mae,correlation,crps,main_node_name,graph_topology,target_node_policy,context_policy,model_mode
+full_model,precipitation,0.7279106974601746,0.3164618909358978,0.6693099552465379,0.22337304356897159,MAIN,star,main_node_only,main_node_context,era5
+full_model,wind_speed,0.9996054172515869,0.7636071443557739,0.8832797796829058,0.5332616448720774,MAIN,star,main_node_only,main_node_context,era5
+full_model,relative_humidity,2.858187198638916,1.9914525747299194,0.974889019267046,1.4081613062730467,MAIN,star,main_node_only,main_node_context,era5

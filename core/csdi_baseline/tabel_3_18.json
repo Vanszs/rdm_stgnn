@@ -1,0 +1,122 @@
+{
+  "aligned_test_set": true,
+  "csdi_meta": {
+    "nsample": 30,
+    "test_windows": 35058,
+    "checkpoint_epoch": 25,
+    "checkpoint_best_val": 0.11246350361034274
+  },
+  "rdm_meta": {
+    "samples_per_scenario": 35058,
+    "num_ensemble": 30,
+    "eval_step": 1,
+    "seed": 1,
+    "crps": "fair_unbiased",
+    "rain_probability_threshold": 0.6499999761581421
+  },
+  "rdm_caveat": null,
+  "table": {
+    "precipitation": {
+      "rmse": {
+        "CSDI": 0.5857968926429749,
+        "RDM-STGNN": 0.6619998812675476
+      },
+      "mae": {
+        "CSDI": 0.19258849322795868,
+        "RDM-STGNN": 0.2726685404777527
+      },
+      "correlation": {
+        "CSDI": 0.7211797272217072,
+        "RDM-STGNN": 0.7008225393090203
+      },
+      "crps": {
+        "CSDI": 0.13984407814026342,
+        "RDM-STGNN": 0.19496439377696545
+      },
+      "brier_2mm": {
+        "CSDI": 0.025199098636545156,
+        "RDM-STGNN": 0.03680158594329397
+      },
+      "pod_2mm": {
+        "CSDI": 0.42592592592592593,
+        "RDM-STGNN": 0.7350427350427351
+      },
+      "far_2mm": {
+        "CSDI": 0.40733399405351833,
+        "RDM-STGNN": 0.5935407640803466
+      },
+      "csi_2mm": {
+        "CSDI": 0.32947658402203855,
+        "RDM-STGNN": 0.3545173479903813
+      },
+      "brier_5mm": {
+        "CSDI": 0.005696464905775191,
+        "RDM-STGNN": 0.007035008652328522
+      },
+      "pod_5mm": {
+        "CSDI": 0.15352697095435686,
+        "RDM-STGNN": 0.11203319502074689
+      },
+      "far_5mm": {
+        "CSDI": 0.4393939393939394,
+        "RDM-STGNN": 0.6582278481012658
+      },
+      "csi_5mm": {
+        "CSDI": 0.13703703703703704,
+        "RDM-STGNN": 0.09215017064846416
+      },
+      "brier_10mm": {
+        "CSDI": 0.00020302863191790115,
+        "RDM-STGNN": 0.00026857081281178493
+      },
+      "pod_10mm": {
+        "CSDI": 0.14285714285714285,
+        "RDM-STGNN": 0.0
+      },
+      "far_10mm": {
+        "CSDI": 0.5,
+        "RDM-STGNN": 1.0
+      },
+      "csi_10mm": {
+        "CSDI": 0.125,
+        "RDM-STGNN": 0.0
+      }
+    },
+    "wind_speed": {
+      "rmse": {
+        "CSDI": 0.8648158311843872,
+        "RDM-STGNN": 0.9952409267425537
+      },
+      "mae": {
+        "CSDI": 0.6596580147743225,
+        "RDM-STGNN": 0.7580803632736206
+      },
+      "correlation": {
+        "CSDI": 0.9017539903329473,
+        "RDM-STGNN": 0.878261888887304
+      },
+      "crps": {
+        "CSDI": 0.4691725052209608,
+        "RDM-STGNN": 0.5288480809482624
+      }
+    },
+    "relative_humidity": {
+      "rmse": {
+        "CSDI": 2.9865100383758545,
+        "RDM-STGNN": 3.095766067504883
+      },
+      "mae": {
+        "CSDI": 2.026501417160034,
+        "RDM-STGNN": 2.190554618835449
+      },
+      "correlation": {
+        "CSDI": 0.9755568079241963,
+        "RDM-STGNN": 0.9702089197899052
+      },
+      "crps": {
+        "CSDI": 1.4484720474670798,
+        "RDM-STGNN": 1.5259761101706417
+      }
+    }
+  }
+}

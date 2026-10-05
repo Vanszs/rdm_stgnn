@@ -132,7 +132,7 @@ sekeliling + memori historis (retrieval) + ketidakpastian probabilistik (diffusi
 ## 5. ARSITEKTUR MODEL UTAMA (3 komponen + cara kerja)
 
 
-> **Catatan keterbatasan edge weight:** pada grid ERA5 0.25°, jarak antar MAIN dan setiap tetangga konstan 0.25°. Oleh karena itu `edge_attr` bersifat non-informatif; spatial conditioning berasal dari topology graf dan fitur node, bukan dari bobot edge. Eksperimen edge_attr berbasis Δelevasi pernah dicoba tapi divergen, sehingga direvert.
+> **Catatan keterbatasan edge weight:** pada grid ERA5 0.25°, jarak haversine antar MAIN dan setiap tetangga praktis seragam (27.799 km meridional vs 27.606 km zonal, beda ~0.7%). `edge_attr` kini 2-dim (haversine ternormalisasi + heavy-tail) dan setidaknya memisahkan kelas jarak; spatial conditioning utama tetap dari topologi graf dan fitur node. Audit membuktikan atribut yang benar-benar konstan membuat seluruh cabang edge `GATConv` kolaps jadi satu skalar per head. Eksperimen edge_attr berbasis Δelevasi pernah dicoba tapi divergen, sehingga direvert.
 
 ### 5.1 Spatio-Temporal GNN — `src/models/gnn.py`
 **Tujuan:** meringkas pola spasial (antar 5 node) + temporal (6 jam) jadi satu vektor "graph embedding".
@@ -140,11 +140,13 @@ sekeliling + memori historis (retrieval) + ketidakpastian probabilistik (diffusi
 Alur:
 1. Untuk **tiap timestep** (6 buah), graf 5-node diproses **SpatialGNN** = 2 layer `GATConv`
    (Graph Attention, 4 heads di layer-1). Output di-`global_mean_pool` → 1 vektor per timestep.
-   - `edge_dim=1` menerima `edge_attr` (jarak antar node). Catatan: nilai jarak konstan 0.25°
-     (grid equidistant) → non-informatif; sinyal spasial efektif dari topologi + fitur node.
+   - `edge_dim=2` menerima `edge_attr` (haversine ternormalisasi + heavy-tail). Selisih jarak
+     antar edge hanya ~0.7% (grid hampir equidistant) → sinyal spasial efektif tetap dari
+     topologi + fitur node. `SpatialGNN(edge_dim=None)` tersedia bila atribut edge ingin
+     dimatikan total (tidak ada parameter `lin_edge`/`att_edge`).
 2. 6 vektor timestep ditumpuk → **TemporalAttention** (multi-head self-attention, 4 heads) dengan
-   **positional embedding** + **causal mask** (waktu t tak boleh attend ke t+1..). Ambil representasi
-   **timestep terakhir**.
+   **positional embedding** + **causal mask** (waktu t tak boleh attend ke t+1..). Seluruh sekuens
+   diagregasi lewat **learned-query pooling** (`pool_query`), sehingga tidak ada timestep yang dibuang.
 3. `output_proj` → graph embedding berdimensi `graph_dim=64`.
 
 **Kenapa GAT + attention?** GAT memberi bobot adaptif pada tetangga (tidak semua tetangga sama penting);

@@ -26,21 +26,21 @@ class ConditionalDiffusionModel(nn.Module):
     - Context conditioning (weather features)
     - Retrieval conditioning (FAISS neighbors)
     - Graph conditioning (Spatio-Temporal GNN output) [NEW]
-    
+
     MULTI-OUTPUT: Predicts 3 variables:
     - precipitation (mm/jam)
         - wind_speed (m/s)
     - relative_humidity (%)
-    
+
     This satisfies the thesis requirement:
     "Retrieval-Augmented Diffusion Model dengan Spatio-Temporal Graph Conditioning"
     """
-    
+
     # Multi-output configuration
     NUM_TARGETS = 3
     TARGET_NAMES = FINAL_TARGET_COLS
-    
-    def __init__(self, input_dim=3, context_dim=64, retrieval_dim=32, 
+
+    def __init__(self, input_dim=3, context_dim=64, retrieval_dim=32,
                  graph_dim=64, hidden_dim=64):
         """
         Args:
@@ -52,7 +52,11 @@ class ConditionalDiffusionModel(nn.Module):
         """
         super().__init__()
         self.input_dim = input_dim
-        
+        # Checkpoint-ablatability flag: when False, callers must ablate retrieval
+        # via `retrieved=None` (true structural bypass); zero tensors still keep
+        # the branch in the autograd graph and inject the bias-only activation.
+        self.use_retrieval = retrieval_dim is not None and retrieval_dim > 0
+
         # Time embedding
         self.time_mlp = nn.Sequential(
             SinusoidalPositionEmbeddings(hidden_dim),
@@ -60,21 +64,21 @@ class ConditionalDiffusionModel(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_dim * 2, hidden_dim),
         )
-        
+
         # History/Retrieval embedding processing
         self.retrieval_mlp = nn.Sequential(
             nn.Linear(retrieval_dim, hidden_dim),
             nn.SiLU(),
             nn.Linear(hidden_dim, hidden_dim)
         )
-        
+
         # Condition embedding processing (current weather)
         self.cond_mlp = nn.Sequential(
             nn.Linear(context_dim, hidden_dim),
             nn.SiLU(),
             nn.Linear(hidden_dim, hidden_dim)
         )
-        
+
         # [NEW] Graph embedding processing (Spatio-Temporal context)
         self.graph_mlp = nn.Sequential(
             nn.Linear(graph_dim, hidden_dim),
@@ -91,9 +95,9 @@ class ConditionalDiffusionModel(nn.Module):
         # MLP denoiser with skip connection
         self.down1 = nn.Sequential(nn.Linear(input_dim, hidden_dim), nn.SiLU())
         self.down2 = nn.Sequential(nn.Linear(hidden_dim, hidden_dim * 2), nn.SiLU())
-        
+
         self.mid = nn.Sequential(nn.Linear(hidden_dim * 2, hidden_dim * 2), nn.SiLU())
-        
+
         self.up_mlp = nn.Sequential(
             nn.Linear(hidden_dim * 4, hidden_dim),
             nn.SiLU(),
@@ -104,10 +108,15 @@ class ConditionalDiffusionModel(nn.Module):
         """
         Build conditioning embedding without timestep.
         Used by both diffusion and rain-occurrence auxiliary head.
+
+        retrieved=None is the ONLY true ablation bypass: the retrieval branch
+        contributes exactly zero. Passing a zero tensor instead keeps
+        `retrieval_mlp` in the autograd graph, injects its bias-only activation,
+        and silently biases the ablation measurement (invalid falsification).
         """
         cond_emb = self.cond_mlp(context)
 
-        if retrieved is not None:
+        if self.use_retrieval and retrieved is not None:
             # Flatten neighbors if needed: [B, k, F] -> [B, k*F]
             if retrieved.dim() == 3:
                 r_flat = retrieved.reshape(retrieved.shape[0], -1)
@@ -234,9 +243,17 @@ class RainForecaster:
         return x
 
     @torch.no_grad()
-    def sample_fast(self, condition, retrieved=None, graph_emb=None, num_samples=1, num_inference_steps=50):
+    def sample_fast(self, condition, retrieved=None, graph_emb=None, num_samples=1,
+                    num_inference_steps=50, init_noise=None):
         """
         Fast inference using DDIM scheduler with NaN protection.
+
+        Two contracts, selected by init_noise:
+          init_noise=None  -> condition [1, C] is one window expanded to num_samples
+                              independent ensemble members; the noise is drawn internally.
+          init_noise [B,C] -> condition [B, C] is B distinct windows, one sample each:
+                              a batched call replacing a B-step python loop, identical
+                              math per window. Requires num_samples == B.
         """
         self.model.eval()
         
@@ -249,11 +266,30 @@ class RainForecaster:
         ddim = self._ddim_cache[1]
         
         num_targets = self.model.input_dim
-        x = torch.randn((num_samples, num_targets)).to(self.device)
-        
-        cond_expanded = condition.repeat(num_samples, 1).to(self.device)
-        retr_expanded = retrieved.repeat(num_samples, 1, 1).to(self.device) if retrieved is not None else None
-        graph_expanded = graph_emb.repeat(num_samples, 1).to(self.device) if graph_emb is not None else None
+        if init_noise is not None:
+            x = init_noise.to(self.device)
+            if x.shape[0] != num_samples:
+                raise ValueError(
+                    f"init_noise batch {x.shape[0]} must equal num_samples {num_samples}"
+                )
+            if condition.shape[0] != num_samples:
+                raise ValueError(
+                    f"Batched conditioning requires one context per sample: "
+                    f"condition batch {condition.shape[0]} != num_samples {num_samples}"
+                )
+            cond_expanded = condition.to(self.device)
+            retr_expanded = retrieved.to(self.device) if retrieved is not None else None
+            graph_expanded = graph_emb.to(self.device) if graph_emb is not None else None
+        else:
+            x = torch.randn((num_samples, num_targets)).to(self.device)
+            if condition.shape[0] != 1:
+                raise ValueError(
+                    f"Unbatched sampling expects a single context [1, C], got batch {condition.shape[0]}. "
+                    "Pass init_noise with one context per sample for batched sampling."
+                )
+            cond_expanded = condition.repeat(num_samples, 1).to(self.device)
+            retr_expanded = retrieved.repeat(num_samples, 1, 1).to(self.device) if retrieved is not None else None
+            graph_expanded = graph_emb.repeat(num_samples, 1).to(self.device) if graph_emb is not None else None
         
         use_amp = str(self.device) != 'cpu'
         

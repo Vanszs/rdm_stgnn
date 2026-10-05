@@ -198,7 +198,7 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
 
     rain_cfg = config.get("rain_specialization", {})
     rain_enabled = bool(rain_cfg.get("enabled", False))
-    wet_threshold = float(rain_cfg.get("wet_probability_threshold", 0.5))
+    wet_threshold = float(rain_cfg.get("wet_probability_threshold", 0.6))
 
     windows = _pick_week_windows(main_df)
     summary_rows = []

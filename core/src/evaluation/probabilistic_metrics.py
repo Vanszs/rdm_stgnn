@@ -135,28 +135,41 @@ def compute_brier_score(ensemble_samples: np.ndarray, observations: np.ndarray,
     """
     n_timesteps = len(observations)
     brier_values = []
-    
+
     for t in range(n_timesteps):
         samples = ensemble_samples[t]
         obs = observations[t]
-        
+
+        # Skip missing observations: NaN > threshold is False, which would
+        # fabricate a dry-event pair. The deterministic metrics drop NaN too.
+        if np.isnan(obs):
+            continue
+
         # Probabilitas prediksi: fraksi ensemble > threshold
         prob_pred = np.mean(samples > threshold)
-        
+
         # Observasi biner
         obs_binary = 1.0 if obs > threshold else 0.0
-        
+
         brier = (prob_pred - obs_binary) ** 2
         brier_values.append(brier)
-    
+
+    if not brier_values:
+        return float('nan')
     return float(np.mean(brier_values))
 
 
 def _contingency(ensemble_samples: np.ndarray, observations: np.ndarray,
                  threshold: float, prob_threshold: float) -> Tuple[int, int, int]:
-    """Shared hit/miss/false-alarm tally used by POD, FAR and CSI."""
+    """Shared hit/miss/false-alarm tally used by POD, FAR and CSI.
+
+    Timesteps with a missing observation are skipped rather than counted as a
+    non-event.
+    """
     hits = misses = false_alarms = 0
     for t in range(len(observations)):
+        if np.isnan(observations[t]):
+            continue
         obs_event = observations[t] > threshold
         pred_event = float(np.mean(ensemble_samples[t] > threshold)) >= prob_threshold
 
@@ -285,35 +298,44 @@ def compute_reliability_data(ensemble_samples: np.ndarray, observations: np.ndar
                               threshold: float = HEAVY_RAIN_THRESHOLD_MM, n_bins: int = 10) -> Dict:
     """
     Hitung data untuk reliability diagram.
-    
+
+    Missing observations are dropped rather than treated as dry: `NaN > threshold`
+    evaluates False, which would fabricate non-event verification pairs. The final
+    bin is closed on the right so a fully-confident forecast (prob == 1.0) lands in
+    the last bin instead of being silently discarded.
+
     Returns:
         Dict dengan 'forecast_probs', 'observed_freqs', 'bin_counts'
     """
-    # Hitung probabilitas prediksi per timestep
-    pred_probs = np.array([np.mean(ensemble_samples[t] > threshold) 
-                           for t in range(len(observations))])
-    obs_binary = (observations > threshold).astype(float)
-    
+    valid = ~np.isnan(observations)
+    valid_probs = np.array([np.mean(ensemble_samples[t] > threshold)
+                            for t in range(len(observations)) if valid[t]])
+    obs_binary = (observations[valid] > threshold).astype(float)
+
     # Binning
     bin_edges = np.linspace(0, 1, n_bins + 1)
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-    
+
     forecast_probs = []
     observed_freqs = []
     bin_counts = []
-    
+
     for i in range(n_bins):
-        mask = (pred_probs >= bin_edges[i]) & (pred_probs < bin_edges[i + 1])
+        upper_inclusive = i == n_bins - 1
+        if upper_inclusive:
+            mask = (valid_probs >= bin_edges[i]) & (valid_probs <= bin_edges[i + 1])
+        else:
+            mask = (valid_probs >= bin_edges[i]) & (valid_probs < bin_edges[i + 1])
         count = np.sum(mask)
         bin_counts.append(int(count))
-        
+
         if count > 0:
-            forecast_probs.append(float(np.mean(pred_probs[mask])))
+            forecast_probs.append(float(np.mean(valid_probs[mask])))
             observed_freqs.append(float(np.mean(obs_binary[mask])))
         else:
             forecast_probs.append(float(bin_centers[i]))
             observed_freqs.append(float('nan'))
-    
+
     return {
         'forecast_probs': forecast_probs,
         'observed_freqs': observed_freqs,

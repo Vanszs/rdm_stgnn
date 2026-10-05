@@ -263,6 +263,30 @@ def _calibrate_wet_probability_threshold(
     return best
 
 
+def _resolve_feature_cols(precip_mode: str = "both") -> list:
+    """
+    Feature list for training.
+
+    precip_mode controls how the current-hour precipitation enters the features.
+    The window row at t-1 is what the model reads, so a lag-1 column there holds
+    precipitation(t-2) -- one hour staler than every other variable. Options:
+
+      "none"    9 features, historical default (precipitation_lag1 only -> t-2)
+      "both"    10 features, lag-1 kept and raw precipitation appended
+      "current" 9 features, lag-1 replaced by raw precipitation     -> t-1
+
+    "current" is what the thesis text describes ("curah hujan satu jam
+    sebelumnya") while keeping the feature count at 9. See docs/LAG1_FIX.md.
+    """
+    if precip_mode not in ("none", "both", "current"):
+        raise ValueError(f"precip_mode must be none|both|current, got {precip_mode!r}")
+    cols = [c for c in FINAL_FEATURE_COLS if c != "precipitation_lag1"] \
+        if precip_mode == "current" else list(FINAL_FEATURE_COLS)
+    if precip_mode in ("both", "current"):
+        cols.append("precipitation")
+    return cols
+
+
 def train_pipeline(
     data_path: str = CANONICAL_DATA_PATH,
     seq_len: int = 6,
@@ -290,6 +314,8 @@ def train_pipeline(
     seed: int = 1,
     lr: float = 1e-3,
     num_workers: int = 8,
+    checkpoint_path: str = "models/diffusion_chkpt.pth",
+    precip_mode: str = "both",
 ) -> Tuple[float, Dict[str, object]]:
     print("=" * 80)
     print("TRAINING: 5-NODE STAR ST-GRAPH | MAIN-NODE-ONLY TARGET")
@@ -339,9 +365,13 @@ def train_pipeline(
         fetch_era5_data(start_year=start_year, end_year=end_year)
     df = pd.read_parquet(data_path)
     df = harmonize_weather_columns(df)
-    validate_feature_schema(df, FINAL_FEATURE_COLS, FINAL_TARGET_COLS)
-    validate_feature_values(df, FINAL_FEATURE_COLS)
-    feature_cols = list(FINAL_FEATURE_COLS)
+    # The lag-1 fix adds raw precipitation to the feature set. Applied here (read
+    # time) rather than in FINAL_FEATURE_COLS so the CSDI adapter, which imports
+    # that constant and relies on precipitation being a separate channel, is
+    # unaffected. See docs/LAG1_FIX.md.
+    feature_cols = _resolve_feature_cols(precip_mode)
+    validate_feature_schema(df, feature_cols, FINAL_TARGET_COLS)
+    validate_feature_values(df, feature_cols)
     print(f"Loaded: {df.shape}")
 
     print("\n[2/8] Temporal split...")
@@ -451,11 +481,14 @@ def train_pipeline(
 
     context_dim = len(feature_cols)
     # DB key = feature at tau (drop last), value = outcome target at tau+1 (drop first).
+    # Staging is plain tensor state; the FAISS index is built explicitly once, so
+    # FAISS search runs per window batch while the sampling loop only performs
+    # pure-tensor lookups via retrieval_db.query().
     retrieval_keys = train_features_norm[:-1]
     retrieval_values = train_targets_norm[1:]
     retrieval_db = RetrievalDatabase(embedding_dim=context_dim)
     retrieval_db.add_items(retrieval_keys, retrieval_values)
-    retrieval_index = retrieval_db.index
+    retrieval_index = retrieval_db.ensure_index_built()
 
     # Train retrieval is restricted to strict-past neighbors to avoid temporal look-ahead.
     # Key position j == time tau; strict_past keeps j < t-1 so value time tau+1 < t.
@@ -796,7 +829,8 @@ def train_pipeline(
                     **metadata,
                 },
             }
-            torch.save(checkpoint, "models/diffusion_chkpt.pth")
+            os.makedirs(os.path.dirname(checkpoint_path) or ".", exist_ok=True)
+            torch.save(checkpoint, checkpoint_path)
             best_wet_threshold = float(val_wet_threshold)
             best_wet_metrics = {
                 "csi": None if not np.isfinite(val_wet_csi) else float(val_wet_csi),
@@ -896,8 +930,14 @@ def _parse_args():
                         help="Random seed for reproducible training (1 is empirically stable).")
     parser.add_argument("--lr", type=float, default=1e-3,
                         help="Learning rate.")
+    parser.add_argument("--checkpoint-path", type=str, default="models/diffusion_chkpt.pth",
+                        help="Where to write the trained checkpoint (per-scenario runs must differ).")
     parser.add_argument("--num-workers", type=int, default=8,
                         help="DataLoader workers (parallel graph batching; 0=main process).")
+    parser.add_argument("--precip-mode", choices=["none", "both", "current"], default="both",
+                        help="How current-hour precipitation enters the features. "
+                             "none=9 feat (lag-1 only, t-2); both=10 feat (lag-1 + raw, t-1); "
+                             "current=9 feat (raw replaces lag-1, t-1). See docs/LAG1_FIX.md.")
     return parser.parse_args()
 
 
@@ -927,7 +967,9 @@ if __name__ == "__main__":
         rain_occurrence_threshold_mm=args.rain_occurrence_threshold_mm,
         wet_loss_weight=args.wet_loss_weight,
         cond_dropout=args.cond_dropout,
+        precip_mode=args.precip_mode,
         seed=args.seed,
         lr=args.lr,
         num_workers=args.num_workers,
+        checkpoint_path=args.checkpoint_path,
     )

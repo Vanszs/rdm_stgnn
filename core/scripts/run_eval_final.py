@@ -47,7 +47,7 @@ from src.evaluation.probabilistic_metrics import (  # noqa: E402
     compute_pod,
     compute_rmse,
 )
-from src.inference import create_inference_graphs, load_model_and_stats  # noqa: E402
+from src.inference import BatchGraphBuilder, load_model_and_stats  # noqa: E402
 from src.train import compute_stats_from_training, temporal_split  # noqa: E402
 
 matplotlib.use("Agg")
@@ -59,7 +59,7 @@ PALETTE = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def load_test_data(data_path: str):
+def load_test_data(data_path: str, checkpoint: str = "models/diffusion_chkpt.pth"):
     if not os.path.exists(data_path):
         fetch_era5_data(start_year=2005, end_year=2025)
     df = pd.read_parquet(data_path)
@@ -67,7 +67,7 @@ def load_test_data(data_path: str):
     validate_feature_schema(df, FINAL_FEATURE_COLS, FINAL_TARGET_COLS)
     validate_feature_values(df, FINAL_FEATURE_COLS)
 
-    ckpt = torch.load("models/diffusion_chkpt.pth", map_location="cpu", weights_only=False)
+    ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
     feature_cols = ckpt["config"].get("feature_cols", FINAL_FEATURE_COLS)
     train_end = ckpt["config"].get("train_end", "2018-12-31 16:00")
     val_end = ckpt["config"].get("val_end", "2021-12-31 16:00")
@@ -101,26 +101,6 @@ def load_test_data(data_path: str):
     return main_df, per_node_data, feature_cols, stats
 
 
-def get_per_node_sequence(per_node_data, idx, seq_len, feature_cols, stats):
-    c_mean = stats["c_mean"].numpy()
-    c_std = stats["c_std"].numpy()
-    sequences = []
-    for t in range(idx - seq_len, idx):
-        node_feats = []
-        for node in NODE_NAMES:
-            ndf = per_node_data[node]
-            if t < 0 or t >= len(ndf):
-                node_feats.append(np.zeros(len(feature_cols), dtype=np.float32))
-            else:
-                row = ndf.iloc[t]
-                feat = np.array([row[c] if c in row.index else 0.0 for c in feature_cols], dtype=np.float32)
-                node_feats.append(feat)
-        sequences.append(np.stack(node_feats))
-    seq = np.stack(sequences)
-    seq_norm = (seq - c_mean) / (c_std + ZSCORE_EPSILON)
-    return torch.tensor(seq_norm, dtype=torch.float32)
-
-
 def _eval_indices(main_df, seq_len, eval_step, max_eval_samples=0):
     """
     Single source of evaluation indices so every scenario uses identical samples.
@@ -130,6 +110,17 @@ def _eval_indices(main_df, seq_len, eval_step, max_eval_samples=0):
     if max_eval_samples and max_eval_samples > 0:
         idxs = idxs[:max_eval_samples]
     return idxs
+
+
+def _fetch_retrieval_batched(retrieval_db, contexts_np, k):
+    """
+    Fetch FAISS neighbors for every window once, up front. The retrieval DB is
+    static, so querying per window inside the sampling loop buys nothing but a
+    python round-trip per window.
+    """
+    retrieval_db.ensure_index_built()
+    out = retrieval_db.query(contexts_np, k=k)
+    return out if torch.is_tensor(out) else torch.as_tensor(out, dtype=torch.float32)
 
 
 def run_diffusion_scenario(
@@ -143,8 +134,11 @@ def run_diffusion_scenario(
     use_retrieval=True,
     use_gnn=True,
     max_eval_samples=0,
+    checkpoint="models/diffusion_chkpt.pth",
+    num_inference_steps=DDIM_INFERENCE_STEPS,
+    sample_batch_size=256,
 ):
-    model_wrapper, _, retrieval_db = load_model_and_stats("models/diffusion_chkpt.pth")
+    model_wrapper, _, retrieval_db = load_model_and_stats(checkpoint)
     model_wrapper.to(DEVICE)
     model_wrapper.eval()
 
@@ -161,64 +155,104 @@ def run_diffusion_scenario(
     features_norm = (features_raw - c_mean) / (c_std + ZSCORE_EPSILON)
     targets_raw = main_df[TARGET_COLS].values.astype(np.float32)
 
-    targets_all, preds_all, ensemble_all = [], [], []
-    wet_probs_all = []
     rain_cfg = config.get("rain_specialization", {})
     rain_enabled = bool(rain_cfg.get("enabled", False))
-    wet_threshold = float(rain_cfg.get("wet_probability_threshold", 0.5))
+    wet_threshold = float(rain_cfg.get("wet_probability_threshold", 0.6))
     eval_idxs = _eval_indices(main_df, seq_len, eval_step, max_eval_samples)
-    for idx in tqdm(eval_idxs, desc=f"Diff(R={use_retrieval},G={use_gnn})"):
-        target = targets_raw[idx]
-        main_ctx_seq = torch.tensor(features_norm[idx - seq_len : idx], dtype=torch.float32).to(DEVICE)
-        context_last = main_ctx_seq[-1].unsqueeze(0)
+
+    # Pre-fetch everything the sampling loop needs, once, in bulk. None of it
+    # depends on a previous window, so per-window assembly was pure python cost.
+    window_idx = np.stack([np.arange(i - seq_len, i) for i in eval_idxs])          # [N, seq_len]
+    contexts_np = features_norm[window_idx.reshape(-1)].reshape(-1, seq_len, features_norm.shape[-1])
+    # The conditioning context is the LAST observed row of each window (row i-1),
+    # matching main_ctx_seq[-1] in the original loop.
+    context_last_np = features_norm[np.asarray(eval_idxs) - 1]                     # [N, C]
+    targets = targets_raw[eval_idxs]                                               # [N, 3]
+
+    retrieved_all = None
+    if use_retrieval:
+        retrieved_all = _fetch_retrieval_batched(retrieval_db, context_last_np, config["k_neighbors"])
+    # use_retrieval=False keeps retrieved_all=None: downstream code passes
+    # retrieved=None so the retrieval_mlp branch is a true structural bypass
+    # (zero contribution). A zero tensor instead keeps the branch in the graph
+    # and injects its bias-only activation into cond_emb, silently biasing the
+    # ablation table (clean-branch contract, tests/test_ablation_clean_branch.py).
+
+    node_windows_all = None
+    if use_gnn:
+        per_node_arrays = [per_node_data[n][feature_cols].values.astype(np.float32) for n in NODE_NAMES]
+        padded = [np.concatenate([np.zeros((seq_len, arr.shape[1]), np.float32), arr], axis=0) for arr in per_node_arrays]
+        stacked = np.stack(padded, axis=1)                                         # [T + seq_len, num_nodes, C]
+        node_windows_all = stacked[window_idx + seq_len]                           # [N, seq_len, num_nodes, C]
+        node_windows_all = (node_windows_all - c_mean) / (c_std + ZSCORE_EPSILON)
+        edge_dim = getattr(st_gnn.spatial_gnn.conv1, "edge_dim", 2)
+        graph_builder = BatchGraphBuilder(config, device=DEVICE, edge_dim=edge_dim)
+
+    n_total = len(eval_idxs)
+    preds_all, ensemble_all, wet_probs_all = [], [], []
+
+    for start in tqdm(range(0, n_total, sample_batch_size), desc=f"Diff(R={use_retrieval},G={use_gnn})"):
+        stop = min(start + sample_batch_size, n_total)
+        b = stop - start
         with torch.no_grad():
             if use_gnn:
-                per_node_seq = get_per_node_sequence(per_node_data, idx, seq_len, feature_cols, stats).to(DEVICE)
-                graphs = create_inference_graphs(per_node_seq, config, device=DEVICE)
+                node_windows = torch.as_tensor(node_windows_all[start:stop], dtype=torch.float32).to(DEVICE)
+                graphs = graph_builder.build(node_windows)
                 graph_emb = st_gnn(graphs)
             else:
-                graph_emb = torch.zeros(1, config["graph_dim"], device=DEVICE)
+                graph_emb = None
 
-            if use_retrieval:
-                retrieved = retrieval_db.query(context_last.cpu().numpy(), k=config["k_neighbors"]).to(DEVICE)
-            else:
-                k = config.get("k_neighbors", 3)
-                feat_dim = config["retrieval_dim"] // k
-                retrieved = torch.zeros(1, k, feat_dim, device=DEVICE)
+            dim = forecaster.model.input_dim
+            cond = torch.as_tensor(context_last_np[start:stop], dtype=torch.float32).to(DEVICE)
+            # retrieved is None when retrieval is ablated (structural bypass),
+            # else the FAISS-fetched tensor slice for this batch.
+            retrieved = None
+            if retrieved_all is not None:
+                retrieved = retrieved_all[start:stop].to(DEVICE)
+
+            wet_prob = None
+            if rain_enabled:
+                wet_prob = forecaster.model.compute_wet_probability(
+                    context=cond, retrieved=retrieved, graph_emb=graph_emb
+                )
+
+            # One noise draw per window, sliced across the M ensemble members.
+            # Draw order and shape are identical to the original per-window loop
+            # (torch.randn((M, dim)) per window), so results are reproducible.
+            init_noise = torch.cat(
+                [torch.randn(num_ensemble, dim) for _ in range(b)], dim=0
+            ).to(DEVICE)
 
             samples = forecaster.sample_fast(
-                condition=context_last,
-                retrieved=retrieved,
-                graph_emb=graph_emb,
-                num_samples=num_ensemble,
-                num_inference_steps=DDIM_INFERENCE_STEPS,
+                condition=cond.repeat_interleave(num_ensemble, dim=0),
+                retrieved=(None if retrieved is None else retrieved.repeat_interleave(num_ensemble, dim=0)),
+                graph_emb=(None if graph_emb is None else graph_emb.repeat_interleave(num_ensemble, dim=0)),
+                num_samples=b * num_ensemble,
+                num_inference_steps=num_inference_steps,
+                init_noise=init_noise,
             )
             samples_denorm = samples * t_std_t + t_mean_t
             samples_denorm[:, 0] = torch.clamp(torch.expm1(torch.clamp(samples_denorm[:, 0], max=LOG_PRECIP_MAX)), min=0.0, max=PRECIP_PHYSICAL_MAX_MM)
             samples_denorm[:, 1] = torch.clamp(samples_denorm[:, 1], min=0.0)  # wind speed >= 0
             samples_denorm[:, 2] = torch.clamp(samples_denorm[:, 2], min=0.0, max=100.0)
-            if rain_enabled:
-                wet_prob = forecaster.model.compute_wet_probability(
-                    context=context_last,
-                    retrieved=retrieved,
-                    graph_emb=graph_emb,
-                )
-                wet_probs_all.append(float(wet_prob.squeeze().item()))
-            samples_np = samples_denorm.cpu().numpy()
+            samples_np = samples_denorm.cpu().numpy().reshape(b, num_ensemble, -1)
 
-        targets_all.append(target)
-        preds_all.append(np.median(samples_np, axis=0))
+            if wet_prob is not None:
+                wet_probs_all.append(wet_prob.detach().cpu().numpy().reshape(-1))
+
+        preds_all.append(np.median(samples_np, axis=1))
         ensemble_all.append(samples_np)
 
-    targets = np.stack(targets_all)
-    preds = np.stack(preds_all)
-    ensemble = np.stack(ensemble_all)
+    targets = np.asarray(targets)
+    preds = np.concatenate(preds_all, axis=0)
+    ensemble = np.concatenate(ensemble_all, axis=0)
+    wet_probs = np.concatenate(wet_probs_all, axis=0) if wet_probs_all else None
 
     # FIX #5: apply rain gate AFTER the loop with an anti-degenerate guard.
     # If every window is below threshold, skip gating entirely (transparent) instead of
     # silently zeroing all precipitation.
-    if rain_enabled and wet_probs_all:
-        wet_arr = np.asarray(wet_probs_all, dtype=np.float32)
+    if rain_enabled and wet_probs is not None:
+        wet_arr = np.asarray(wet_probs, dtype=np.float32)
         if float(wet_arr.max()) < wet_threshold:
             print(
                 f"  [rain-gate guard] All {len(wet_arr)} windows have wet_prob < {wet_threshold:.3f} "
@@ -382,7 +416,9 @@ def plot_ablation(all_results, save_dir):
     plt.close()
 
 
-def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH, max_eval_samples=0, seed=1):
+def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH, max_eval_samples=0, seed=1,
+         checkpoint="models/diffusion_chkpt.pth", num_inference_steps=DDIM_INFERENCE_STEPS, out_dir="result_test",
+         scenarios="all", sample_batch_size=256):
     print("=" * 70)
     print("COMPREHENSIVE 6-SCENARIO EVALUATION (MAIN NODE ONLY)")
     print("=" * 70)
@@ -395,12 +431,12 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    os.makedirs("result_test/plots", exist_ok=True)
-    os.makedirs("result_test/comparison", exist_ok=True)
+    os.makedirs(f"{out_dir}/plots", exist_ok=True)
+    os.makedirs(f"{out_dir}/comparison", exist_ok=True)
 
     print("\n[1/8] Loading test data...")
-    main_df, per_node_data, feature_cols, stats = load_test_data(data_path)
-    ckpt = torch.load("models/diffusion_chkpt.pth", map_location="cpu", weights_only=False)
+    main_df, per_node_data, feature_cols, stats = load_test_data(data_path, checkpoint)
+    ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
     rain_cfg = ckpt.get("config", {}).get("rain_specialization", {})
     if not isinstance(rain_cfg, dict):
         rain_cfg = {}
@@ -410,33 +446,41 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
     all_results: Dict[str, Dict[str, Dict[str, float]]] = {}
     all_data: Dict[str, Tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
 
-    print("\n[2/8] Scenario 1: Diffusion only...")
-    t, p, e = run_diffusion_scenario(
-        main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, False, False, max_eval_samples
-    )
-    all_results["diff_only"] = compute_scenario_metrics(t, p, e)
-    all_data["diff_only"] = (t, p, e)
+    if scenarios in ("all", "diff_only"):
+        print("\n[2/8] Scenario 1: Diffusion only...")
+        t, p, e = run_diffusion_scenario(
+            main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, False, False, max_eval_samples, checkpoint=checkpoint,
+            num_inference_steps=num_inference_steps, sample_batch_size=sample_batch_size,
+        )
+        all_results["diff_only"] = compute_scenario_metrics(t, p, e)
+        all_data["diff_only"] = (t, p, e)
 
-    print("\n[3/8] Scenario 2: Diffusion + Retrieval...")
-    t, p, e = run_diffusion_scenario(
-        main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, True, False, max_eval_samples
-    )
-    all_results["diff_retrieval"] = compute_scenario_metrics(t, p, e)
-    all_data["diff_retrieval"] = (t, p, e)
+    if scenarios in ("all", "diff_retrieval"):
+        print("\n[3/8] Scenario 2: Diffusion + Retrieval...")
+        t, p, e = run_diffusion_scenario(
+            main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, True, False, max_eval_samples, checkpoint=checkpoint,
+            num_inference_steps=num_inference_steps, sample_batch_size=sample_batch_size,
+        )
+        all_results["diff_retrieval"] = compute_scenario_metrics(t, p, e)
+        all_data["diff_retrieval"] = (t, p, e)
 
-    print("\n[4/8] Scenario 3: Diffusion + GNN...")
-    t, p, e = run_diffusion_scenario(
-        main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, False, True, max_eval_samples
-    )
-    all_results["diff_gnn"] = compute_scenario_metrics(t, p, e)
-    all_data["diff_gnn"] = (t, p, e)
+    if scenarios in ("all", "diff_gnn"):
+        print("\n[4/8] Scenario 3: Diffusion + GNN...")
+        t, p, e = run_diffusion_scenario(
+            main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, False, True, max_eval_samples, checkpoint=checkpoint,
+            num_inference_steps=num_inference_steps, sample_batch_size=sample_batch_size,
+        )
+        all_results["diff_gnn"] = compute_scenario_metrics(t, p, e)
+        all_data["diff_gnn"] = (t, p, e)
 
-    print("\n[5/8] Scenario 4: Full model...")
-    t, p, e = run_diffusion_scenario(
-        main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, True, True, max_eval_samples
-    )
-    all_results["full_model"] = compute_scenario_metrics(t, p, e)
-    all_data["full_model"] = (t, p, e)
+    if scenarios in ("all", "full_model"):
+        print("\n[5/8] Scenario 4: Full model...")
+        t, p, e = run_diffusion_scenario(
+            main_df, per_node_data, feature_cols, stats, eval_step, seq_len, num_ensemble, True, True, max_eval_samples, checkpoint=checkpoint,
+            num_inference_steps=num_inference_steps, sample_batch_size=sample_batch_size,
+        )
+        all_results["full_model"] = compute_scenario_metrics(t, p, e)
+        all_data["full_model"] = (t, p, e)
 
     # FIX #3: fail-fast if any scenario produced a different number of samples.
     sample_counts = {name: int(data[0].shape[0]) for name, data in all_data.items()}
@@ -466,10 +510,11 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
         "rain_specialization_enabled": bool(rain_cfg.get("enabled", False)),
         "rain_occurrence_threshold_mm": rain_cfg.get("rain_occurrence_threshold_mm"),
         "rain_probability_threshold": rain_cfg.get("wet_probability_threshold"),
+        "sample_batch_size": int(sample_batch_size),
     }
 
     for scenario_name, metrics in all_results.items():
-        scenario_dir = f"result_test/{scenario_name}"
+        scenario_dir = f"{out_dir}/{scenario_name}"
         os.makedirs(scenario_dir, exist_ok=True)
         with open(os.path.join(scenario_dir, "metrics.json"), "w", encoding="utf-8") as f:
             json.dump({"metadata": metadata, "metrics": metrics}, f, indent=2)
@@ -495,11 +540,11 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
                 }
             )
     summary_df = pd.DataFrame(rows)
-    summary_df.to_csv("result_test/comparison/comparison_summary.csv", index=False)
-    with open("result_test/comparison/comparison_summary.json", "w", encoding="utf-8") as f:
+    summary_df.to_csv(f"{out_dir}/comparison/comparison_summary.csv", index=False)
+    with open(f"{out_dir}/comparison/comparison_summary.json", "w", encoding="utf-8") as f:
         json.dump({"metadata": metadata, "results": all_results}, f, indent=2)
 
-    plot_dir = "result_test/plots"
+    plot_dir = f"{out_dir}/plots"
     plot_bar_chart(all_results, plot_dir)
     plot_scatter(all_data, plot_dir)
     plot_time_series(all_data, plot_dir)
@@ -507,7 +552,7 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
     plot_crps_comparison(all_results, plot_dir)
     plot_ablation(all_results, plot_dir)
 
-    with open("result_test/EVALUATION_REPORT.md", "w", encoding="utf-8") as f:
+    with open(f"{out_dir}/EVALUATION_REPORT.md", "w", encoding="utf-8") as f:
         f.write("# Evaluation Report - Main Node Only\n\n")
         for k, v in metadata.items():
             f.write(f"- **{k}**: `{v}`\n")
@@ -538,7 +583,7 @@ def main(eval_step=1, num_ensemble=30, seq_len=6, data_path=CANONICAL_DATA_PATH,
                 )
             f.write("\n")
 
-    print("Evaluation complete. Outputs refreshed in result_test/.")
+    print(f"Evaluation complete. Outputs refreshed in {out_dir}/.")
 
 
 def parse_args():
@@ -551,6 +596,16 @@ def parse_args():
                         help="Optional cap on number of eval samples per scenario (0 = no cap).")
     parser.add_argument("--seed", type=int, default=1, help="Seed for reproducible diffusion sampling.")
     parser.add_argument("--data-path", type=str, default=CANONICAL_DATA_PATH)
+    parser.add_argument("--checkpoint", type=str, default="models/diffusion_chkpt.pth",
+                        help="Checkpoint to evaluate. Default keeps the canonical path.")
+    parser.add_argument("--num-inference-steps", type=int, default=DDIM_INFERENCE_STEPS,
+                        help="DDIM inference steps (Tabel 3.17 sweeps 10/15/20/30/50).")
+    parser.add_argument("--scenarios", type=str, default="all",
+                        help="Which ablation to run: all | diff_only | diff_retrieval | diff_gnn | full_model")
+    parser.add_argument("--out-dir", type=str, default="result_test",
+                        help="Output directory. Use a per-scenario dir to avoid overwriting.")
+    parser.add_argument("--sample-batch-size", type=int, default=256,
+                        help="Mini-batch size for window evaluation (default: 256 for fast batched inference).")
     return parser.parse_args()
 
 
@@ -563,4 +618,9 @@ if __name__ == "__main__":
         data_path=args.data_path,
         max_eval_samples=args.max_eval_samples,
         seed=args.seed,
+        checkpoint=args.checkpoint,
+        num_inference_steps=args.num_inference_steps,
+        out_dir=args.out_dir,
+        scenarios=args.scenarios,
+        sample_batch_size=args.sample_batch_size,
     )

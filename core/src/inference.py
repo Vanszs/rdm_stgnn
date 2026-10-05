@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -76,6 +76,67 @@ def create_inference_graphs(condition_sequence, config, device="cpu"):
     return graphs_sequence
 
 
+class BatchGraphBuilder:
+    """
+    Builds one PyG batch per timestep from stacked node windows, reusing the edge
+    tensors. Equivalent to calling create_inference_graphs per window and
+    Batch.from_data_list, but one allocation per timestep instead of per window.
+    """
+
+    def __init__(self, config, device="cpu", edge_dim=None):
+        if isinstance(device, str):
+            device = torch.device(device)
+        self.device = device
+        self.seq_len = int(config["seq_len"])
+        self.num_nodes = int(config.get("num_nodes", len(config.get("node_names", NODE_NAMES))))
+        self.edge_index = _build_edge_index_from_config(config, device)
+        raw_attr = build_star_edge_attr(list(config.get("node_names", NODE_NAMES))).to(device)
+        if edge_dim == 1 or (edge_dim is None and config.get("edge_dim") == 1):
+            self.edge_attr = raw_attr[:, :1]
+        else:
+            self.edge_attr = raw_attr
+
+    def build(self, node_windows):
+        """
+        node_windows: [B, seq_len, num_nodes, features]
+        Returns: list of length seq_len, each a PyG Batch of B graphs.
+        """
+        if node_windows.dim() != 4:
+            raise ValueError(
+                f"node_windows must be 4-dimensional [B, seq_len, num_nodes, features], "
+                f"got shape {tuple(node_windows.shape)}"
+            )
+        if node_windows.shape[1] != self.seq_len:
+            raise ValueError(
+                f"node_windows seq dim {node_windows.shape[1]} != config seq_len {self.seq_len}"
+            )
+        if node_windows.shape[2] != self.num_nodes:
+            raise ValueError(
+                f"node_windows node dim {node_windows.shape[2]} != config num_nodes {self.num_nodes}"
+            )
+
+        batch = int(node_windows.shape[0])
+        # Node order is [g0 nodes, g1 nodes, ...], so the graph index per node is
+        # arange(batch) interleaved over nodes (each graph owns num_nodes consecutive nodes).
+        graph_batch = torch.arange(batch, device=self.device).repeat_interleave(self.num_nodes)
+
+        # Offset each copy of the single-graph topology into its own node block.
+        # Batch.from_data_list does this internally; without it every graph but the
+        # first passes messages only among nodes 0..num_nodes-1 and gets none of its own.
+        n_edges = self.edge_index.shape[1]
+        offsets = (torch.arange(batch, device=self.device) * self.num_nodes).repeat_interleave(n_edges)
+        edge_index_batched = self.edge_index.repeat(1, batch) + offsets.unsqueeze(0)
+        edge_attr_batched = self.edge_attr.repeat(batch, 1)
+
+        graphs_sequence = []
+        for t in range(self.seq_len):
+            x = node_windows[:, t].reshape(-1, node_windows.shape[-1]).to(self.device)
+            graph = Data(x=x, edge_index=edge_index_batched, edge_attr=edge_attr_batched)
+            graph.batch = graph_batch
+            graphs_sequence.append(graph)
+        return graphs_sequence
+
+
 class InferenceModelWrapper:
     def __init__(self, st_gnn, forecaster, config):
         self.st_gnn = st_gnn
@@ -93,6 +154,33 @@ class InferenceModelWrapper:
         self.forecaster.model.to(device)
         self.forecaster.device = device
         return self
+
+
+def migrate_legacy_st_gnn_state(state: Dict[str, torch.Tensor], config: Dict[str, object]) -> Dict[str, torch.Tensor]:
+    """
+    Reshape a pre-migration ST-GNN state dict (edge_dim=1) for the edge_dim=2 convs.
+
+    The learned second column starts at zero, so the migrated model boots and runs. This is
+    NOT an exact behavioural port: legacy training saw a constant 0.25 edge attribute and the
+    new convs see normalised haversine distance, so attention logits shift. Retraining is what
+    actually picks up the new edge signal; this only keeps old checkpoints loadable instead of
+    crashing the checkpoint contract.
+    """
+    migrated = dict(state)
+    edge_keys = [k for k in migrated if k.endswith("lin_edge.weight")]
+    if not edge_keys:
+        return migrated
+    legacy_dim = int(migrated[edge_keys[0]].shape[-1])
+    if legacy_dim == 2:
+        return migrated
+    if legacy_dim != 1:
+        raise ValueError(
+            f"Unsupported legacy ST-GNN edge_dim={legacy_dim}; expected 1 (constant attr) or 2."
+        )
+    for key in edge_keys:
+        weight = migrated[key]
+        migrated[key] = torch.cat([weight, torch.zeros_like(weight)], dim=-1)
+    return migrated
 
 
 def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
@@ -146,9 +234,11 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
         num_gat_heads=4,
         num_attn_heads=4,
         seq_len=config["seq_len"],
+        edge_dim=2,
     )
-    missing, unexpected = st_gnn.load_state_dict(checkpoint["st_gnn_state"], strict=False)
-    allowed_missing = {"temporal_attn.pos_embedding"}
+    st_gnn_state = migrate_legacy_st_gnn_state(checkpoint["st_gnn_state"], config)
+    missing, unexpected = st_gnn.load_state_dict(st_gnn_state, strict=False)
+    allowed_missing = {"temporal_attn.pos_embedding", "temporal_attn.pool_query"}
     invalid_missing = sorted([k for k in missing if k not in allowed_missing])
     if invalid_missing:
         raise RuntimeError(f"Checkpoint missing unexpected ST-GNN keys: {invalid_missing}")
@@ -294,7 +384,7 @@ def run_inference_real(
         samples_denorm[:, humidity_idx] = torch.clamp(samples_denorm[:, humidity_idx], min=0.0, max=100.0)
         rain_cfg = config.get("rain_specialization", {})
         wet_prob_value = None
-        wet_prob_threshold = float(rain_cfg.get("wet_probability_threshold", 0.5))
+        wet_prob_threshold = float(rain_cfg.get("wet_probability_threshold", 0.6))
         if rain_cfg.get("enabled", False):
             wet_prob = forecaster.model.compute_wet_probability(
                 context=context_last,

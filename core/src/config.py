@@ -4,6 +4,7 @@ Central configuration and canonical system contract for the 5-node migration.
 
 from __future__ import annotations
 
+import math
 from typing import Dict, List
 
 import pandas as pd
@@ -202,27 +203,50 @@ def build_star_edge_index(node_names: List[str] | None = None) -> torch.Tensor:
     return edge_index
 
 
+EARTH_RADIUS_KM = 6371.0088
+
+
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance between two lat/lon points, in kilometres."""
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = phi2 - phi1
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2.0) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2.0) ** 2
+    return 2.0 * EARTH_RADIUS_KM * math.asin(min(1.0, math.sqrt(a)))
+
+
 def build_star_edge_attr(node_names: List[str] | None = None) -> torch.Tensor:
     """
-    Build static per-edge attribute for the star graph. Shape: [num_edges, 1].
-    Feature: euclidean lat/lon distance (degrees).
+    Build static per-edge attributes for the star graph. Shape: [num_edges, 2].
 
-    NOTE (honest limitation): on the canonical 0.25-deg grid every surrounding node is
-    exactly 0.25 deg from MAIN, so this distance is constant across edges and therefore
-    non-informative; spatial signal comes from the topology (edge_index) and node features,
-    not from edge weights. An elevation-difference edge feature was tested but empirically
-    degraded training convergence, so it was reverted. Elevation context is retained per
-    node (NODE_ELEVATIONS) and documented rather than injected as an edge weight.
+    Features, per directed edge (u, v):
+      [0] haversine distance u->v in km (normalised by the star radius),
+      [1] heavy-tail transform 1/(1 + d/d_ref), bounded in (0, 1].
+
+    NOTE (honest limitation): on the canonical 0.25-deg grid every surrounding node sits
+    ~27.6-27.8 km from MAIN, so a *constant* edge attribute collapses the whole GATConv
+    edge branch to one learnable scalar per attention head (verified: zero reproduction
+    error against a manual forward). The two features below still separate radial (N/S vs
+    E/W) from latency, which a single scalar could not. Elevation difference was tested and
+    empirically degraded training convergence, so it is retained per node (NODE_ELEVATIONS)
+    rather than injected as an edge weight.
     """
     names = node_names or NODE_NAMES
-    distances = []
+    d_ref = max(
+        1e-6,
+        max(
+            haversine_km(*NODE_COORDINATES[MAIN_NODE_NAME], *NODE_COORDINATES[name])
+            for name in names
+            if name != MAIN_NODE_NAME and name in NODE_COORDINATES
+        ),
+    )
+    rows = []
     for src, dst in STAR_EDGES:
         if src not in NODE_COORDINATES or dst not in NODE_COORDINATES:
             raise ValueError(f"Cannot build edge attr. Missing coordinates for edge {(src, dst)}")
-        (slat, slon) = NODE_COORDINATES[src]
-        (dlat, dlon) = NODE_COORDINATES[dst]
-        distances.append(((dlat - slat) ** 2 + (dlon - slon) ** 2) ** 0.5)
-    edge_attr = torch.tensor(distances, dtype=torch.float32).unsqueeze(1)
+        dist_km = haversine_km(*NODE_COORDINATES[src], *NODE_COORDINATES[dst])
+        rows.append([dist_km / d_ref, 1.0 / (1.0 + dist_km / d_ref)])
+    edge_attr = torch.tensor(rows, dtype=torch.float32)
     if edge_attr.shape[0] != STAR_EDGE_COUNT:
         raise ValueError(
             f"Star edge attr count mismatch. Expected {STAR_EDGE_COUNT}, got {edge_attr.shape[0]}"
