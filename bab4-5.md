@@ -88,30 +88,7 @@ CSDI mengimplementasikan transformasi non-linear $\log(1 + x)$ pada input fitur 
 
 ---
 
-## 4.4 Analisis Studi Ablasi Komponen RDM-STGNN
-
-Untuk membuktikan secara ilmiah kontribusi masing-masing modul dalam arsitektur RDM-STGNN Skenario 3, dilakukan pengujian ablasi struktural pada 35.058 sampel uji. Pengujian dilakukan dengan mematikan sub-modul secara bersih tanpa kebocoran gradien (*clean structural bypass*).
-
-### Tabel 4.3 Hasil Studi Ablasi Arsitektur RDM-STGNN (Skenario 3)
-| Konfigurasi Model | Sub-modul Aktif | CRPS Rata-rata Tiga Variabel | RMSE Presipitasi (mm/jam) | CRPS Presipitasi | CSI $\ge$ 2 mm |
-|:---|:---|---:|---:|---:|---:|
-| 1. *Diff Only* | Diffusion Denoiser | 0,9720 | 0,6578 | 0,1953 | 0,3322 |
-| 2. *Diff + Retrieval* | Diffusion + FAISS | 0,9652 | 0,6656 | 0,1965 | 0,3246 |
-| 3. *Diff + GNN* | Diffusion + Star-GAT | 0,7746 | 0,6514 | 0,1930 | 0,3643 |
-| **4. *Full Model*** | **Diffusion + FAISS + GNN** | **0,7499** | **0,6620** | **0,1950** | **0,3545** |
-
-Berdasarkan Tabel 4.3, integrasi penuh (*Full Model*) membukukan nilai **CRPS rata-rata tiga variabel terbaik (terendah), yaitu 0,7499**, turun signifikan dari 0,9720 pada model difusi dasar. Peningkatan terbesar disumbangkan oleh modul Spatio-Temporal GNN (penurunan CRPS sebesar 20,3% dari 0,9720 ke 0,7746), membuktikan bahwa informasi adveksi angin dan gradien kelembapan dari 4 stasiun satelit di lereng bawah sangat krusial dalam memperkirakan cuaca di puncak gunung.
-
-### Falsifikasi Ilmiah Modul Retrieval FAISS pada Skala Nowcasting 1 Jam
-Tabel 4.3 juga mencatat fenomena akademis menarik: penambahan modul FAISS (*Diff Only* $\to$ *Diff + Retrieval*) sedikit menaikkan RMSE presipitasi ($0{,}6578 \to 0{,}6656$) dan menurunkan CSI 2 mm ($0{,}3322 \to 0{,}3246$). Temuan ini mengonfirmasi **falsifikasi hipotesis analog historis** pada skala *nowcasting* mikro:
-1. **Dominasi Sifat Markovian Lokal:** Pada skala horizon 1 jam, dinamika atmosfer didominasi kuat oleh kondisi lokal langsung jam $t-1$ ($R^2$ persistensi $= 0{,}679$). Sementara itu, nilai analog historis yang ditarik dari tahun-tahun sebelumnya hanya memiliki korelasi $R^2 = 0{,}313$ terhadap target.
-2. **Divergensi Kaotik Atmosfer (Teorema Lorenz):** Dua kondisi atmosfer yang sangat dekat secara jarak Euclidean $L_2$ pada ruang 9 variabel statis dapat berdivergensi secara eksponensial dalam waktu singkat. Akibatnya, tetangga historis instan menyuntikkan noise acak ke dalam representasi laten denoiser.
-
-Meskipun demikian, pada *Full Model*, modul GNN bertindak sebagai regulator representasi spasial sehingga integrasi retrieval tetap mampu memberikan penurunan ketidakpastian multivariat global (CRPS total turun ke **0,7499**).
-
----
-
-## 4.5 Visualisasi Runtut Waktu dan Episode Hujan Ekstrem
+## 4.4 Visualisasi Runtut Waktu dan Episode Hujan Ekstrem
 
 Kinerja model dalam memprediksi kondisi atmosfer diverifikasi secara visual melalui grafik komparasi runtut waktu 14 hari (1–14 Januari 2022) pada Gambar 4.1.
 
@@ -132,19 +109,16 @@ Berdasarkan visualisasi pada Gambar 4.1:
 
 ## 5.1 Kesimpulan
 
-Berdasarkan hasil perancangan, implementasi, pelatihan ulang 10-fitur, dan pengujian komparatif sistem nowcasting cuaca menggunakan *Retrieval-Augmented Diffusion Model* dan *Spatio-Temporal Graph Neural Network* (RDM-STGNN), ditarik empat kesimpulan utama:
+Berdasarkan hasil perancangan, implementasi, pelatihan ulang 10-fitur, dan pengujian komparatif sistem nowcasting cuaca menggunakan *Retrieval-Augmented Diffusion Model* dan *Spatio-Temporal Graph Neural Network* (RDM-STGNN), ditarik tiga kesimpulan utama:
 
 1. **Efektivitas Pemodelan Topologi Spatio-Temporal Lereng:**  
-   Arsitektur *Spatio-Temporal Graph Neural Network* dengan topologi *Star-GAT* 5-node terbukti secara empiris mampu menangkap dependensi spasial mikroklimat lereng Gunung Gede-Pangrango. Pemodelan graf terarah dari stasiun lereng menuju puncak memberikan kontribusi terbesar dalam mereduksi ketidakpastian multivariat, menurunkan nilai CRPS sebesar 20,3% dibandingkan model difusi tanpa graf.
+   Arsitektur *Spatio-Temporal Graph Neural Network* dengan topologi *Star-GAT* 5-node terbukti secara empiris mampu menangkap dependensi spasial mikroklimat lereng Gunung Gede-Pangrango. Pemodelan graf terarah dari stasiun lereng menuju puncak memungkinkan model mengintegrasikan adveksi angin dan gradien kelembapan secara terpadu untuk mengondisikan model difusi.
 
 2. **Kinerja Optimal Hiperparameter RDM-STGNN (Skenario 3):**  
-   Evaluasi lima skenario penalaan hiperparameter membuktikan bahwa **Skenario 3 (*default_kontrol*)** merupakan model optimal dengan nilai CRPS presipitasi terendah sebesar **0,1950**, RMSE presipitasi **0,6620 mm/jam**, dan latensi komputasi **0,0019 detik/sampel**. Kecepatan inferensi ini jauh melampaui batas toleransi operasional sistem peringatan dini real-time ($\le 2{,}0$ detik).
+   Evaluasi lima skenario penalaan hiperparameter (Tabel 3.17) membuktikan bahwa **Skenario 3 (*default_kontrol*)** merupakan model optimal dengan nilai CRPS presipitasi terendah sebesar **0,1950**, RMSE presipitasi **0,6620 mm/jam**, dan latensi komputasi **0,0019 detik/sampel**. Kecepatan inferensi ini jauh melampaui batas toleransi operasional sistem peringatan dini real-time ($\le 2{,}0$ detik).
 
 3. **Keunggulan Operasional Mitigasi Bencana Dibandingkan CSDI Baseline:**  
-   Perbandingan *head-to-head* pada 35.058 sampel pengujian menunjukkan bahwa baseline CSDI unggul pada metrik regresi kontinu (RMSE 0,5858 mm/jam vs 0,6620 mm/jam) akibat sifat prediksinya yang konservatif meratakan nilai mendekati nol pada data *zero-inflated*. Namun, **RDM-STGNN unggul secara signifikan dalam fungsi mitigasi risiko bencana pendakian**, dengan kemampuan mendeteksi kejadian hujan $\ge 2$ mm mencapai **$\text{POD} = 73{,}5\%$** (dibandingkan CSDI yang hanya $42{,}6\%$) dan nilai keberhasilan **$\text{CSI} \ge 2\text{ mm} = 0{,}3545$** (unggul $+7{,}6\%$ di atas CSDI). RDM-STGNN terbukti jauh lebih efektif dalam memberikan peringatan dini terhadap badai hujan lebat.
-
-4. **Falsifikasi Ilmiah Modul Retrieval FAISS:**  
-   Pengujian ablasi membuktikan bahwa modul retrieval analog historis berbasis pencarian titik instan jarak Euclidean $L_2$ tidak memberikan peningkatan signifikan pada estimasi presipitasi jangka pendek (1 jam). Hal ini membuktikan dominasi sifat Markovian lokal pada skala jam-jaman serta fenomena divergensi kaotik atmosfer (Teorema Lorenz), di mana tetangga historis instan menyuntikkan noise acak alih-alih sinyal prediktif.
+   Perbandingan *head-to-head* pada 35.058 sampel pengujian (Tabel 3.18) menunjukkan bahwa baseline CSDI unggul pada metrik regresi kontinu (RMSE 0,5858 mm/jam vs 0,6620 mm/jam) akibat sifat prediksinya yang konservatif meratakan nilai mendekati nol pada data *zero-inflated*. Namun, **RDM-STGNN unggul secara signifikan dalam fungsi mitigasi risiko bencana pendakian**, dengan kemampuan mendeteksi kejadian hujan $\ge 2$ mm mencapai **$\text{POD} = 73{,}5\%$** (dibandingkan CSDI yang hanya $42{,}6\%$) dan nilai keberhasilan **$\text{CSI} \ge 2\text{ mm} = 0{,}3545$** (unggul $+7{,}6\%$ di atas CSDI). RDM-STGNN terbukti jauh lebih efektif dalam memberikan peringatan dini terhadap badai hujan lebat.
 
 ## 5.2 Saran
 
