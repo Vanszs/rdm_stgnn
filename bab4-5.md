@@ -71,13 +71,37 @@ Evaluasi *head-to-head* dilakukan secara ketat dan setara (*apple-to-apple*) pad
 
 Perbandingan pada Tabel 4.2 memperlihatkan pemisahan kinerja (*trade-off*) yang nyata: **CSDI unggul pada metrik regresi kontinu (RMSE, MAE, CRPS), sedangkan RDM-STGNN unggul signifikan pada metrik deteksi kejadian hujan operasional (POD dan CSI $\ge 2$ mm).** Fenomena ini dianalisis melalui tiga landasan teoretis dan arsitektural:
 
-### 1. Paradoks Data *Zero-Inflated* pada Fungsi Penalti Kuadrat ($L_2$)
-Distribusi presipitasi di wilayah pegunungan tropis memiliki karakteristik *zero-inflated*: lebih dari **60% jam observasi bernilai persis $0{,}0$ mm/jam (kering)**.
-* **Mekanisme Penalti RMSE:** Fungsi penalti kuadrat menuntut penalti yang sangat berat terhadap kesalahan positif saat kondisi aktual kering: jika model memprediksi hujan $1{,}5$ mm/jam pada jam kering, kuadrat kesalahannya langsung bernilai $2{,}25$. Sebaliknya, jika model menebak $0{,}0$ mm/jam, penaltinya persis $0$.
-* **Strategi Konservatif CSDI:** Model CSDI secara implisit mempelajari strategi regresi konservatif (*risk-averse*), yaitu meratakan prediksi menuju nilai nol (*smoothing toward zero*). Strategi ini secara matematis sangat menguntungkan nilai RMSE ($0{,}5858$), MAE ($0{,}1926$), dan CRPS ($0{,}1398$) karena mayoritas populasi data memang bernilai nol. Namun, konsekuensi fisisnya fatal: **CSDI mengalami kegagalan deteksi (melewatkan) 57,4% dari seluruh kejadian hujan $\ge 2$ mm** (nilai $\text{POD}$ hanya $0{,}4259$).
-* **Sensitivitas Deteksi RDM-STGNN:** RDM-STGNN dirancang dengan *auxiliary wet head* ($\lambda_{\text{wet}}=0{,}7$, `pos_weight`$=1{,}93$) yang mengompensasi ketidakseimbangan kelas (*imbalance loss*). Model dipaksa mengenali sinyal konvektif lokal di lereng gunung. Hasilnya, RDM-STGNN berhasil mendeteksi **73,5% dari seluruh kejadian hujan $\ge 2$ mm** ($\text{POD} = 0{,}7350$, melompat **+72,6% di atas CSDI**). Keberanian memprediksi kejadian hujan ini menyebabkan sedikit kenaikan alarm palsu ($\text{FAR} = 0{,}5935$), yang menaikkan nilai RMSE ke $0{,}6620$. Namun pada metrik keberhasilan sejati **CSI $\ge 2$ mm, RDM-STGNN membuktikan keunggulan superior atas CSDI ($0{,}3545$ vs $0{,}3295$, unggul $+7{,}6\%$)**.
+### 1. Dekonstruksi Paradoks *Auxiliary Wet Loss* vs Penalti RMSE Agregat
+Pertanyaan mendasar yang muncul adalah: *jika RDM-STGNN telah dilengkapi dengan auxiliary wet loss dan mekanisme rain gate untuk menanggulangi kondisi kering (hujan 0 mm), mengapa nilai RMSE agregat RDM-STGNN (0,6620 mm/jam) masih lebih tinggi dibandingkan CSDI (0,5858 mm/jam)?*
 
-Dalam konteks keselamatan pendaki di kawasan rawan hipotermia Taman Nasional Gunung Gede Pangrango, kegagalan memprediksi badai hujan lebat jauh lebih membahayakan nyawa dibandingkan alarm palsu. Oleh karena itu, keunggulan POD dan CSI pada RDM-STGNN memiliki nilai operasional mitigasi yang jauh lebih tinggi.
+Secara teoritis dan matematis, tidak terdapat kontradiksi antara kedua mekanisme tersebut karena keduanya bekerja pada lapisan obyektif optimasi yang berbeda:
+
+1. **Peran Matematis *Auxiliary Wet Loss* ($\text{BCEWithLogitsLoss}$ dengan `pos_weight`$=1{,}93$):**  
+   Fungsi *auxiliary wet loss* dirumuskan sebagai:
+   $$\mathcal{L}_{\text{wet}} = -\left[ w \cdot y \log(p) + (1 - y) \log(1 - p) \right], \quad \text{dengan } w = 1{,}93$$
+   Nilai $w = 1{,}93$ diturunkan dari rasio sampel negatif terhadap positif pada data latih ($N_{\text{dry}} / N_{\text{wet}}$). Faktor pembobot ini memberikan penalti **1,93 kali lebih berat terhadap kesalahan *False Negative* (melewatkan hujan)** dibandingkan *False Positive*.  
+   Artinya, **fungsi *auxiliary wet loss* BUKAN bertujuan menekan prediksi ke angka nol**, melainkan secara agresif memaksa model mendeteksi keberadaan hujan dan mencegah *mode collapse* (kecenderungan model difusi meratakan tebakan ke nol akibat dominasi jam kering). Komponen ini secara sengaja menggeser ambang batas posterior efektif model dari $0{,}50$ menjadi $\eta^* \approx \frac{1}{1 + w} \approx 0{,}341$, memprioritaskan sensitivitas deteksi peristiwa hujan.
+2. **Peran *Rain Gate* sebagai Lapisan Keputusan Pasca-Inferensi:**  
+   Untuk menanggulangi jam kering saat evaluasi, mekanisme *rain gate* menolkan keluaran presipitasi ketika probabilitas klasifikasi $\sigma(\text{logit}) < \tau_{\text{wet}}$ ($0{,}65$). Terbukti secara empiris pada 19.870 jam kering observasi ($obs = 0{,}0$ mm/jam):
+   * RDM-STGNN berhasil memprediksi **tepat $0{,}000$ mm/jam pada 18.632 jam kering (akurasi nol eksak 93,8%)**.
+   * Sebaliknya, CSDI memprediksi tepat $0{,}000$ mm/jam pada **0 jam kering (0,0%)**, melainkan menghasilkan gerimis mikroskopis semu dengan rata-rata $0{,}0159$ mm/jam sepanjang jam kering.
+3. **Dekomposisi Empiris Tiga Rezim Presipitasi (Bukti Matematis RMSE Agregat):**  
+   Meskipun RDM-STGNN berhasil menolkan 93,8% jam kering, mengapa CSDI tetap unggul pada RMSE total? Analisis dekomposisi terhadap 35.058 sampel uji mengungkap bukti empiris berikut:
+
+| Rezim Presipitasi Aktual | Jumlah Jam Uji (Proporsi) | Rata-rata Aktual | Rata-rata Prediksi CSDI | Rata-rata Prediksi RDM-STGNN | RMSE CSDI $\downarrow$ | RMSE RDM-STGNN $\downarrow$ | Model Unggul pada Rezim |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Jam Kering** ($obs = 0{,}0$ mm/jam) | 19.870 jam (56,7%) | 0,0000 mm | 0,0159 mm | 0,0310 mm | **0,0904** | 0,1965 | CSDI (penalti kuadrat tipis) |
+| **2. Hujan Ringan** ($0 < obs < 2{,}0$ mm/jam) | 13.694 jam (39,1%) | 0,3889 mm | 0,3912 mm | 0,7190 mm | **0,4454** | 0,8079 | CSDI (cocok dengan smoothing) |
+| **3. Hujan Lebat** ($obs \ge 2{,}0$ mm/jam) | **1.494 jam (4,3%)** | **3,6422 mm** | 1,9213 mm | **2,6768 mm** | 2,4750 | **1,9382** | **RDM-STGNN (Unggul Telak +21,7%)** |
+| **Total Agregat Seluruh Sampel** | **35.058 jam (100%)** | 0,3073 mm | 0,2597 mm | 0,4125 mm | **0,5858** | 0,6620 | CSDI (terbantu dominasi 95,7% jam) |
+
+Tabel dekomposisi di atas membuktikan secara meyakinkan:
+* **Pada Hujan Lebat ($obs \ge 2{,}0$ mm/jam — Inti Mitigasi Bencana):** RDM-STGNN **MENANG TELAK atas CSDI**, mencatatkan RMSE sebesar **1,9382 mm/jam (21,7% lebih rendah dari CSDI 2,4750 mm/jam)** dan MAE sebesar **1,4308 mm/jam (27,7% lebih rendah dari CSDI 1,9799 mm/jam)**. CSDI mengalami keruntuhan amplitudo (*amplitude collapse*) dengan hanya menebak rata-rata 1,92 mm saat kondisi aktual mencapai 3,64 mm.
+* **Penyebab Kekalahan RMSE Agregat:** Populasi data uji di Gunung Pangrango didominasi secara masif oleh kondisi kering dan hujan sangat ringan ($< 2$ mm mencakup **95,7% total waktu**). Karena metrik RMSE menghitung rata-rata kuadrat tanpa bobot kepentingan bencana:
+  $$\text{MSE}_{\text{total}} = 0{,}567 \times \text{MSE}_{\text{dry}} + 0{,}391 \times \text{MSE}_{\text{light}} + 0{,}043 \times \text{MSE}_{\text{heavy}}$$
+  Keunggulan telak RDM-STGNN pada 1.494 jam badai ekstrem tereduksi oleh bobot frekuensi sampel yang hanya 4,3%. CSDI yang selalu bermain aman dengan meratakan prediksi mendekati nol memperoleh keuntungan statistik dari 13.694 jam gerimis tipis ($obs \approx 0{,}38$ mm), sehingga secara agregat membukukan RMSE total $0{,}5858$.
+
+Dalam konteks keselamatan pendaki di kawasan rawan hipotermia, kegagalan memprediksi badai hujan lebat jauh lebih berakibat fatal daripada alarm palsu gerimis. Oleh karena itu, keunggulan RDM-STGNN pada rezim hujan lebat ($\text{RMSE}=1{,}9382$, $\text{POD}=73{,}5\%$, $\text{CSI}=0{,}3545$) memiliki nilai operasional mitigasi yang jauh lebih bermakna.
 
 ### 2. Kapasitas dan Bias Induktif Arsitektur
 * **CSDI (Transformer Spatio-Temporal 2D):** Memiliki kapasitas parameter lebih besar (**414.305 parameter**) dengan mekanisme atensi global (*dense self-attention*) 2D di atas seluruh 50 kanal fitur. Arsitektur ini sangat fleksibel dalam memuluskan hubungan kovarian kontinu global, tercermin dari korelasi Pearson angin yang mencapai $0{,}9018$ dan kelembapan $0{,}9756$.
