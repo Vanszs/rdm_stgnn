@@ -6,7 +6,7 @@ import torch
 
 class CheckpointContractTest(unittest.TestCase):
     def test_diffusion_checkpoint_metadata_contract(self):
-        path = "models/diffusion_chkpt.pth"
+        path = "models/diffusion_chkpt.pth" if os.path.exists("models/diffusion_chkpt.pth") else "core/models/diffusion_chkpt.pth"
         self.assertTrue(os.path.exists(path), f"Missing checkpoint: {path}")
         ckpt = torch.load(path, map_location="cpu", weights_only=False)
         cfg = ckpt["config"]

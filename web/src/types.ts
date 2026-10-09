@@ -56,6 +56,7 @@ export interface DashboardLiveSnapshot {
   generatedAt: string;
   frame: TimelineFrame;
   nowcast: NowcastVariableSet;
+  analogs?: HistoricalAnalog[];
 }
 
 export interface ModelMetrics {

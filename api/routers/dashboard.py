@@ -1,17 +1,25 @@
 from fastapi import APIRouter, HTTPException
 
+from api.schemas import DashboardLiveSnapshot
+from api.services.inference_service import generate_live_dashboard_snapshot
+
 router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard"])
 
 
-@router.get("/live")
-def get_live_dashboard():
-    """Contract boundary for the public dashboard's live weather snapshot.
+@router.get("/live", response_model=DashboardLiveSnapshot)
+def get_live_dashboard() -> DashboardLiveSnapshot:
+    """Mengembalikan snapshot cuaca real-time dan inferensi RDM-STGNN (Skenario 3).
 
-    A production adapter must return five ERA5-cell observations, MAIN forecast
-    quantiles, and optional risk assessment using the DashboardLiveSnapshot shape.
-    The endpoint intentionally fails closed until that adapter is configured.
+    Mencakup:
+    - Observasi 5 node kanonik (MAIN, UP, DOWN, LEFT, RIGHT)
+    - Nowcasting probabilistik T+1 jam (50 sampel stokastik difusi, mean, p10-p90)
+    - Top-3 analog historis riil dari indeks FAISS IndexFlatL2
     """
-    raise HTTPException(
-        status_code=503,
-        detail="Sumber data cuaca real-time belum dikonfigurasi",
-    )
+    try:
+        return generate_live_dashboard_snapshot()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gagal menghasilkan inferensi dashboard live: {exc}",
+        ) from exc
+

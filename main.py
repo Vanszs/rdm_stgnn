@@ -34,11 +34,16 @@ app.include_router(metrics.router)
 app.include_router(dashboard.router)
 
 # Mount plots static files from the canonical evaluation artifact directory
-# (core/results/fix_lag1/eval/plots), overridable via EVAL_OUT_DIR.
-eval_out_dir = os.environ.get("EVAL_OUT_DIR", "fix_lag1/eval")
+# (core/results/tabel_3_17/sken_3_default_kontrol/eval/plots), overridable via EVAL_OUT_DIR.
+eval_out_dir = os.environ.get("EVAL_OUT_DIR", "tabel_3_17/sken_3_default_kontrol/eval")
 plots_dir = os.path.join(CORE_DIR, "results", eval_out_dir, "plots")
 if os.path.exists(plots_dir):
     app.mount("/static/plots", StaticFiles(directory=plots_dir), name="plots")
+
+# Mount web frontend if built (dist directory exists)
+web_dist_dir = os.path.join(PROJECT_ROOT, "web", "dist")
+if os.path.exists(web_dist_dir):
+    app.mount("/app", StaticFiles(directory=web_dist_dir, html=True), name="web_app")
 
 @app.get("/")
 def root():
@@ -46,6 +51,7 @@ def root():
         "status": "online",
         "system": "RA-Diffusion Gede-Pangrango Weather Nowcasting API",
         "docs": "/docs",
+        "web_app": "/app",
         "endpoints": [
             "/api/v1/metrics",
             "/api/v1/dashboard/live"
