@@ -43,6 +43,9 @@ if os.path.exists(plots_dir):
 # Mount web frontend if built (dist directory exists)
 web_dist_dir = os.path.join(PROJECT_ROOT, "web", "dist")
 if os.path.exists(web_dist_dir):
+    web_assets_dir = os.path.join(web_dist_dir, "assets")
+    if os.path.exists(web_assets_dir):
+        app.mount("/assets", StaticFiles(directory=web_assets_dir), name="assets")
     app.mount("/app", StaticFiles(directory=web_dist_dir, html=True), name="web_app")
 
 @app.get("/")
