@@ -303,7 +303,9 @@ class RainForecaster:
             # Clamp noise prediction to prevent NaN from numerical instability
             noise_pred = torch.clamp(noise_pred, -10.0, 10.0)
             x = ddim.step(noise_pred, t, x).prev_sample
-            # Replace any NaN with 0
+            non_finite = int((~torch.isfinite(x)).sum())
+            if non_finite:
+                self.non_finite_samples = getattr(self, "non_finite_samples", 0) + non_finite
             x = torch.nan_to_num(x, nan=0.0)
         
         return x

@@ -94,44 +94,44 @@ mesin suspend) ≈ **5,1 jam** di RTX 3050 Laptop 4 GB. Kurva validasi turun mon
 
 | Metrik | CSDI | RDM-STGNN |
 |---|---:|---:|
-| RMSE | 0.5858 | 0.6620 |
-| MAE | 0.1926 | 0.2727 |
-| Korelasi Pearson (r) | 0.7212 | 0.7008 |
-| CRPS | 0.1398 | 0.1950 |
-| Brier Score (ambang 2mm) | 0.0252 | 0.0368 |
-| POD (ambang 2mm) | 0.4259 | 0.7350 |
-| FAR (ambang 2mm) | 0.4073 | 0.5935 |
-| CSI (ambang 2mm) | 0.3295 | 0.3545 |
-| Brier Score (ambang 5mm) | 0.0057 | 0.0070 |
-| POD (ambang 5mm) | 0.1535 | 0.1120 |
-| FAR (ambang 5mm) | 0.4394 | 0.6582 |
-| CSI (ambang 5mm) | 0.1370 | 0.0922 |
+| RMSE | 0.5821 | 0.6641 |
+| MAE | 0.1920 | 0.2730 |
+| Korelasi Pearson (r) | 0.7252 | 0.6997 |
+| CRPS | 0.1393 | 0.1953 |
+| Brier Score (ambang 2mm) | 0.0257 | 0.0367 |
+| POD (ambang 2mm) | 0.4157 | 0.7282 |
+| FAR (ambang 2mm) | 0.3759 | 0.5723 |
+| CSI (ambang 2mm) | 0.3324 | 0.3688 |
+| Brier Score (ambang 5mm) | 0.0060 | 0.0074 |
+| POD (ambang 5mm) | 0.1621 | 0.0870 |
+| FAR (ambang 5mm) | 0.4058 | 0.7215 |
+| CSI (ambang 5mm) | 0.1459 | 0.0710 |
 | Brier Score (ambang 10mm) | 0.0002 | 0.0003 |
 | POD (ambang 10mm) | 0.1429 | 0.0000 |
-| FAR (ambang 10mm) | 0.5000 | 1.0000 |
-| CSI (ambang 10mm) | 0.1250 | 0.0000 |
+| FAR (ambang 10mm) | 0.0000 | 1.0000 |
+| CSI (ambang 10mm) | 0.1429 | 0.0000 |
 
 ### Wind Speed
 
 | Metrik | CSDI | RDM-STGNN |
 |---|---:|---:|
-| RMSE | 0.8648 | 0.9952 |
-| MAE | 0.6597 | 0.7581 |
-| Korelasi Pearson (r) | 0.9018 | 0.8783 |
-| CRPS | 0.4692 | 0.5288 |
+| RMSE | 0.8648 | 0.9946 |
+| MAE | 0.6594 | 0.7575 |
+| Korelasi Pearson (r) | 0.9018 | 0.8784 |
+| CRPS | 0.4691 | 0.5284 |
 
 ### Relative Humidity
 
 | Metrik | CSDI | RDM-STGNN |
 |---|---:|---:|
-| RMSE | 2.9865 | 3.0958 |
-| MAE | 2.0265 | 2.1906 |
-| Korelasi Pearson (r) | 0.9756 | 0.9702 |
-| CRPS | 1.4485 | 1.5260 |
+| RMSE | 2.9937 | 3.1002 |
+| MAE | 2.0347 | 2.1882 |
+| Korelasi Pearson (r) | 0.9754 | 0.9701 |
+| CRPS | 1.4537 | 1.5244 |
 
 _aligned_test_set: True_
 _source CSDI: checkpoint epoch 25, sampler ddim, M=30, windows=35058_
-_source RDM-STGNN: results/tabel_3_17/sken_3_default_kontrol/eval/comparison/comparison_summary.json (eval_step 1)_
+_source RDM-STGNN: results/eval_final_fixed/comparison/comparison_summary.json (eval_step 1)_
 <!-- TABEL_3_18_END -->
 
 ## 6. Reproduksi

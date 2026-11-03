@@ -74,7 +74,7 @@ def build():
     df = pd.read_parquet(PARQUET)
     df["date"] = pd.to_datetime(df["date"])
     if df["date"].dt.tz is not None:
-        df["date"] = df["date"].dt.tz_localize(None)
+        df["date"] = df["date"].dt.tz_convert("UTC").tz_localize(None)
     df = df.sort_values(["date", "node"]).reset_index(drop=True)
 
     ts = np.sort(df["date"].unique())

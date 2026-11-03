@@ -1,6 +1,6 @@
 import os
 import sys
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -47,6 +47,10 @@ if os.path.exists(web_dist_dir):
     if os.path.exists(web_assets_dir):
         app.mount("/assets", StaticFiles(directory=web_assets_dir), name="assets")
     app.mount("/app", StaticFiles(directory=web_dist_dir, html=True), name="web_app")
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(content=b"", media_type="image/x-icon")
 
 @app.get("/")
 def root():

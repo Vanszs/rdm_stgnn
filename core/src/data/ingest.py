@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Dict, List
 
 import openmeteo_requests
@@ -23,8 +24,9 @@ cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
-CANONICAL_DATA_PATH = "data/raw/pangrango_era5_5node_2005_2025.parquet"
-GRID_VALIDATION_PATH = "data/raw/pangrango_era5_5node_grid_validation.json"
+CORE_ROOT = Path(__file__).resolve().parents[2]
+CANONICAL_DATA_PATH = str(CORE_ROOT / "data/raw/pangrango_era5_5node_2005_2025.parquet")
+GRID_VALIDATION_PATH = str(CORE_ROOT / "data/raw/pangrango_era5_5node_grid_validation.json")
 
 
 def get_node_definitions_df() -> pd.DataFrame:

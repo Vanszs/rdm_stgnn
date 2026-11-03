@@ -1,27 +1,29 @@
 import { ModelMetrics } from '../types';
-import { CURRENT_MODEL_METRICS } from '../data/nodesData';
 
 const endpoint = import.meta.env.VITE_METRICS_URL ?? '/api/v1/metrics';
 
-export async function fetchModelMetrics(signal?: AbortSignal): Promise<ModelMetrics> {
+const num = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+export async function fetchModelMetrics(signal?: AbortSignal): Promise<ModelMetrics | null> {
   try {
     const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, signal });
-    if (!response.ok) return CURRENT_MODEL_METRICS;
+    if (!response.ok) return null;
     const data = await response.json();
     const p = data?.results?.full_model?.precipitation;
-    if (!p) return CURRENT_MODEL_METRICS;
-
-    return {
-      rmse: Number(p.rmse ?? CURRENT_MODEL_METRICS.rmse),
-      mae: Number(p.mae ?? CURRENT_MODEL_METRICS.mae),
-      corr: Number(p.correlation ?? CURRENT_MODEL_METRICS.corr),
-      crps: Number(p.crps ?? CURRENT_MODEL_METRICS.crps),
-      brierScore: Number(p.brier_2mm ?? CURRENT_MODEL_METRICS.brierScore),
-      pod: Number(p.pod_2mm ?? CURRENT_MODEL_METRICS.pod),
-      far: Number(p.far_2mm ?? CURRENT_MODEL_METRICS.far),
-      csi: Number(p.csi_2mm ?? CURRENT_MODEL_METRICS.csi),
+    if (!p) return null;
+    const metrics: ModelMetrics = {
+      rmse: num(p.rmse) ?? NaN,
+      mae: num(p.mae) ?? NaN,
+      corr: num(p.correlation) ?? NaN,
+      crps: num(p.crps) ?? NaN,
+      brierScore: num(p.brier_2mm) ?? NaN,
+      pod: num(p.pod_2mm) ?? NaN,
+      far: num(p.far_2mm) ?? NaN,
+      csi: num(p.csi_2mm) ?? NaN,
     };
+    return Object.values(metrics).every(Number.isFinite) ? metrics : null;
   } catch {
-    return CURRENT_MODEL_METRICS;
+    return null;
   }
 }

@@ -1,98 +1,65 @@
-import React, { useMemo } from 'react';
-import { CloudRain, Wind, Droplets, Activity } from 'lucide-react';
-import { NowcastDistribution } from '../types';
-import { SAMPLE_NOWCAST } from '../data/nodesData';
+import React from 'react';
+import { CloudRain, Wind, Droplets } from 'lucide-react';
+import { NowcastDistribution, NowcastVariableSet } from '../types';
 
 interface ForecastChartProps {
-  precipitation?: NowcastDistribution;
-  wind?: NowcastDistribution;
-  humidity?: NowcastDistribution;
+  nowcast: NowcastVariableSet;
+  windowRangeWib?: string;
 }
 
 /**
- * One-step nowcast (T+1h) panel.
- * Truth-of-source: the diffusion model emits 50 samples for 3 variables at a single horizon.
- * We render each variable as a percentile band + observed-now marker, NOT a multi-step line.
+ * One-step forecast panel: 50 ensemble members for 3 variables at a single horizon.
+ * Rendered as a percentile band + observed marker, not a multi-step line.
  */
-const ForecastChartComponent: React.FC<ForecastChartProps> = ({
-  precipitation,
-  wind,
-  humidity,
-}) => {
-  const rows = useMemo(
-    () => [
-      {
-        key: 'precip',
-        label: 'Curah Hujan',
-        icon: CloudRain,
-        accent: '#1f6056',
-        data: precipitation ?? SAMPLE_NOWCAST.precipitation,
-        observedLabel: 'Obs. sekarang',
-      },
-      {
-        key: 'wind',
-        label: 'Angin 10m',
-        icon: Wind,
-        accent: '#fed639',
-        data: wind ?? SAMPLE_NOWCAST.wind_speed,
-      },
-      {
-        key: 'humidity',
-        label: 'Kelembapan 2m',
-        icon: Droplets,
-        accent: '#7df4ff',
-        data: humidity ?? SAMPLE_NOWCAST.relative_humidity,
-        observedLabel: 'Obs. sekarang',
-      },
-    ],
-    [precipitation, wind, humidity],
-  );
-
-  const horizonLabel = rows[0]?.data.horizon ?? 'T+1h';
-  const validAt = rows[0]?.data.validAtWib ?? '';
+const ForecastChartComponent: React.FC<ForecastChartProps> = ({ nowcast, windowRangeWib }) => {
+  const rows = [
+    { key: 'precip', label: 'Curah hujan', icon: CloudRain, accent: '#1f6056', data: nowcast.precipitation },
+    { key: 'wind', label: 'Kecepatan angin', icon: Wind, accent: '#b77817', data: nowcast.wind_speed },
+    { key: 'humidity', label: 'Kelembapan', icon: Droplets, accent: '#2c7569', data: nowcast.relative_humidity },
+  ];
+  const validAt = nowcast.precipitation.validAtWib;
 
   return (
     <div className="w-full h-full flex flex-col gap-2">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="font-mono-data text-xs font-bold text-[#b9cacb] uppercase tracking-wider">
-            Nowcast {horizonLabel} (50 Sampel Difusi)
+            Prakiraan 1 jam berikutnya (30 kemungkinan)
           </h3>
           <span className="text-[10px] font-mono-data text-[#1f6056] bg-[#1f6056]/10 px-2 py-0.5 rounded border border-[#1f6056]/30">
-            Berlaku {validAt}
+            Target: {validAt}
           </span>
+          {windowRangeWib && (
+            <span className="text-[10px] font-mono-data text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+              Data: 6 pembacaan jam terakhir ({windowRangeWib})
+            </span>
+          )}
         </div>
-        <span className="text-[10px] font-mono-data font-bold text-[#1f6056] bg-[#dbeae3] px-2 py-1 border border-[#1f6056]">
-          AREA MAIN
-        </span>
       </div>
 
-      {/* Rows */}
       <div className="flex flex-col gap-2 flex-1 justify-center">
         {rows.map((row) => (
           <NowcastRow key={row.key} {...row} />
         ))}
       </div>
 
-      {/* Footer legend */}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-[10px] font-mono-data text-[#849495] pt-2 border-t border-white/5">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <span className="w-2.5 h-2.5 bg-[#1f6056]/15 border border-[#1f6056]/40 inline-block" />
-            P10–P90
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-[10px] font-mono-data text-[#5f685e] pt-2 border-t border-[#d8d4c8]/50">
+        <div className="flex items-center gap-3.5 flex-wrap">
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-[#5f685e]" title="P10–P90: 80% kemungkinan hasil model ada di rentang ini">
+            <span className="w-4 h-1.5 rounded-full bg-[#5f685e]/25 border border-[#5f685e]/50 inline-block" />
+            Rentang 80%
           </span>
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <span className="w-2.5 h-2.5 bg-[#1f6056]/40 border border-[#1f6056]/70 inline-block" />
-            P25–P75
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-[#5f685e]" title="P25–P75: 50% kemungkinan hasil model ada di rentang ini">
+            <span className="w-3.5 h-2 rounded-full bg-[#5f685e]/60 border border-[#5f685e] inline-block" />
+            Rentang 50%
           </span>
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <span className="w-3 h-0.5 bg-[#1f6056] inline-block" />
-            Median (P50)
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-[#202720] font-semibold" title="P50: nilai tengah dari 30 kemungkinan hasil">
+            <span className="w-1 h-3 rounded-xs bg-[#5f685e] inline-block" />
+            Nilai tengah
           </span>
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <Activity className="w-3 h-3 text-[#fed639]" />
-            Observasi
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-[#202720] font-semibold" title="Nilai yang terukur sekarang">
+            <span className="w-2 h-2 rotate-45 bg-[#fed639] border border-[#202720] inline-block" />
+            Nilai sekarang
           </span>
         </div>
       </div>
@@ -105,10 +72,9 @@ interface NowcastRowProps {
   icon: React.ComponentType<{ className?: string }>;
   accent: string;
   data: NowcastDistribution;
-  observedLabel?: string;
 }
 
-const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data, observedLabel }) => {
+const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data }) => {
   const min = Math.min(data.p10, data.observedNow ?? data.p10);
   const max = Math.max(data.p90, data.observedNow ?? data.p90);
   const span = Math.max(0.01, max - min);
@@ -126,19 +92,14 @@ const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono-data">
           <span className="text-[#849495]">
-            P50 <span className="font-bold text-[#dae2fd]">{data.p50}</span>
-          </span>
-          <span className="text-[#849495]">
-            μ <span className="font-bold text-[#dae2fd]">{data.mean}</span>
+            Tengah <span className="font-bold text-[#dae2fd]">{data.p50}</span>
           </span>
         </div>
       </div>
 
       <div className="relative h-7 w-full">
-        {/* Track */}
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 bg-[#070d18] rounded-full border border-white/10" />
 
-        {/* P10-P90 band */}
         <div
           className="absolute top-1/2 -translate-y-1/2 h-2 rounded-full border"
           style={{
@@ -149,7 +110,6 @@ const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data
           }}
         />
 
-        {/* P25-P75 band */}
         <div
           className="absolute top-1/2 -translate-y-1/2 h-2 rounded-full border"
           style={{
@@ -160,35 +120,19 @@ const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data
           }}
         />
 
-        {/* Median line */}
-        <div
-          className="absolute top-0 bottom-0 w-0.5"
-          style={{ left: `${pct(data.p50)}%`, background: accent }}
-        />
+        <div className="absolute top-0 bottom-0 w-0.5" style={{ left: `${pct(data.p50)}%`, background: accent }} />
 
-        {/* Observed marker (if available) */}
         {data.observedNow !== undefined && (
           <>
-            <div
-              className="absolute top-0 bottom-0 w-px bg-[#fed639]"
-              style={{ left: `${pct(data.observedNow)}%` }}
-            />
-            <div
-              className="absolute -top-1 w-2 h-2 rotate-45 bg-[#fed639] border border-[#070d18]"
-              style={{ left: `calc(${pct(data.observedNow)}% - 4px)` }}
-            />
+            <div className="absolute top-0 bottom-0 w-px bg-[#fed639]" style={{ left: `${pct(data.observedNow)}%` }} />
+            <div className="absolute -top-1 w-2 h-2 rotate-45 bg-[#fed639] border border-[#070d18]" style={{ left: `calc(${pct(data.observedNow)}% - 4px)` }} />
           </>
         )}
       </div>
 
-      {/* Numeric axis ticks */}
       <div className="flex justify-between text-[9px] font-mono-data text-[#849495] mt-1">
         <span>{min.toFixed(1)}</span>
-        <span>
-          {observedLabel && data.observedNow !== undefined
-            ? `${observedLabel}: ${data.observedNow.toFixed(1)}`
-            : `${data.samples.length} sampel`}
-        </span>
+        <span>{data.observedNow !== undefined ? `Sekarang: ${data.observedNow.toFixed(1)}` : `${data.samples.length} kemungkinan`}</span>
         <span>{max.toFixed(1)}</span>
       </div>
     </div>

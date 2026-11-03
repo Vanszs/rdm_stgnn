@@ -55,6 +55,7 @@ class TimelineFrame(BaseModel):
 
     offset: str = "Now"
     timeWib: str
+    windowRangeWib: str | None = None
     description: str
     telemetries: dict[str, NodeTelemetry]
 
@@ -90,10 +91,9 @@ class HistoricalAnalog(BaseModel):
     id: str
     rank: int | None = None
     datetime: str
+    patternAtWib: str | None = None
     patternType: str
-    similarityPercent: float
     distanceL2: float | None = None
-    accumulatedRainMm: float
     rainRateMmH: float | None = None
     peakWindKmh: float
     tempCelsius: float | None = None

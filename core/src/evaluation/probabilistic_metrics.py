@@ -145,11 +145,11 @@ def compute_brier_score(ensemble_samples: np.ndarray, observations: np.ndarray,
         if np.isnan(obs):
             continue
 
-        # Probabilitas prediksi: fraksi ensemble > threshold
-        prob_pred = np.mean(samples > threshold)
-
-        # Observasi biner
-        obs_binary = 1.0 if obs > threshold else 0.0
+        valid = np.isfinite(samples)
+        if valid.sum() < 1:
+            continue
+        prob_pred = np.mean(samples[valid] >= threshold)
+        obs_binary = 1.0 if obs >= threshold else 0.0
 
         brier = (prob_pred - obs_binary) ** 2
         brier_values.append(brier)
@@ -170,8 +170,12 @@ def _contingency(ensemble_samples: np.ndarray, observations: np.ndarray,
     for t in range(len(observations)):
         if np.isnan(observations[t]):
             continue
-        obs_event = observations[t] > threshold
-        pred_event = float(np.mean(ensemble_samples[t] > threshold)) >= prob_threshold
+        samples = ensemble_samples[t]
+        valid = np.isfinite(samples)
+        if valid.sum() < 1:
+            continue
+        obs_event = observations[t] >= threshold
+        pred_event = float(np.mean(samples[valid] >= threshold)) >= prob_threshold
 
         if obs_event and pred_event:
             hits += 1

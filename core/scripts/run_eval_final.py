@@ -73,7 +73,7 @@ def load_test_data(data_path: str, checkpoint: str = "models/diffusion_chkpt.pth
     val_end = ckpt["config"].get("val_end", "2021-12-31 16:00")
 
     train_df, _, test_df = temporal_split(df, train_end, val_end)
-    stats = compute_stats_from_training(train_df, feature_cols, main_node_name=MAIN_NODE_NAME)
+    stats = ckpt["stats"]
 
     test_df = test_df.copy()
     test_df["date"] = pd.to_datetime(test_df["date"])
@@ -96,6 +96,8 @@ def load_test_data(data_path: str, checkpoint: str = "models/diffusion_chkpt.pth
         )
         if ndf.empty:
             raise ValueError(f"Test split missing node '{node}'")
+        if not ndf["date"].reset_index(drop=True).equals(main_df["date"]):
+            raise ValueError(f"Date mismatch between MAIN and node '{node}' in test split")
         per_node_data[node] = ndf
 
     return main_df, per_node_data, feature_cols, stats
@@ -138,11 +140,19 @@ def run_diffusion_scenario(
     num_inference_steps=DDIM_INFERENCE_STEPS,
     sample_batch_size=256,
 ):
-    model_wrapper, _, retrieval_db = load_model_and_stats(checkpoint)
+    model_wrapper, _, retrieval_db, _catalog = load_model_and_stats(checkpoint)
     model_wrapper.to(DEVICE)
     model_wrapper.eval()
 
     config = model_wrapper.config
+    # Each scenario gets its own RNG stream so metrics do not depend on which
+    # scenarios ran before it (stable offset from the scenario flags).
+    import zlib
+
+    base_seed = int(config.get("seed", 1))
+    offset = zlib.crc32(f"{use_retrieval}-{use_gnn}".encode()) % 10000
+    torch.manual_seed(base_seed + offset)
+    np.random.seed((base_seed + offset) % (2**32))
     st_gnn = model_wrapper.st_gnn
     forecaster = model_wrapper.forecaster
 
@@ -260,8 +270,9 @@ def run_diffusion_scenario(
             )
         else:
             gate_mask = wet_arr < wet_threshold
+            # Only the point forecast is gated here; CRPS/Brier must be scored on the
+            # raw ensemble so the gate cannot inflate calibration metrics.
             preds[gate_mask, 0] = 0.0
-            ensemble[gate_mask, :, 0] = 0.0
 
     return targets, preds, ensemble
 

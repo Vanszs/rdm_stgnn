@@ -1,17 +1,34 @@
-import { ObservationNode, NodeId, TimelineFrame, ModelMetrics, NowcastDistribution } from '../types';
+import { ObservationNode, NodeId, TimelineFrame, NowcastDistribution } from '../types';
 
 export const NODES_LIST: Record<NodeId, ObservationNode> = {
-  MAIN: { id: 'MAIN', name: 'MAIN', locationName: 'Sel ERA5 target', role: 'Target Utama Prediksi', lat: -6.75, lng: 107.00, elevation: 1529, isTarget: true, color: '#1f6056' },
-  UP: { id: 'UP', name: 'UP', locationName: 'Sel ERA5 utara', role: 'Konteks Utara', lat: -6.50, lng: 107.00, elevation: 162, isTarget: false, color: '#a46b13' },
-  DOWN: { id: 'DOWN', name: 'DOWN', locationName: 'Sel ERA5 selatan', role: 'Konteks Selatan', lat: -7.00, lng: 107.00, elevation: 0, isTarget: false, color: '#9c3f1d' },
-  LEFT: { id: 'LEFT', name: 'LEFT', locationName: 'Sel ERA5 barat', role: 'Konteks Barat', lat: -6.75, lng: 106.75, elevation: 823, isTarget: false, color: '#2c7569' },
-  RIGHT: { id: 'RIGHT', name: 'RIGHT', locationName: 'Sel ERA5 timur', role: 'Konteks Timur', lat: -6.75, lng: 107.25, elevation: 288, isTarget: false, color: '#5f7965' },
+  MAIN: { id: 'MAIN', name: 'MAIN', locationName: 'Petak puncak', role: 'Titik utama prakiraan', lat: -6.75, lng: 107.00, elevation: 1529, isTarget: true, color: '#1f6056' },
+  UP: { id: 'UP', name: 'UP', locationName: 'Petak utara', role: 'Petak utara', lat: -6.50, lng: 107.00, elevation: 162, isTarget: false, color: '#a46b13' },
+  DOWN: { id: 'DOWN', name: 'DOWN', locationName: 'Petak selatan', role: 'Petak selatan', lat: -7.00, lng: 107.00, elevation: 0, isTarget: false, color: '#9c3f1d' },
+  LEFT: { id: 'LEFT', name: 'LEFT', locationName: 'Petak barat', role: 'Petak barat', lat: -6.75, lng: 106.75, elevation: 823, isTarget: false, color: '#2c7569' },
+  RIGHT: { id: 'RIGHT', name: 'RIGHT', locationName: 'Petak timur', role: 'Petak timur', lat: -6.75, lng: 107.25, elevation: 288, isTarget: false, color: '#5f7965' },
 };
+
+const WIB_TZ = 'Asia/Jakarta';
+const dtfDate = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: WIB_TZ });
+const dtfTime = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: WIB_TZ });
+const dateLabel = (d: Date) => dtfDate.format(d).replace(/\./g, '');
+const timeLabel = (d: Date) => dtfTime.format(d).replace(/\./g, ':');
+const wibLabel = (d: Date) => `${dateLabel(d)}, ${timeLabel(d)} WIB`;
+
+const HOUR_MS = 3_600_000;
+const lastFullHour = new Date(Math.floor(Date.now() / HOUR_MS) * HOUR_MS - HOUR_MS);
+const windowStart = new Date(lastFullHour.getTime() - 5 * HOUR_MS);
+const targetHour = new Date(lastFullHour.getTime() + HOUR_MS);
+const SAMPLE_VALID_AT = wibLabel(targetHour);
+const SAMPLE_WINDOW = dateLabel(windowStart) === dateLabel(lastFullHour)
+  ? `${timeLabel(windowStart)} – ${timeLabel(lastFullHour)} WIB`
+  : `${dateLabel(windowStart)} ${timeLabel(windowStart)} – ${dateLabel(lastFullHour)} ${timeLabel(lastFullHour)} WIB`;
 
 export const TIMELINE_FRAMES: TimelineFrame[] = [{
   offset: 'Now',
-  timeWib: '14:30 WIB',
-  description: 'Contoh masukan lima sel ERA5 untuk nowcast T+1 jam.',
+  timeWib: wibLabel(lastFullHour),
+  windowRangeWib: SAMPLE_WINDOW,
+  description: `Contoh data: 6 pembacaan jam terakhir (${SAMPLE_WINDOW}) dipakai untuk memperkirakan 1 jam berikutnya.`,
   telemetries: {
     MAIN: { nodeId: 'MAIN', tempCelsius: 8.2, dewPointCelsius: 8.0, rainIntensityMmH: 14.8, humidityPercent: 98, windSpeedKmh: 34, windDirectionDeg: 220, pressureHpa: 705 },
     UP: { nodeId: 'UP', tempCelsius: 17.0, dewPointCelsius: 16.2, rainIntensityMmH: 6.4, humidityPercent: 92, windSpeedKmh: 22, windDirectionDeg: 220, pressureHpa: 855 },
@@ -25,26 +42,16 @@ function makeDistribution(variable: NowcastDistribution['variable'], unit: strin
   const sorted = [...samples].sort((a, b) => a - b);
   const pick = (q: number) => sorted[Math.floor(q * (sorted.length - 1))];
   const mean = sorted.reduce((sum, value) => sum + value, 0) / sorted.length;
-  return { horizon: 'T+1h', validAtWib: '15:30 WIB', samples: sorted, mean: Number(mean.toFixed(2)), p10: Number(pick(.1).toFixed(2)), p25: Number(pick(.25).toFixed(2)), p50: Number(pick(.5).toFixed(2)), p75: Number(pick(.75).toFixed(2)), p90: Number(pick(.9).toFixed(2)), observedNow, unit, variable };
+  return { horizon: 'T+1h', validAtWib: SAMPLE_VALID_AT, samples: sorted, mean: Number(mean.toFixed(2)), p10: Number(pick(.1).toFixed(2)), p25: Number(pick(.25).toFixed(2)), p50: Number(pick(.5).toFixed(2)), p75: Number(pick(.75).toFixed(2)), p90: Number(pick(.9).toFixed(2)), observedNow, unit, variable };
 }
 
 function samples(center: number, spread: number): number[] {
-  return Array.from({ length: 50 }, (_, index) => Math.max(0, center + spread * (((index + .5) / 50) * 2 - 1) + Math.sin(index * 1.7) * spread * .05));
+  return Array.from({ length: 30 }, (_, index) => Math.max(0, center + spread * (((index + .5) / 30) * 2 - 1) + Math.sin(index * 1.7) * spread * .05));
 }
 
 export const SAMPLE_NOWCAST = {
   precipitation: makeDistribution('precipitation', 'mm/jam', samples(12.8, 5.4), 14.8),
-  wind_speed: makeDistribution('wind_speed', 'm/s', samples(8.4, 2.1)),
+  wind_speed: makeDistribution('wind_speed', 'km/jam', samples(12, 4)),
   relative_humidity: makeDistribution('relative_humidity', '%', samples(94.0, 3.5), 98),
 };
 
-export const CURRENT_MODEL_METRICS: ModelMetrics = {
-  rmse: 0.6619998812675476,
-  mae: 0.2726685404777527,
-  corr: 0.7008225393090203,
-  crps: 0.19496439377696545,
-  brierScore: 0.03680158594329397,
-  pod: 0.7350427350427351,
-  far: 0.5935407640803466,
-  csi: 0.3545173479903813,
-};

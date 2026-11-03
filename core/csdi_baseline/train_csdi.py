@@ -67,7 +67,7 @@ def load_arrays():
     import pandas as pd
     df = pd.read_parquet(os.path.join(os.path.dirname(HERE), "data", "raw",
                                       "pangrango_era5_5node_2005_2025.parquet"))
-    ts = np.sort(pd.to_datetime(df["date"]).dt.tz_localize(None).unique())
+    ts = np.sort(pd.to_datetime(df["date"], utc=True).dt.tz_convert(None).unique())
     return main_data, mask_data, mean_data, std_data, ts
 
 
@@ -80,12 +80,16 @@ class PangrangoForecast(Dataset):
         self.ts = ts
         if mode == "train":
             self.starts = np.where(ts <= TRAIN_END)[0]
+            split_last = int(self.starts[-1]) if len(self.starts) else -1
         elif mode == "valid":
             self.starts = np.where((ts > TRAIN_END) & (ts <= VAL_END))[0]
+            split_last = int(self.starts[-1]) if len(self.starts) else -1
         else:
             self.starts = np.where(ts > VAL_END)[0]
-        # Need SEQ_LENGTH consecutive timestamps.
-        self.starts = self.starts[self.starts + SEQ_LENGTH <= len(ts)]
+            split_last = len(ts) - 1
+        # A window may not cross the split boundary: its target (last step) must
+        # stay inside the same split.
+        self.starts = self.starts[self.starts + SEQ_LENGTH - 1 <= split_last]
 
     def __len__(self):
         return len(self.starts)

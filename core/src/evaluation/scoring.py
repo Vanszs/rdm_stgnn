@@ -389,14 +389,19 @@ def event_metrics_from_ensemble(
     ens = to_numpy(ensemble).astype(np.float64)
     obs = to_numpy(observations).astype(np.float64).reshape(-1)
     valid = ~np.isnan(obs)
-    if allow_mask is not None:
-        valid &= np.asarray(allow_mask, dtype=bool)
     if not valid.any():
         return {"pod": float("nan"), "far": float("nan"), "csi": float("nan")}
+
+    allow = np.asarray(allow_mask, dtype=bool) if allow_mask is not None else None
+    # PDF 3.8.4: if no window passes the gate, do not apply it at all.
+    if allow is not None and not allow.any():
+        allow = None
 
     with np.errstate(invalid="ignore"):
         prob = np.mean(ens[valid] > threshold, axis=1)
     pred_event = prob >= prob_threshold
+    if allow is not None:
+        pred_event &= allow[valid]  # suppression counts as a miss, not a dropped row
     obs_event = obs[valid] > threshold
     return event_metrics_from_masks(pred_event, obs_event)
 

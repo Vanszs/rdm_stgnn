@@ -274,40 +274,47 @@ def load_model_and_stats(checkpoint_path="models/diffusion_chkpt.pth"):
     model_wrapper = InferenceModelWrapper(st_gnn, forecaster, config)
 
     # Rebuild retrieval DB from training main-node rows only.
-    data_path = config.get("data_path", "data/raw/pangrango_era5_5node_2005_2025.parquet")
+    from src.data.ingest import CANONICAL_DATA_PATH
+
+    data_path = CANONICAL_DATA_PATH
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Canonical dataset missing: {data_path}")
     retrieval_db = RetrievalDatabase(embedding_dim=config["context_dim"])
-    if os.path.exists(data_path):
-        df = pd.read_parquet(data_path)
-        df = harmonize_weather_columns(df)
-        validate_feature_schema(df, FINAL_FEATURE_COLS, FINAL_TARGET_COLS)
-        validate_feature_values(df, FINAL_FEATURE_COLS)
-        df["date"] = pd.to_datetime(df["date"])
-        if df["date"].dt.tz is not None:
-            df["date"] = df["date"].dt.tz_localize(None)
-        train_end = config.get("train_end", "2018-12-31 16:00")
-        main_name = config.get("main_node_name", MAIN_NODE_NAME)
-        main_train = df[(df["date"] <= pd.to_datetime(train_end)) & (df["node"] == main_name)].copy()
-        main_train = main_train.sort_values("date")
-        feature_cols = config.get("feature_cols", FINAL_FEATURE_COLS)
-        target_cols = config.get("target_cols", FINAL_TARGET_COLS)
-        train_features = main_train[feature_cols].values
-        c_mean = stats["c_mean"].numpy()
-        c_std = stats["c_std"].numpy()
-        train_features_norm = (train_features - c_mean) / (c_std + ZSCORE_EPSILON)
+    df = pd.read_parquet(data_path)
+    df = harmonize_weather_columns(df)
+    validate_feature_schema(df, FINAL_FEATURE_COLS, FINAL_TARGET_COLS)
+    validate_feature_values(df, FINAL_FEATURE_COLS)
+    df["date"] = pd.to_datetime(df["date"])
+    if df["date"].dt.tz is not None:
+        df["date"] = df["date"].dt.tz_localize(None)
+    train_end = config.get("train_end", "2018-12-31 16:00")
+    main_name = config.get("main_node_name", MAIN_NODE_NAME)
+    main_train = df[(df["date"] <= pd.to_datetime(train_end)) & (df["node"] == main_name)].copy()
+    main_train = main_train.sort_values("date")
+    feature_cols = config.get("feature_cols", FINAL_FEATURE_COLS)
+    target_cols = config.get("target_cols", FINAL_TARGET_COLS)
+    train_features = main_train[feature_cols].values
+    c_mean = stats["c_mean"].numpy()
+    c_std = stats["c_std"].numpy()
+    train_features_norm = (train_features - c_mean) / (c_std + ZSCORE_EPSILON)
 
-        # Retrieval value = next-step outcome (target at tau+1), normalized like training targets.
-        precip_idx = list(target_cols).index("precipitation")
-        train_targets_g = main_train[target_cols].values.astype(np.float32)
-        train_targets_g[:, precip_idx] = np.log1p(train_targets_g[:, precip_idx])
-        t_mean = stats["t_mean"].numpy()
-        t_std = stats["t_std"].numpy()
-        train_targets_norm = ((train_targets_g - t_mean) / (t_std + ZSCORE_EPSILON)).astype(np.float32)
+    # Retrieval value = next-step outcome (target at tau+1), normalized like training targets.
+    precip_idx = list(target_cols).index("precipitation")
+    train_targets_g = main_train[target_cols].values.astype(np.float32)
+    train_targets_g[:, precip_idx] = np.log1p(train_targets_g[:, precip_idx])
+    t_mean = stats["t_mean"].numpy()
+    t_std = stats["t_std"].numpy()
+    train_targets_norm = ((train_targets_g - t_mean) / (t_std + ZSCORE_EPSILON)).astype(np.float32)
 
-        retrieval_db.add_items(
-            train_features_norm[:-1].astype(np.float32),
-            train_targets_norm[1:],
+    retrieval_db.add_items(
+        train_features_norm[:-1].astype(np.float32),
+        train_targets_norm[1:],
+    )
+    if retrieval_db.index.ntotal + 1 != len(main_train):
+        raise RuntimeError(
+            f"Retrieval catalog mismatch: {retrieval_db.index.ntotal + 1} keys vs {len(main_train)} rows"
         )
-    return model_wrapper, stats, retrieval_db
+    return model_wrapper, stats, retrieval_db, main_train
 
 
 def run_inference_real(

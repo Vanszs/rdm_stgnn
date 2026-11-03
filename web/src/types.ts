@@ -4,7 +4,7 @@ export interface ObservationNode {
   id: NodeId;
   name: string;
   locationName: string;
-  role: 'Target Utama Prediksi' | 'Konteks Utara' | 'Konteks Selatan' | 'Konteks Barat' | 'Konteks Timur';
+  role: string;
   lat: number;
   lng: number;
   elevation: number;
@@ -41,11 +41,12 @@ export interface NowcastDistribution {
 export interface TimelineFrame {
   offset: 'Now';
   timeWib: string;
+  windowRangeWib?: string;
   description: string;
   telemetries: Partial<Record<NodeId, NodeTelemetry>>;
 }
 
-export type DashboardDataSource = 'live' | 'sample';
+export type DashboardDataSource = 'era5_h7' | 'sample';
 export type NowcastVariableSet = {
   precipitation: NowcastDistribution;
   wind_speed: NowcastDistribution;
@@ -53,7 +54,6 @@ export type NowcastVariableSet = {
 };
 export interface DashboardLiveSnapshot {
   source: DashboardDataSource;
-  generatedAt: string;
   frame: TimelineFrame;
   nowcast: NowcastVariableSet;
   analogs?: HistoricalAnalog[];
@@ -74,10 +74,9 @@ export interface HistoricalAnalog {
   id: string;
   rank?: number;
   datetime: string;
+  patternAtWib?: string;
   patternType: string;
-  similarityPercent: number;
   distanceL2?: number;
-  accumulatedRainMm: number;
   rainRateMmH?: number;
   peakWindKmh: number;
   tempCelsius?: number;
@@ -86,4 +85,4 @@ export interface HistoricalAnalog {
   outcomeSummary: string;
 }
 
-export type ActiveTab = 'map' | 'forecast' | 'comparison' | 'eval' | 'topology';
+export type ActiveTab = 'map' | 'forecast' | 'eval';

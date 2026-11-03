@@ -9,7 +9,7 @@ from src.inference import create_inference_graphs, load_model_and_stats, run_inf
 class InferenceSmokeTest(unittest.TestCase):
     def test_inference_smoke_main_node_output(self):
         ckpt_path = "models/diffusion_chkpt.pth" if os.path.exists("models/diffusion_chkpt.pth") else "core/models/diffusion_chkpt.pth"
-        model, stats, retrieval_db = load_model_and_stats(ckpt_path)
+        model, stats, retrieval_db, _catalog = load_model_and_stats(ckpt_path)
         cfg = model.config
         feature_cols = cfg["feature_cols"]
         node_names = cfg["node_names"]

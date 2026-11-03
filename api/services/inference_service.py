@@ -1,12 +1,13 @@
 """
-Inference service for real-time and fallback weather nowcasting.
+Inference service for ERA5 H-7 archive nowcasting with dataset fallback.
 
 Integrates RDM-STGNN (Skenario 3, 10-fitur) and FAISS retrieval with the
-public dashboard live snapshot contract.
+public dashboard snapshot contract.
 """
 from __future__ import annotations
 
 import datetime
+import logging
 import os
 import threading
 from typing import Any, Dict, List, Tuple
@@ -25,6 +26,7 @@ from api.schemas import (
     TimelineFrame,
 )
 from core.src.config import (
+    FINAL_FEATURE_COLS,
     MAIN_NODE_NAME,
     NODE_COORDINATES,
     NODE_DEFINITIONS,
@@ -38,6 +40,7 @@ _ENGINE_LOCK = threading.Lock()
 _ENGINE_INSTANCE: Tuple[Any, Dict[str, torch.Tensor], Any, pd.DataFrame] | None = None
 
 DEFAULT_CHECKPOINT_PATH = "core/models/diffusion_chkpt.pth"
+CANDIDATE_FEATURE_COLS = list(FINAL_FEATURE_COLS) + ["precipitation"]
 
 
 def get_inference_engine(
@@ -50,70 +53,110 @@ def get_inference_engine(
     global _ENGINE_INSTANCE
     with _ENGINE_LOCK:
         if _ENGINE_INSTANCE is None:
-            model_wrapper, stats, retrieval_db = load_model_and_stats(checkpoint_path)
-
-            # Load main-node training catalog for real analog timestamp lookups
-            df = pd.read_parquet(CANONICAL_DATA_PATH)
-            df["date"] = pd.to_datetime(df["date"])
-            if df["date"].dt.tz is not None:
-                df["date"] = df["date"].dt.tz_localize(None)
-            train_end = model_wrapper.config.get("train_end", "2018-12-31 16:00")
-            main_train = (
-                df[(df["date"] <= pd.to_datetime(train_end)) & (df["node"] == MAIN_NODE_NAME)]
-                .sort_values("date")
-                .reset_index(drop=True)
-            )
-
+            model_wrapper, stats, retrieval_db, main_train = load_model_and_stats(checkpoint_path)
+            checkpoint_features = list(model_wrapper.config.get("feature_cols", []))
+            if checkpoint_features != CANDIDATE_FEATURE_COLS:
+                raise RuntimeError(
+                    "Checkpoint feature_cols tidak cocok dengan urutan fitur API: "
+                    f"{checkpoint_features}"
+                )
             _ENGINE_INSTANCE = (model_wrapper, stats, retrieval_db, main_train)
     return _ENGINE_INSTANCE
 
 
 _CACHE_LOCK = threading.Lock()
-_LIVE_OBS_CACHE: Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None = None
-_LIVE_OBS_TIMESTAMP: float = 0.0
-LIVE_CACHE_TTL_SECONDS = 60.0
+_ERA5_CACHE: Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None = None
+_ERA5_TIMESTAMP: float = 0.0
+
+ERA5_H7_DAYS = 7
+ERA5_LOOKBACK_DAYS = 1
+ERA5_CACHE_TTL_SECONDS = 3600.0
+
+_COMPLETE_FIELDS = (
+    "temperature_2m", "relative_humidity_2m", "dew_point_2m", "surface_pressure",
+    "wind_speed_10m", "wind_direction_10m", "cloud_cover", "precipitation",
+)
 
 
-def _fetch_open_meteo_live() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None:
+def _select_h7_end_index(times: List[str], cutoff: datetime.datetime) -> int:
+    """Newest hourly index whose timestamp is at or before cutoff; -1 when none."""
+    cutoff_iso = cutoff.strftime("%Y-%m-%dT%H:%M")
+    return max((i for i, t in enumerate(times) if t <= cutoff_iso), default=-1)
+
+
+def _has_complete_window(data: List[dict], end_i: int, seq_len: int = 6) -> bool:
+    """True when all nodes have non-null values for every hour in the window."""
+    for i in range(end_i - seq_len + 1, end_i + 1):
+        for node in data:
+            hourly = node["hourly"]
+            if any(hourly[field][i] is None for field in _COMPLETE_FIELDS):
+                return False
+    return True
+
+
+def _telemetry(node_name: str, temp: float, dew: float, rain: float, humidity: float, wind: float, wind_dir: float, pressure: float) -> NodeTelemetry:
+    return NodeTelemetry(
+        nodeId=node_name,
+        tempCelsius=round(temp, 1),
+        dewPointCelsius=round(dew, 1),
+        rainIntensityMmH=round(rain, 2),
+        humidityPercent=round(humidity, 1),
+        windSpeedKmh=round(wind, 1),
+        windDirectionDeg=round(wind_dir, 0),
+        pressureHpa=round(pressure, 1),
+    )
+
+
+def _fetch_era5_h7() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None:
     """
-    Fetch the last 6-hour observation across all 5 nodes from Open-Meteo.
-    Cached with a 60-second TTL to avoid redundant internet round-trips.
-    Returns (features_array [6, 5, 10], telemetries_dict, latest_timestamp) or None on failure.
+    Fetch the newest ERA5 archive window that is at least H-7 old.
+
+    cutoff = utcnow - 7 days; the last input hour must be <= cutoff, so every
+    response is guaranteed to lag at least 7 days. If the boundary hour is not
+    fully populated yet, the window shifts back one hour at a time instead of
+    falling back to the stale parquet. Cached for an hour.
+    Returns (features_array [6, 5, 10], telemetries_dict, latest_timestamp) or None.
     """
-    global _LIVE_OBS_CACHE, _LIVE_OBS_TIMESTAMP
+    global _ERA5_CACHE, _ERA5_TIMESTAMP
     import time
 
     with _CACHE_LOCK:
-        now = time.time()
-        if _LIVE_OBS_CACHE is not None and (now - _LIVE_OBS_TIMESTAMP) < LIVE_CACHE_TTL_SECONDS:
-            return _LIVE_OBS_CACHE
+        if _ERA5_CACHE is not None and (time.time() - _ERA5_TIMESTAMP) < ERA5_CACHE_TTL_SECONDS:
+            return _ERA5_CACHE
 
     try:
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=ERA5_H7_DAYS)
+        start = (cutoff - datetime.timedelta(days=ERA5_LOOKBACK_DAYS)).date().isoformat()
         lats = [str(NODE_COORDINATES[n][0]) for n in NODE_NAMES]
         lons = [str(NODE_COORDINATES[n][1]) for n in NODE_NAMES]
-        url = (
-            f"https://api.open-meteo.com/v1/forecast?latitude={','.join(lats)}"
-            f"&longitude={','.join(lons)}"
-            "&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,surface_pressure,"
-            "wind_speed_10m,wind_direction_10m,cloud_cover,precipitation"
-            "&past_hours=12&forecast_hours=1&timezone=UTC"
-        )
-        resp = requests.get(url, timeout=5)
+        params = {
+            "latitude": ",".join(lats),
+            "longitude": ",".join(lons),
+            "start_date": start,
+            "end_date": cutoff.date().isoformat(),
+            "hourly": list(_COMPLETE_FIELDS),
+            "timezone": "UTC",
+            "models": "era5",
+        }
+        resp = requests.get("https://archive-api.open-meteo.com/v1/archive", params=params, timeout=20)
         if resp.status_code != 200:
-            return _LIVE_OBS_CACHE
+            return _ERA5_CACHE
         data = resp.json()
         if not isinstance(data, list) or len(data) != len(NODE_NAMES):
-            return _LIVE_OBS_CACHE
+            return _ERA5_CACHE
 
         elev_map = {d["name"]: d["elevation_m"] for d in NODE_DEFINITIONS}
         h_sample = data[0]["hourly"]
-        # Use last 6 completed hourly steps ending at index -2
-        n_times = len(h_sample["time"])
-        if n_times < 8:
-            return _LIVE_OBS_CACHE
-        indices = list(range(n_times - 7, n_times - 1))
+        end_i = _select_h7_end_index(h_sample["time"], cutoff)
+        while end_i >= 5 and not _has_complete_window(data, end_i):
+            end_i -= 1
+        if end_i < 5:
+            return _ERA5_CACHE
+        indices = list(range(end_i - 5, end_i + 1))
 
-        latest_dt_utc = datetime.datetime.fromisoformat(h_sample["time"][indices[-1]])
+        latest_dt_utc = datetime.datetime.fromisoformat(h_sample["time"][end_i])
+        if latest_dt_utc > cutoff:
+            raise RuntimeError(f"ERA5 H-7 guard violated: {latest_dt_utc} > {cutoff}")
 
         node_matrices = []
         telemetries: Dict[str, NodeTelemetry] = {}
@@ -138,25 +181,26 @@ def _fetch_open_meteo_live() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], date
             node_matrices.append(node_rows)
 
             last_i = indices[-1]
-            telemetries[node_name] = NodeTelemetry(
-                nodeId=node_name,
-                tempCelsius=round(float(h["temperature_2m"][last_i]), 1),
-                dewPointCelsius=round(float(h["dew_point_2m"][last_i]), 1),
-                rainIntensityMmH=round(float(h["precipitation"][last_i]), 2),
-                humidityPercent=round(float(h["relative_humidity_2m"][last_i]), 1),
-                windSpeedKmh=round(float(h["wind_speed_10m"][last_i]) * 3.6, 1),
-                windDirectionDeg=round(float(h["wind_direction_10m"][last_i]), 0),
-                pressureHpa=round(float(h["surface_pressure"][last_i]), 1),
+            telemetries[node_name] = _telemetry(
+                node_name,
+                float(h["temperature_2m"][last_i]),
+                float(h["dew_point_2m"][last_i]),
+                float(h["precipitation"][last_i]),
+                float(h["relative_humidity_2m"][last_i]),
+                float(h["wind_speed_10m"][last_i]),
+                float(h["wind_direction_10m"][last_i]),
+                float(h["surface_pressure"][last_i]),
             )
 
         feats = np.array(node_matrices, dtype=np.float32).transpose(1, 0, 2)
         with _CACHE_LOCK:
-            _LIVE_OBS_CACHE = (feats, telemetries, latest_dt_utc)
-            _LIVE_OBS_TIMESTAMP = time.time()
-        return _LIVE_OBS_CACHE
+            _ERA5_CACHE = (feats, telemetries, latest_dt_utc)
+            _ERA5_TIMESTAMP = time.time()
+        return _ERA5_CACHE
 
     except Exception:
-        return _LIVE_OBS_CACHE
+        logging.getLogger(__name__).exception("ERA5 H-7 fetch failed; serving fallback")
+        return _ERA5_CACHE
 
 
 def _fetch_parquet_fallback(
@@ -181,15 +225,15 @@ def _fetch_parquet_fallback(
         node_dfs.append(sub[feature_cols].values)
 
         last_row = sub.iloc[-1]
-        telemetries[n] = NodeTelemetry(
-            nodeId=n,
-            tempCelsius=round(float(last_row["temperature"]), 1),
-            dewPointCelsius=round(float(last_row["dewpoint"]), 1),
-            rainIntensityMmH=round(float(last_row["precipitation"]), 2),
-            humidityPercent=round(float(last_row["relative_humidity"]), 1),
-            windSpeedKmh=round(float(last_row["wind_speed"]) * 3.6, 1),
-            windDirectionDeg=round(float(last_row["wind_direction"]), 0),
-            pressureHpa=round(float(last_row["surface_pressure"]), 1),
+        telemetries[n] = _telemetry(
+            n,
+            float(last_row["temperature"]),
+            float(last_row["dewpoint"]),
+            float(last_row["precipitation"]),
+            float(last_row["relative_humidity"]),
+            float(last_row["wind_speed"]),
+            float(last_row["wind_direction"]),
+            float(last_row["surface_pressure"]),
         )
 
     feats = np.stack(node_dfs, axis=1).astype(np.float32)
@@ -229,7 +273,7 @@ def generate_live_dashboard_snapshot(
 ) -> DashboardLiveSnapshot:
     """
     Generate a full end-to-end DashboardLiveSnapshot using RDM-STGNN Skenario 3:
-    1. Fetch real-time observation (or dataset fallback)
+    1. Fetch an ERA5 archive window at least 7 days old (or dataset fallback)
     2. Normalize and run Spatio-Temporal GNN + FAISS Retrieval + Diffusion sampling
     3. Query top-3 real analogs from training database
     4. Format valid JSON response
@@ -237,20 +281,33 @@ def generate_live_dashboard_snapshot(
     model_wrapper, stats, retrieval_db, main_train = get_inference_engine(checkpoint_path)
     feature_cols = model_wrapper.config["feature_cols"]
 
-    # 1. Fetch input sequence
-    live_result = _fetch_open_meteo_live()
-    if live_result is not None:
-        feats_raw, telemetries, obs_dt = live_result
-        source_label = "live"
+    # 1. Fetch input sequence — ERA5 archive, guaranteed H-7 or older
+    era5_result = _fetch_era5_h7()
+    if era5_result is not None:
+        feats_raw, telemetries, obs_dt = era5_result
+        source_label = "era5_h7"
     else:
         feats_raw, telemetries, obs_dt = _fetch_parquet_fallback(feature_cols)
-        source_label = "live"
+        source_label = "sample"
 
-    # Convert timestamps to WIB (+7h)
+    # Single WIB formatter: every "WIB" string comes from a UTC value shifted once.
+    bulan_id = {
+        1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun",
+        7: "Jul", 8: "Agu", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Des",
+    }
+
+    def _wib(dt: datetime.datetime) -> str:
+        dt = dt + datetime.timedelta(hours=7)
+        return f"{dt.day} {bulan_id[dt.month]} {dt.year}, {dt.strftime('%H:%M WIB')}"
+
     obs_wib = obs_dt + datetime.timedelta(hours=7)
-    valid_wib = obs_wib + datetime.timedelta(hours=1)
-    obs_wib_str = obs_wib.strftime("%H:%M WIB")
-    valid_wib_str = valid_wib.strftime("%H:%M WIB")
+    window_start_wib = obs_wib - datetime.timedelta(hours=5)
+    obs_wib_str = _wib(obs_dt)
+    valid_wib_str = _wib(obs_dt + datetime.timedelta(hours=1))
+    if window_start_wib.date() == obs_wib.date():
+        window_range_str = f"{window_start_wib.strftime('%H:%M')} – {obs_wib.strftime('%H:%M WIB')}"
+    else:
+        window_range_str = f"{window_start_wib.day} {bulan_id[window_start_wib.month]} {window_start_wib.strftime('%H:%M')} – {obs_wib.day} {bulan_id[obs_wib.month]} {obs_wib.strftime('%H:%M WIB')}"
 
     # 2. Normalize and run inference
     c_mean = stats["c_mean"].numpy()
@@ -263,7 +320,7 @@ def generate_live_dashboard_snapshot(
         model_wrapper,
         stats,
         retrieval_db,
-        num_samples=50,
+        num_samples=30,
         device="cpu",
     )
 
@@ -279,9 +336,9 @@ def generate_live_dashboard_snapshot(
         ),
         wind_speed=_build_nowcast_distribution(
             variable="wind_speed",
-            unit="m/s",
+            unit="km/jam",
             raw_samples=inference_res["wind_speed"],
-            observed_now=round(main_telemetry.windSpeedKmh / 3.6, 2) if main_telemetry else None,
+            observed_now=round(main_telemetry.windSpeedKmh, 2) if main_telemetry else None,
             valid_at_wib=valid_wib_str,
         ),
         relative_humidity=_build_nowcast_distribution(
@@ -301,29 +358,28 @@ def generate_live_dashboard_snapshot(
     for rank, (idx, dist) in enumerate(zip(indices[0], distances[0]), start=1):
         if idx + 1 < len(main_train):
             row = main_train.iloc[idx + 1]
-            sim = max(0.0, min(100.0, 100.0 / (1.0 + float(dist) * 0.15)))
+            pattern_wib = _wib(main_train.iloc[idx]["date"])
+            analog_wib = _wib(row["date"])
             pattern = (
-                "Hujan Orografis Ekstrem"
+                "Hujan lebat"
                 if row["precipitation"] >= 5.0
-                else ("Hujan Sedang" if row["precipitation"] >= 2.0 else ("Gerimis Ringan" if row["precipitation"] > 0 else "Kondisi Kering"))
+                else ("Hujan sedang" if row["precipitation"] >= 2.0 else ("Gerimis" if row["precipitation"] > 0 else "Tidak hujan"))
             )
             analog = HistoricalAnalog(
                 id=f"FAISS-{rank:02d}",
                 rank=rank,
-                datetime=row["date"].strftime("%d %b %Y %H:%M WIB"),
+                datetime=analog_wib,
+                patternAtWib=pattern_wib,
                 patternType=pattern,
-                similarityPercent=round(sim, 1),
-                distanceL2=round(float(dist), 3),
-                accumulatedRainMm=round(float(row["precipitation"]), 2),
+                distanceL2=round(float(dist), 2),
                 rainRateMmH=round(float(row["precipitation"]), 2),
-                peakWindKmh=round(float(row["wind_speed"]) * 3.6, 1),
+                peakWindKmh=round(float(row["wind_speed"]), 1),
                 tempCelsius=round(float(row["temperature"]), 1),
                 humidityPercent=round(float(row["relative_humidity"]), 1),
                 pressureHpa=round(float(row["surface_pressure"]), 1),
                 outcomeSummary=(
-                    f"Analog historis riil ({row['date'].strftime('%Y-%m-%d %H:%M')}): "
-                    f"Presipitasi {row['precipitation']:.1f} mm/jam, angin {row['wind_speed']*3.6:.1f} km/jam, "
-                    f"kelembapan {row['relative_humidity']:.0f}%."
+                    f"Pola cuaca {pattern_wib} mirip. Satu jam kemudian: {pattern.lower()}, "
+                    f"angin {row['wind_speed']:.1f} km/jam, kelembapan {row['relative_humidity']:.1f}%."
                 ),
             )
             analogs.append(analog)
@@ -332,7 +388,8 @@ def generate_live_dashboard_snapshot(
     frame = TimelineFrame(
         offset="Now",
         timeWib=obs_wib_str,
-        description=f"Observasi 5 sel ERA5 Gunung Gede-Pangrango per {obs_wib_str}.",
+        windowRangeWib=window_range_str,
+        description=f"Observasi 5 sel ERA5 jendela 6 titik jam ({window_range_str}) menuju jam berikutnya {valid_wib_str}.",
         telemetries=telemetries,
     )
 

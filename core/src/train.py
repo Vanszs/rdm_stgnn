@@ -351,12 +351,16 @@ def train_pipeline(
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    # Dedicated validation RNG: validation noise no longer depends on how many
+    # draws training consumed before it.
+    val_gen = torch.Generator(device=device).manual_seed(seed + 7919)
     use_amp = bool(amp and torch.cuda.is_available())
     if torch.cuda.is_available():
         # benchmark=False so the fixed seed gives reproducible training.
         torch.backends.cudnn.benchmark = False
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+    torch.use_deterministic_algorithms(True, warn_only=True)
     print(f"Device: {device} | seed: {seed}")
 
     print("\n[1/8] Loading canonical dataset...")
@@ -684,8 +688,10 @@ def train_pipeline(
                 contexts = contexts.to(device, non_blocking=True)
                 retrieved = retrieved.to(device, non_blocking=True)
                 graph_emb = st_gnn(batched_graphs)
-                noise = torch.randn_like(targets)
-                timesteps = torch.randint(0, DIFFUSION_TRAIN_TIMESTEPS, (targets.shape[0],), device=device).long()
+                noise = torch.randn(targets.shape, generator=val_gen, device=device)
+                timesteps = torch.randint(
+                    0, DIFFUSION_TRAIN_TIMESTEPS, (targets.shape[0],), device=device, generator=val_gen
+                ).long()
                 noisy_target = forecaster.scheduler.add_noise(targets, noise, timesteps)
                 if effective_rain_specialization:
                     noise_pred, wet_logit = forecaster.model(
@@ -729,8 +735,12 @@ def train_pipeline(
                     val_corr_running += batch_corr
                     val_corr_count += 1
 
-        avg_val = val_running / max(val_effective_batches, 1)
-        avg_val_noise = val_noise_running / max(val_effective_batches, 1)
+        if val_effective_batches == 0:
+            raise RuntimeError(
+                "Validation produced no finite batches; refusing to select a checkpoint from a diverged run."
+            )
+        avg_val = val_running / val_effective_batches
+        avg_val_noise = val_noise_running / val_effective_batches
         avg_val_wet = val_wet_running / val_wet_count if val_wet_count > 0 else float("nan")
         if effective_rain_specialization and val_wet_probs:
             wet_prob_np = np.concatenate(val_wet_probs).astype(np.float32)

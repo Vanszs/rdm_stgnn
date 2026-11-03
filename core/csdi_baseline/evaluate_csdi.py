@@ -89,7 +89,10 @@ def main():
     # Batch size belongs in the tag: it changes both the shard count and which
     # windows each shard holds, so mixing shards from two batch sizes would
     # concatenate mismatched windows into silently wrong metrics.
+    import hashlib
+    ck_hash = hashlib.sha256(open(CKPT, "rb").read()).hexdigest()[:12]
     tag = (f"{args.sampler}_m{args.nsample}_s{args.ddim_steps}_bs{args.batch_size}"
+           f"_c{ck_hash}_e{int(ck.get('epoch', -1))}"
            + (f"_w{args.max_windows}" if args.max_windows else ""))
     shard = lambda bi: os.path.join(shard_dir, f"{tag}_b{bi:05d}.npz")
 

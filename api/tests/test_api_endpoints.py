@@ -39,7 +39,7 @@ async def test_dashboard_live_endpoint_returns_real_rdm_inference():
         assert resp.status_code == 200
         data = resp.json()
 
-        assert data["source"] in ("live", "sample")
+        assert data["source"] in ("era5_h7", "sample")
         assert "generatedAt" in data
         assert "frame" in data
         assert "nowcast" in data
@@ -59,7 +59,7 @@ async def test_dashboard_live_endpoint_returns_real_rdm_inference():
         for var in ("precipitation", "wind_speed", "relative_humidity"):
             dist = nowcast[var]
             assert dist["horizon"] == "T+1h"
-            assert len(dist["samples"]) == 50
+            assert len(dist["samples"]) == 30
             assert dist["p10"] <= dist["p50"] <= dist["p90"]
             assert dist["mean"] >= 0.0
 
@@ -70,8 +70,8 @@ async def test_dashboard_live_endpoint_returns_real_rdm_inference():
         for idx, analog in enumerate(analogs, start=1):
             assert analog["id"] == f"FAISS-{idx:02d}"
             assert analog["rank"] == idx
-            assert 0.0 <= analog["similarityPercent"] <= 100.0
             assert analog["distanceL2"] >= 0.0
+            assert "similarityPercent" not in analog
             assert "WIB" in analog["datetime"]
 
 
@@ -79,14 +79,14 @@ async def test_dashboard_live_endpoint_returns_real_rdm_inference():
 async def test_dashboard_live_fallback_on_network_failure():
     """Verify that when Open-Meteo network request fails, parquet fallback activates cleanly."""
     transport = httpx.ASGITransport(app=app)
-    with patch("api.services.inference_service._fetch_open_meteo_live", return_value=None):
+    with patch("api.services.inference_service._fetch_era5_h7", return_value=None):
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.get("/api/v1/dashboard/live")
             assert resp.status_code == 200
             data = resp.json()
-            assert data["source"] == "live"
+            assert data["source"] == "sample"
             assert len(data["frame"]["telemetries"]) == 5
-            assert len(data["nowcast"]["precipitation"]["samples"]) == 50
+            assert len(data["nowcast"]["precipitation"]["samples"]) == 30
 
 
 @pytest.mark.asyncio

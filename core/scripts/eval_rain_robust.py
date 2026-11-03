@@ -175,7 +175,7 @@ def run_crosscheck(data_path: str, num_ensemble: int, num_inference_steps: int, 
     _seed_everything()
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    model_wrapper, _, retrieval_db = load_model_and_stats("models/diffusion_chkpt.pth")
+    model_wrapper, _, retrieval_db, _catalog = load_model_and_stats("models/diffusion_chkpt.pth")
     model_wrapper.to(device)
     model_wrapper.eval()
     config = model_wrapper.config
