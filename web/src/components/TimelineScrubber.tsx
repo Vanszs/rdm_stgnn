@@ -6,16 +6,14 @@ interface TimelineScrubberProps {
   validAtWib: string;
   dataStatus: string;
   isEra5: boolean;
-  windowRangeWib?: string;
 }
 
-/** Compact one-line forecast bar: input window -> target hour -> source. */
+/** Compact one-line forecast bar: data hour -> target hour -> source. */
 const TimelineScrubberComponent: React.FC<TimelineScrubberProps> = ({
   nowWib,
   validAtWib,
   dataStatus,
   isEra5,
-  windowRangeWib,
 }) => {
   return (
     <div
@@ -26,7 +24,7 @@ const TimelineScrubberComponent: React.FC<TimelineScrubberProps> = ({
       <div className="flex items-center gap-2 min-w-0">
         <RefreshCw className="w-4 h-4 text-[#1f6056] flex-shrink-0" />
         <span className="text-[9px] font-mono-data font-bold text-[#849495] uppercase tracking-wider flex-shrink-0">Data</span>
-        <span className="text-[11px] font-mono-data font-bold text-[#dae2fd] truncate">{windowRangeWib ?? nowWib}</span>
+        <span className="text-[11px] font-mono-data font-bold text-[#dae2fd] truncate">{nowWib}</span>
       </div>
 
       <span className="text-[#5f685e] text-xs font-bold">→</span>
