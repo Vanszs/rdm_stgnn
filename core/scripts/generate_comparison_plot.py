@@ -144,15 +144,15 @@ def main():
     z_dates = dates[z_start:z_end]
     ax4 = fig.add_subplot(gs[3])
     ax4.plot(z_dates, csdi_precip_obs[z_start:z_end], color=c_actual, lw=2.2, marker="o", markersize=4, label="Aktual (Ground Truth)", zorder=4)
-    ax4.plot(z_dates, rdm_p_med[z_start:z_end], color=c_rdm, lw=1.8, marker="s", markersize=4, label="RDM-STGNN Median (Menangkap Puncak 6.3 mm)", zorder=3)
+    ax4.plot(z_dates, rdm_p_med[z_start:z_end], color=c_rdm, lw=1.8, marker="s", markersize=4, label="RDM-STGNN (median)", zorder=3)
     ax4.fill_between(z_dates, rdm_p_p10[z_start:z_end], rdm_p_p90[z_start:z_end], color=c_rdm, alpha=0.25, label="RDM-STGNN P10-P90 Band")
-    ax4.plot(z_dates, csdi_p_med[z_start:z_end], color=c_csdi, lw=1.8, linestyle="--", marker="^", markersize=4, label="CSDI Median (Under-predict / Smoothing)", zorder=2)
+    ax4.plot(z_dates, csdi_p_med[z_start:z_end], color=c_csdi, lw=1.8, linestyle="--", marker="^", markersize=4, label="CSDI (median)", zorder=2)
     ax4.fill_between(z_dates, csdi_p_p10[z_start:z_end], csdi_p_p90[z_start:z_end], color=c_csdi, alpha=0.20, label="CSDI P10-P90 Band")
     ax4.set_ylabel("Presipitasi (mm/jam)")
     ax4.set_xlabel("Waktu (UTC)", labelpad=8)
-    ax4.set_title("(d) Zoom-In Episode Hujan Ekstrem Orografis (9–11 Januari 2022) — Bukti Sensitivitas Deteksi Bencana (POD Tinggi)", fontweight="bold")
+    ax4.set_title(f"(d) Zoom-In Episode Hujan Ekstrem Orografis ({z_dates[0]:%d %b %Y} – {z_dates[-1]:%d %b %Y})", fontweight="bold")
     ax4.legend(loc="upper left", frameon=True, framealpha=0.9, ncol=2)
-    ax4.set_ylim(-0.2, 8.8)
+    ax4.set_ylim(-0.2, max(csdi_precip_obs[z_start:z_end].max() * 1.35, 3.0))
     ax4.xaxis.set_major_formatter(mdates.DateFormatter("%d %b %H:%M"))
 
     # Annotate peak
@@ -160,7 +160,7 @@ def main():
     peak_val = csdi_precip_obs[peak_idx]
     peak_date = dates[peak_idx]
     ax4.annotate(
-        f"Puncak Hujan: {peak_val:.1f} mm/jam\nRDM Tangkap (POD=73.5%)\nCSDI Under-predict (4.1 mm)",
+        f"Puncak hujan: {peak_val:.1f} mm/jam\nRDM: {rdm_p_med[peak_idx]:.1f} · CSDI: {csdi_p_med[peak_idx]:.1f}",
         xy=(peak_date, peak_val),
         xytext=(mdates.date2num(peak_date) + 0.35, 5.0),
         arrowprops=dict(facecolor="black", shrink=0.08, width=1, headwidth=5),

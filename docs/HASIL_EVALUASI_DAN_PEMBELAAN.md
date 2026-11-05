@@ -160,7 +160,7 @@ Hanya 7 kejadian. CSI/POD/FAR di ambang itu ditentukan segelintir kasus, bukan k
 Ya. Seed per skenario, determinisme diaktifkan, shard terikat hash checkpoint, dan `verify_metrics` menghitung ulang dari shard.
 
 **Q11. Kenapa RDM lebih cepat?**
-Outputnya 3 angka dengan MLP kecil; CSDI mengolah 50 kanal × 7 langkah dengan transformer.
+Output RDM hanya 3 angka (hujan, angin, kelembapan) dan denoiser-nya MLP kecil. CSDI harus memperbaiki seluruh jendela 7 langkah × 9 fitur (63 nilai) lewat transformer 4 lapis di setiap langkah DDIM. Detail angka terukur ada di §12.
 
 **Q12. Apa langkah berikutnya agar RDM menyusul?**
 Beri denoiser akses jendela penuh, ambil embedding titik puncak (bukan rata-rata), samakan perlakuan retrieval, dan kalibrasi untuk CRPS/Brier.
@@ -168,3 +168,46 @@ Beri denoiser akses jendela penuh, ambil embedding titik puncak (bukan rata-rata
 ## 11. Kalimat siap pakai untuk naskah
 
 > "Pada protokol 1:1 dengan 35.058 window uji, M=30, dan DDIM 20 langkah, CSDI unggul pada seluruh metrik akurasi dan kalibrasi serta pada ambang 5 mm. RDM-STGNN hanya unggul pada CSI 2 mm (0,3688 vs 0,3324), dengan FAR yang lebih tinggi. Tidak ditemukan kebocoran data; perbedaan hasil disebabkan oleh akses informasi dan supervisi arsitektur, bukan oleh perbedaan protokol."
+
+## 12. Kecepatan training dan evaluasi (angka terukur)
+
+Semua angka di bawah berasal dari log/berkas hasil yang ada di repo, bukan perkiraan. Perangkat: RTX 3050 Laptop (tercatat di `core/csdi_baseline/train_csdi.py`).
+
+| Tahap | CSDI | RDM-STGNN | Sumber bukti |
+|---|---|---|---|
+| Training | 30 epoch = **33.546 s (9 j 19 m)**, ≈1.118 s/epoch | 20 epoch, 239 batch/epoch; epoch ke-20 = **16 s**, epoch ke-10 = 13 s → ≈**4–5 menit** loop training | `core/csdi_baseline/logs/train.log` baris `epoch 30/30 ... 33546s`; `core/results/tabel_3_17/sken_3_default_kontrol/train.log` (tqdm `100%|239/239 [00:16 ... 14,38 it/s]`) |
+| Evaluasi penuh | **9,52 jam** untuk 35.058 window (1.096 shard × 32 window), median **34 s/shard** ≈ **1,06 s/window** | **65,0 s total** untuk 35.058 window × 30 anggota × DDIM 20 → **1,85 ms/window** | rentang mtime `core/csdi_baseline/eval_shards/` (10:19:02 → 19:50:06); `core/results/tabel_3_17/sken_3_default_kontrol/latency.json` |
+| Rasio | — | evaluasi ≈ **526× lebih cepat** (per window ≈573×); training ≈ **110× lebih cepat** | hitungan dari dua baris di atas |
+
+Catatan kejujuran angka:
+- 9,52 jam CSDI adalah wall-clock termasuk resume (`evaluate.log`: `resuming: 61/1096`). Median 34 s/shard lebih stabil sebagai angka per-unit.
+- Waktu training RDM di atas hanya loop epoch. Pra-perhitungan retrieval (122.706 vektor) berjalan sekali di CPU dan tidak dicatat di log, jadi total wall-clock training RDM lebih besar dari 4–5 menit.
+- Pembanding "tanpa optimasi": sampler resmi CSDI (loop Python per sampel, DDPM 50 langkah) terukur **3,9 s/window ≈ 38 jam** untuk split uji — tercatat di docstring `core/csdi_baseline/ddim_sampler.py`. Versi yang dipakai skripsi sudah dibatch (DDIM 20) dan tetap 9,5 jam.
+
+### Kenapa selisihnya sebesar itu
+
+1. **Bentuk keluaran berbeda.** CSDI memperbaiki seluruh jendela: 7 langkah waktu × 9 fitur = 63 nilai, dengan transformer 4 lapis, 64 kanal, 8 kepala. RDM hanya menghasilkan 3 angka target (hujan, angin, kelembapan) dengan MLP 64→128→64→3. Pada setiap langkah DDIM, biaya per evaluasi jaringan berbeda sekitar dua orde.
+2. **Jumlah langkah dan anggota sama.** Keduanya memakai M=30 dan DDIM 20 langkah, dan keduanya melipat 30 anggota ke dalam batch. Jadi bukan karena RDM memakai sampling lebih sedikit — yang berbeda adalah harga satu forward pass.
+3. **Beban per langkah.** 20 langkah × 30 anggota × 35.058 window ≈ 21 juta evaluasi jaringan untuk kedua model. Di CSDI tiap evaluasi adalah attention atas 7 token × 9 fitur; di RDM hanya MLP atas vektor 3 dimensi.
+4. **Overhead I/O.** Evaluasi CSDI dipecah 1.096 shard dengan penulisan `.npz` per shard; jeda antar-shard inilah yang membuat 34 s/shard, bukan murni komputasi.
+5. **Training.** CSDI memprediksi noise untuk 63 nilai (loss lebih berat, butuh 30 epoch). RDM meregresi 3 target dengan konteks retrieval yang sudah dihitung sekali di depan, sehingga konvergen dalam 20 epoch pendek.
+
+### Kalimat siap pakai
+
+> "Pada perangkat yang sama dan protokol inferensi yang sama (M=30, DDIM 20 langkah, 35.058 window), evaluasi penuh CSDI memerlukan 9,5 jam sedangkan RDM-STGNN 65 detik. Selisih ini bukan akibat protokol yang berbeda, melainkan bentuk komputasi: CSDI memperbaiki 63 nilai per jendela melalui transformer, RDM hanya 3 nilai melalui MLP."
+
+> "Efisiensi RDM bukan klaim tanpa bukti: `latency.json` mencatat 65 detik untuk 35.058 window, dan `train.log` mencatat 33.546 detik untuk 30 epoch CSDI."
+
+## 13. Grafik time-series evaluasi (CSDI vs RDM-STGNN)
+
+![Time-series seluruh split uji](bukti_highlight/timeseries_penuh_csdi_vs_rdm.png)
+
+**Gambar 13.1** — Seluruh split uji (35.058 jam, dua tahun). Atas: presipitasi jam-jaman (garis tipis) dan rata-rata bergerak 7 hari (garis tebal). Bawah: bias rata-rata bergerak 7 hari (median model − aktual). Sumber: `core/scripts/plot_timeseries_full.py`; data CSDI dari `core/csdi_baseline/eval_shards/*.npz`, data RDM dari checkpoint `sken_3_default_kontrol`.
+
+Terlihat: CSDI biasnya sedikit negatif (cenderung *under-predict*), RDM biasnya positif (cenderung *over-predict* hujan ringan) — konsisten dengan FAR RDM yang lebih tinggi dan RMSE RDM yang lebih besar.
+
+![Zoom 4 panel: presipitasi, angin, kelembapan, episode ekstrem](bukti_highlight/komparasi_prediksi_stgnn_csdi_aktual.png)
+
+**Gambar 13.2** — Cuplikan 320 jam pertama split uji (01–13 Jan 2022) untuk tiga variabel, plus zoom episode hujan ekstrem 09–11 Jan 2022. Pita = P10–P90 dari 30 anggota. Angka pada anotasi dihitung dari data, bukan angka tetap: pada puncak 6,3 mm/jam, median RDM 3,5 dan CSDI 2,6 — keduanya *under-predict* puncak.
+
+Catatan verifikasi: RMSE presipitasi dihitung ulang dari run pembuat grafik = CSDI **0,5821** (persis sama dengan metrik tersimpan) dan RDM **0,6635** (metrik tersimpan 0,6620; selisih 0,2% karena non-determinisme GPU pada sampling).
