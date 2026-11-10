@@ -217,7 +217,7 @@ Tujuan: tekankan event ekstrem (hujan lebat). Nilai 5/10 heuristik (belum di-abl
 
 ### 6.2 MLP baseline — `src/models/mlp_baseline.py`, `src/train_baseline.py`
 - Arsitektur: `Linear(54→128)→ReLU→Dropout→Linear(128→128)→ReLU→Dropout→Linear(128→3)`.
-  Input = 6 jam × 9 fitur (MAIN saja) di-flatten = 54.
+  Input = 6 jam × 9 fitur (MAIN saja) di-flatten = 54 untuk baseline MLP; model difusi memakai 10 fitur per node (9 + precipitation).
 - Deterministik (1 forward pass saat eval; CRPS-nya = MAE karena ensemble=1).
 - Training: MSE loss, AdamW, CosineAnnealing, early stopping.
 - Peran: "ada model tapi sederhana" — pembanding di atas persistence.

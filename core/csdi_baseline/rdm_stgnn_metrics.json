@@ -1,6 +1,6 @@
 {
   "model": "RDM-STGNN",
-  "source": "results/eval_final_fixed/comparison/comparison_summary.json",
+  "source": "results/eval_10feat_restore/comparison/comparison_summary.json",
   "scenario": "full_model",
   "metadata": {
     "samples_per_scenario": 35058,
@@ -8,38 +8,38 @@
     "eval_step": 1,
     "seed": 1,
     "crps": "fair_unbiased",
-    "rain_probability_threshold": 0.6499999761581421
+    "rain_probability_threshold": 0.6000000238418579
   },
   "metrics": {
     "precipitation": {
-      "rmse": 0.6640893816947937,
-      "mae": 0.27301815152168274,
-      "correlation": 0.6996901528154831,
-      "crps": 0.19534903966888878,
-      "brier_2mm": 0.03669487389151946,
-      "pod_2mm": 0.7282463186077643,
-      "far_2mm": 0.5723270440251572,
-      "csi_2mm": 0.3688135593220339,
-      "brier_5mm": 0.007372639625763022,
-      "pod_5mm": 0.08695652173913043,
-      "far_5mm": 0.7215189873417721,
-      "csi_5mm": 0.07096774193548387,
-      "brier_10mm": 0.00027734991537832547,
-      "pod_10mm": 0.0,
-      "far_10mm": 1.0,
-      "csi_10mm": 0.0
+      "rmse": 0.6444581151008606,
+      "mae": 0.28092050552368164,
+      "correlation": 0.7076750895401743,
+      "crps": 0.20094200696927653,
+      "brier_2mm": 0.03588599210197705,
+      "pod_2mm": 0.7182061579651942,
+      "far_2mm": 0.5629327902240326,
+      "csi_2mm": 0.3730876216968011,
+      "brier_5mm": 0.006120238842299427,
+      "pod_5mm": 0.1225296442687747,
+      "far_5mm": 0.3673469387755102,
+      "csi_5mm": 0.11439114391143912,
+      "brier_10mm": 0.00018334696154309366,
+      "pod_10mm": 0.14285714285714285,
+      "far_10mm": 0.0,
+      "csi_10mm": 0.14285714285714285
     },
     "wind_speed": {
-      "rmse": 0.9946054220199585,
-      "mae": 0.7575274705886841,
-      "correlation": 0.8784046123301043,
-      "crps": 0.5284149752905467
+      "rmse": 1.0018724203109741,
+      "mae": 0.7668285965919495,
+      "correlation": 0.8759990615784632,
+      "crps": 0.5341729933708614
     },
     "relative_humidity": {
-      "rmse": 3.100162982940674,
-      "mae": 2.1882388591766357,
-      "correlation": 0.9701259359930314,
-      "crps": 1.524387156140154
+      "rmse": 2.971409559249878,
+      "mae": 2.0580828189849854,
+      "correlation": 0.9726974008150343,
+      "crps": 1.4571482725843883
     }
   }
 }

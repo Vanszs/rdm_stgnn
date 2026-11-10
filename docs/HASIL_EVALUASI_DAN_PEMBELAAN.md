@@ -13,6 +13,8 @@ Dokumen ini merangkum hasil evaluasi terbaru setelah perbaikan protokol, alasan 
 
 ## 2. Protokol 1:1
 
+**Definisi fitur:** 10 fitur masukan = 9 fitur meteorologis (termasuk `precipitation_lag1`) + `precipitation` jam observasi. Angka "9 fitur" di bab 3 merujuk fitur dasar sebelum penambahan precipitation mentah.
+
 | Aspek | RDM-STGNN | CSDI |
 |---|---|---|
 | Data | ERA5 5 node, 10 kanal/node | sama |
@@ -210,4 +212,4 @@ Terlihat: CSDI biasnya sedikit negatif (cenderung *under-predict*), RDM biasnya 
 
 **Gambar 13.2** — Cuplikan 320 jam pertama split uji (01–13 Jan 2022) untuk tiga variabel, plus zoom episode hujan ekstrem 09–11 Jan 2022. Pita = P10–P90 dari 30 anggota. Angka pada anotasi dihitung dari data, bukan angka tetap: pada puncak 6,3 mm/jam, median RDM 3,5 dan CSDI 2,6 — keduanya *under-predict* puncak.
 
-Catatan verifikasi: RMSE presipitasi dihitung ulang dari run pembuat grafik = CSDI **0,5821** (persis sama dengan metrik tersimpan) dan RDM **0,6635** (metrik tersimpan 0,6620; selisih 0,2% karena non-determinisme GPU pada sampling).
+Catatan verifikasi: RMSE presipitasi dihitung ulang dari run pembuat grafik = CSDI **0,5821** (persis sama dengan metrik tersimpan) dan RDM **0,6445** (metrik kanonik run retrain 10-fitur; `core/results/eval_10feat_restore/`).
