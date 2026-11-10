@@ -99,6 +99,7 @@ class HistoricalAnalog(BaseModel):
     tempCelsius: float | None = None
     humidityPercent: float | None = None
     pressureHpa: float | None = None
+    isWithinThreshold: bool = True
     outcomeSummary: str
 
 

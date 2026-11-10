@@ -64,6 +64,54 @@ def get_inference_engine(
     return _ENGINE_INSTANCE
 
 
+ANALOG_MIN_GAP_HOURS = 24
+_ANALOG_THRESHOLD: float | None = None
+
+
+def _analog_distance_threshold(retrieval_db: Any, sample_size: int = 512, quantile: float = 95.0) -> float:
+    """p95 nearest-other-key L2 distance. Analogs beyond it are not 'similar' at all."""
+    global _ANALOG_THRESHOLD
+    if _ANALOG_THRESHOLD is None:
+        index = retrieval_db.index
+        if index is None or index.ntotal < 3:
+            _ANALOG_THRESHOLD = float("inf")
+        else:
+            rng = np.random.default_rng(0)
+            ids = rng.choice(index.ntotal, size=min(sample_size, index.ntotal), replace=False)
+            probe = np.ascontiguousarray(index.reconstruct_batch(ids), dtype=np.float32)
+            dists, _ = index.search(probe, 2)
+            _ANALOG_THRESHOLD = float(np.percentile(dists[:, 1], quantile))
+    return _ANALOG_THRESHOLD
+
+
+def _select_analogs(index: Any, main_train: pd.DataFrame, context: np.ndarray, *, k: int,
+                    max_distance: float, min_gap_hours: int = ANALOG_MIN_GAP_HOURS,
+                    extra: int = 8) -> List[Tuple[int, float, bool]]:
+    """Pick up to k distinct past events, each >= min_gap_hours apart.
+
+    `is_close` is False when the match is farther than the training-cloud p95:
+    the analog is still shown, but callers must label it as distant rather than
+    claiming a similar pattern.
+    """
+    n_refs = len(main_train) - 1  # FAISS keys are rows[:-1]
+    k_search = min(n_refs, max(k, k * extra))
+    if k_search <= 0:
+        return []
+    dists, idxs = index.search(np.ascontiguousarray(context, dtype=np.float32), k_search)
+    picked: List[Tuple[int, float, bool]] = []
+    for idx, dist in zip(idxs[0].tolist(), dists[0].tolist()):
+        if idx < 0 or idx >= n_refs:
+            continue
+        when = main_train.iloc[idx]["date"]
+        if any(abs((when - main_train.iloc[j]["date"]).total_seconds()) < min_gap_hours * 3600
+               for j, _, _ in picked):
+            continue
+        picked.append((int(idx), float(dist), bool(dist <= max_distance)))
+        if len(picked) >= k:
+            break
+    return picked
+
+
 _CACHE_LOCK = threading.Lock()
 _ERA5_CACHE: Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None = None
 _ERA5_TIMESTAMP: float = 0.0
@@ -315,6 +363,10 @@ def generate_live_dashboard_snapshot(
     feats_norm = (feats_raw - c_mean) / (c_std + ZSCORE_EPSILON)
     feats_norm_t = torch.tensor(feats_norm, dtype=torch.float32)
 
+    # ponytail: one seed per observed hour, so refresh gives identical samples.
+    # Per-request seeds would need a cached sampler; add if multi-user determinism matters.
+    torch.manual_seed(int(obs_dt.timestamp()) // 3600)
+
     inference_res = run_inference_real(
         feats_norm_t,
         model_wrapper,
@@ -350,39 +402,45 @@ def generate_live_dashboard_snapshot(
         ),
     )
 
-    # 4. Extract Real FAISS Historical Analogs
+    # 4. Extract Real FAISS Historical Analogs (distance-bounded, distinct events)
     context_last = feats_norm[-1, 0, :].reshape(1, -1)  # MAIN node at time t
-    distances, indices = retrieval_db.index.search(context_last, 3)
+    k_analogs = int(model_wrapper.config.get("k_neighbors", 3))
+    threshold = _analog_distance_threshold(retrieval_db)
+    picked = _select_analogs(
+        retrieval_db.index, main_train, context_last,
+        k=k_analogs, max_distance=threshold,
+    )
 
     analogs: List[HistoricalAnalog] = []
-    for rank, (idx, dist) in enumerate(zip(indices[0], distances[0]), start=1):
-        if idx + 1 < len(main_train):
-            row = main_train.iloc[idx + 1]
-            pattern_wib = _wib(main_train.iloc[idx]["date"])
-            analog_wib = _wib(row["date"])
-            pattern = (
-                "Hujan lebat"
-                if row["precipitation"] >= 5.0
-                else ("Hujan sedang" if row["precipitation"] >= 2.0 else ("Gerimis" if row["precipitation"] > 0 else "Tidak hujan"))
-            )
-            analog = HistoricalAnalog(
-                id=f"FAISS-{rank:02d}",
-                rank=rank,
-                datetime=analog_wib,
-                patternAtWib=pattern_wib,
-                patternType=pattern,
-                distanceL2=round(float(dist), 2),
-                rainRateMmH=round(float(row["precipitation"]), 2),
-                peakWindKmh=round(float(row["wind_speed"]), 1),
-                tempCelsius=round(float(row["temperature"]), 1),
-                humidityPercent=round(float(row["relative_humidity"]), 1),
-                pressureHpa=round(float(row["surface_pressure"]), 1),
-                outcomeSummary=(
-                    f"Pola cuaca {pattern_wib} mirip. Satu jam kemudian: {pattern.lower()}, "
-                    f"angin {row['wind_speed']:.1f} km/jam, kelembapan {row['relative_humidity']:.1f}%."
-                ),
-            )
-            analogs.append(analog)
+    for rank, (idx, dist, is_close) in enumerate(picked, start=1):
+        row = main_train.iloc[idx + 1]
+        pattern_wib = _wib(main_train.iloc[idx]["date"])
+        analog_wib = _wib(row["date"])
+        pattern = (
+            "Hujan lebat"
+            if row["precipitation"] >= 5.0
+            else ("Hujan sedang" if row["precipitation"] >= 2.0 else ("Gerimis" if row["precipitation"] > 0 else "Tidak hujan"))
+        )
+        analog = HistoricalAnalog(
+            id=f"FAISS-{rank:02d}",
+            rank=rank,
+            datetime=analog_wib,
+            patternAtWib=pattern_wib,
+            patternType=pattern,
+            distanceL2=round(float(dist), 2),
+            rainRateMmH=round(float(row["precipitation"]), 2),
+            peakWindKmh=round(float(row["wind_speed"]), 1),
+            tempCelsius=round(float(row["temperature"]), 1),
+            humidityPercent=round(float(row["relative_humidity"]), 1),
+            pressureHpa=round(float(row["surface_pressure"]), 1),
+            isWithinThreshold=is_close,
+            outcomeSummary=(
+                ("" if is_close else "Analog jauh (di luar p95 data latih). ")
+                + f"Pola cuaca {pattern_wib} mirip. Satu jam kemudian: {pattern.lower()}, "
+                f"angin {row['wind_speed']:.1f} km/jam, kelembapan {row['relative_humidity']:.1f}%."
+            ),
+        )
+        analogs.append(analog)
 
     # 5. Build TimelineFrame
     frame = TimelineFrame(

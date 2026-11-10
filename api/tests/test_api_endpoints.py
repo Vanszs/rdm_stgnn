@@ -120,3 +120,54 @@ async def test_dashboard_live_latency_under_two_seconds():
         assert resp.status_code == 200
         assert latency < 2.0, f"Latency {latency:.3f}s exceeded 2.0s limit"
 
+
+
+# --- FAISS analog selection: distance flag, distinct events, k cap ---
+
+class _FakeIndex:
+    def __init__(self, idxs, dists):
+        import numpy as np
+
+        self._idxs = np.asarray(idxs, dtype=np.int64)
+        self._dists = np.asarray(dists, dtype=np.float32)
+
+    def search(self, _query, k):
+        n = min(k, len(self._idxs))
+        return self._dists[:n].reshape(1, -1), self._idxs[:n].reshape(1, -1)
+
+
+def _catalog(hours: int):
+    import pandas as pd
+
+    return pd.DataFrame({"date": pd.date_range("2015-01-01", periods=hours, freq="h")})
+
+
+def test_analogs_collapse_consecutive_hours_to_one_event():
+    import numpy as np
+
+    from api.services.inference_service import _select_analogs
+
+    index = _FakeIndex(idxs=[0, 1, 2, 30], dists=[0.1, 0.1, 0.1, 0.2])
+    picked = _select_analogs(index, _catalog(48), np.zeros((1, 10)), k=3, max_distance=1e9)
+    assert [i for i, _, _ in picked] == [0, 30], picked
+
+
+def test_analogs_flag_far_matches_instead_of_dropping():
+    import numpy as np
+
+    from api.services.inference_service import _select_analogs
+
+    index = _FakeIndex(idxs=[0, 30], dists=[0.5, 9.0])
+    picked = _select_analogs(index, _catalog(48), np.zeros((1, 10)), k=3, max_distance=1.0)
+    assert [i for i, _, _ in picked] == [0, 30], picked
+    assert [c for _, _, c in picked] == [True, False], picked
+
+
+def test_analogs_cap_at_k_and_skip_invalid_indices():
+    import numpy as np
+
+    from api.services.inference_service import _select_analogs
+
+    index = _FakeIndex(idxs=[-1, 0, 30, 60, 90], dists=[0.1, 0.1, 0.1, 0.1, 0.1])
+    picked = _select_analogs(index, _catalog(200), np.zeros((1, 10)), k=2, max_distance=1e9)
+    assert [i for i, _, _ in picked] == [0, 30], picked

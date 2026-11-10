@@ -145,6 +145,13 @@ def _build_precomputed_retrieval(
         raise ValueError("Retrieval data is empty. Cannot precompute retrieval contexts.")
     if strict_past and query_context_indices is None:
         raise ValueError("query_context_indices is required when strict_past=True")
+    if query_context_indices is not None:
+        q_idx_all = np.asarray(query_context_indices)
+        if q_idx_all.size > 1 and not np.all(np.diff(q_idx_all) > 0):
+            raise ValueError(
+                "query_context_indices must be strictly increasing: strict_past relies on "
+                "positional time order, so unsorted windows would leak future outcomes."
+            )
 
     # Wide candidate pool is needed when filtering self/future neighbors.
     search_k = min(total_refs, max(k, k * max(1, int(search_extra_factor))))
@@ -155,7 +162,9 @@ def _build_precomputed_retrieval(
             end = min(start + chunk_size, n)
             query = contexts[start:end]
             _, indices = index.search(query, k)
-            indices = np.clip(indices, 0, total_refs - 1)
+            valid = indices >= 0
+            if not valid.all():
+                raise RuntimeError("FAISS returned invalid indices despite k <= n_total")
             chunk = data[indices]
             chunks.append(torch.tensor(chunk, dtype=torch.float32))
         retrieved = torch.cat(chunks, dim=0)
@@ -188,7 +197,10 @@ def _build_precomputed_retrieval(
             continue
 
         if len(filtered) < k:
-            filtered.extend([filtered[-1]] * (k - len(filtered)))
+            chosen = np.zeros((k, data_dim), dtype=np.float32)
+            chosen[: len(filtered)] = data[np.array(filtered, dtype=np.int64)]
+            rows.append(torch.tensor(chosen, dtype=torch.float32))
+            continue
         chosen = np.array(filtered[:k], dtype=np.int64)
         rows.append(torch.tensor(data[chosen], dtype=torch.float32))
 

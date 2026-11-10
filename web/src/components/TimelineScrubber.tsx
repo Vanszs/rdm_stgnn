@@ -6,6 +6,7 @@ interface TimelineScrubberProps {
   validAtWib: string;
   dataStatus: string;
   isEra5: boolean;
+  isSample?: boolean;
 }
 
 /** Compact one-line forecast bar: data hour -> target hour -> source. */
@@ -14,6 +15,7 @@ const TimelineScrubberComponent: React.FC<TimelineScrubberProps> = ({
   validAtWib,
   dataStatus,
   isEra5,
+  isSample,
 }) => {
   return (
     <div
@@ -37,7 +39,7 @@ const TimelineScrubberComponent: React.FC<TimelineScrubberProps> = ({
 
       <div className="ml-auto flex items-center gap-1.5" title={dataStatus}>
         <span className={`w-2 h-2 rounded-full ${isEra5 ? 'bg-[#1f6056]' : 'bg-[#a46b13]'}`} />
-        <span className="text-[10px] font-mono-data text-[#849495]">{isEra5 ? 'ERA5 · 7 hari lalu' : 'Arsip data uji'}</span>
+        <span className="text-[10px] font-mono-data text-[#849495]">{isEra5 ? 'ERA5 · 7 hari lalu' : isSample ? 'Contoh data' : 'Arsip data uji'}</span>
       </div>
     </div>
   );

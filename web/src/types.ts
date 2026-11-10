@@ -72,16 +72,17 @@ export interface ModelMetrics {
 
 export interface HistoricalAnalog {
   id: string;
-  rank?: number;
+  rank?: number | null;
   datetime: string;
-  patternAtWib?: string;
+  patternAtWib?: string | null;
   patternType: string;
-  distanceL2?: number;
-  rainRateMmH?: number;
+  distanceL2?: number | null;
+  rainRateMmH?: number | null;
   peakWindKmh: number;
-  tempCelsius?: number;
-  humidityPercent?: number;
-  pressureHpa?: number;
+  tempCelsius?: number | null;
+  humidityPercent?: number | null;
+  pressureHpa?: number | null;
+  isWithinThreshold?: boolean;
   outcomeSummary: string;
 }
 

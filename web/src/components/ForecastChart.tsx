@@ -122,7 +122,7 @@ const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data
 
         <div className="absolute top-0 bottom-0 w-0.5" style={{ left: `${pct(data.p50)}%`, background: accent }} />
 
-        {data.observedNow !== undefined && (
+        {data.observedNow != null && (
           <>
             <div className="absolute top-0 bottom-0 w-px bg-[#fed639]" style={{ left: `${pct(data.observedNow)}%` }} />
             <div className="absolute -top-1 w-2 h-2 rotate-45 bg-[#fed639] border border-[#070d18]" style={{ left: `calc(${pct(data.observedNow)}% - 4px)` }} />
@@ -132,7 +132,7 @@ const NowcastRow: React.FC<NowcastRowProps> = ({ label, icon: Icon, accent, data
 
       <div className="flex justify-between text-[9px] font-mono-data text-[#849495] mt-1">
         <span>{min.toFixed(1)}</span>
-        <span>{data.observedNow !== undefined ? `Sekarang: ${data.observedNow.toFixed(1)}` : `${data.samples.length} kemungkinan`}</span>
+        <span>{data.observedNow != null ? `Sekarang: ${data.observedNow.toFixed(1)}` : `${data.samples.length} kemungkinan`}</span>
         <span>{max.toFixed(1)}</span>
       </div>
     </div>
