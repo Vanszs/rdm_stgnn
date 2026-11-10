@@ -10,12 +10,14 @@ selalu sinkron dengan angka. Metodologi (§1–§4), baseline RDM-STGNN, dan ket
 
 ## 1. Mengapa CSDI
 
-Naskah §3.9.6 menetapkan CSDI (*Conditional Score-based Diffusion Models for Probabilistic Time Series Imputation*, Tashiro et al., **NeurIPS 2021 Oral**) sebagai pembanding utama. Justifikasi lengkap ada di `docs/JUSTIFIKASI_SKENARIO_DAN_CSDI.md` §6. Ringkasnya:
+Naskah §3.9.6 menetapkan CSDI (*Conditional Score-based Diffusion Models for Probabilistic Time Series Imputation*, Tashiro et al., **NeurIPS 2021**) sebagai pembanding utama. Justifikasi lengkap ada di `docs/JUSTIFIKASI_SKENARIO_DAN_CSDI.md` §6. Ringkasnya:
 
 - CSDI memproses tensor multivariat `[B, L, K]` — sama seperti RDM-STGNN, tanpa interpolasi ke citra radar.
 - Sama-sama berbasis DDPM/DDIM.
 - Menghasilkan ensemble stokastik, sehingga CRPS/Brier bisa dibandingkan langsung.
 - Paper acuan utama skripsi (RATD, Liu et al. NeurIPS 2024) memakai CSDI sebagai baseline difusi.
+- CSDI masih dipakai sebagai baseline pada literatur 2024–2025 (MTSCI, tBN-CSDI, TSI-Bench), dengan ±1.078 sitasi pada korpus Semantic Scholar.
+- Kelemahan terdokumentasi: sangat sensitif pada tingkat data hilang tinggi (TSI-Bench 2024: MAE ItalyAir 0,539 pada 10% → 4,492 pada 90%) dan komputasi lambat — sehingga perbandingan 1:1 perlu mencatat biaya evaluasi.
 
 Kode yang dipakai adalah **implementasi resmi** `github.com/ermongroup/CSDI` (MIT), divendor ke `core/csdi_baseline/`. Modifikasi yang dilakukan dicatat di §4.
 

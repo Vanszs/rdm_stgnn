@@ -4,7 +4,7 @@ Dokumen ini memuat landasan ilmiah komprehensif, berbasis bukti (*evidence-based
 1. Rasionalisasi metodologis pemilihan tepat 5 skenario penalaan hiperparameter RDM-STGNN.
 2. Asal-usul teoritis penamaan skenario (*Operational Deployment Profiling*).
 3. Landasan matematis dan literatur primer dari 6 parameter yang diuji serta justifikasi parameter yang dikunci.
-4. Justifikasi pemilihan model CSDI (*Conditional Score-based Diffusion Models for Time Series*, NeurIPS 2021 Oral) sebagai pembanding eksternal 1:1 (*head-to-head*).
+4. Justifikasi pemilihan model CSDI (*Conditional Score-based Diffusion Models for Time Series*, NeurIPS 2021) sebagai pembanding eksternal 1:1 (*head-to-head*).
 5. Rancangan tabel naskah Bab 3 dan panduan pembelaan sidang skripsi (*Defense Talking Points*).
 
 Seluruh nomor referensi pada dokumen ini terikat secara konsisten dengan daftar pustaka naskah (`scratch/pdf_references.md`).
@@ -122,13 +122,13 @@ Untuk menjaga validitas komparasi (*controlled experiment*), parameter berikut *
 
 ---
 
-## 6. Landasan Pemilihan Model Pembanding CSDI (NeurIPS 2021 Oral)
+## 6. Landasan Pemilihan Model Pembanding CSDI (NeurIPS 2021)
 
 ### A. Alasan Menolak Pembanding Model Radar 2D (DGMR / NowcastNet / DiffCast):
 Model generatif radar seperti **DGMR [6]** (*Nature 2021*) dan **NowcastNet [7]** (*Nature 2023*) dirancang khusus untuk memproses domain citra grid piksel 2D beresolusi tinggi ($256 \times 256$ piksel) menggunakan operasi konvolusi dan persamaan kontinuitas fluida. Data penelitian ini berbasis 5 stasiun sel diskret ERA5 pada lereng gunung. Memaksakan DGMR/NowcastNet mengharuskan interpolasi koordinat buatan menjadi citra semu, yang memunculkan artefak buatan dan merusak dinamika mikroklimat orografis lokal.
 
 ### B. Bukti CSDI Adalah 100% *Apple-to-Apple* (Head-to-Head):
-Model **CSDI** (*Conditional Score-based Diffusion Models for Probabilistic Time Series Imputation/Forecasting*, Yusuke Tashiro et al., **NeurIPS 2021 Oral Presentation**) merupakan standar emas pemodelan difusi deret waktu multivariat:
+Model **CSDI** (*Conditional Score-based Diffusion Models for Probabilistic Time Series Imputation/Forecasting*, Yusuke Tashiro et al., **NeurIPS 2021**) merupakan standar emas pemodelan difusi deret waktu multivariat:
 1. **Format Input Identik:** Mengolah tensor multivariat $[B, L, K]$ dengan panjang riwayat $L=6$ jam dan fitur multivariat $K = 5\text{ node} \times 9\text{ variabel} = 45\text{ kanal}$, tanpa interpolasi buatan.
 2. **Paradigma Identik:** Sama-sama berbasis *Conditional Denoising Diffusion Probabilistic Models* (DDPM/DDIM) dengan estimasi skor derau bertingkat.
 3. **Protokol Inferensi Identik:** Menghasilkan 30 anggota ensemble stokastik ke horizon $t+1$ jam di node target `MAIN`.
