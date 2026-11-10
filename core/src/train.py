@@ -276,27 +276,15 @@ def _calibrate_wet_probability_threshold(
 
 
 def _resolve_feature_cols(precip_mode: str = "both") -> list:
+    """Feature list for training: 8 base features + current precipitation.
+
+    The extra precipitation column keeps the model at 10 inputs; dropping it
+    (`precip_mode="current"`) raised RMSE 13% and CRPS 19% in ablation, so the
+    single supported configuration is the one the thesis reports.
     """
-    Feature list for training.
-
-    precip_mode controls how the current-hour precipitation enters the features.
-    The window row at t-1 is what the model reads, so a lag-1 column there holds
-    precipitation(t-2) -- one hour staler than every other variable. Options:
-
-      "none"    9 features, historical default (precipitation_lag1 only -> t-2)
-      "both"    10 features, lag-1 kept and raw precipitation appended
-      "current" 9 features, lag-1 replaced by raw precipitation     -> t-1
-
-    "current" is what the thesis text describes ("curah hujan satu jam
-    sebelumnya") while keeping the feature count at 9. See docs/LAG1_FIX.md.
-    """
-    if precip_mode not in ("none", "both", "current"):
-        raise ValueError(f"precip_mode must be none|both|current, got {precip_mode!r}")
-    cols = [c for c in FINAL_FEATURE_COLS if c != "precipitation_lag1"] \
-        if precip_mode == "current" else list(FINAL_FEATURE_COLS)
-    if precip_mode in ("both", "current"):
-        cols.append("precipitation")
-    return cols
+    if precip_mode != "both":
+        raise ValueError(f"only precip_mode='both' is supported, got {precip_mode!r}")
+    return list(FINAL_FEATURE_COLS) + ["precipitation"]
 
 
 def train_pipeline(

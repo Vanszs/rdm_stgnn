@@ -171,3 +171,20 @@ def test_analogs_cap_at_k_and_skip_invalid_indices():
     index = _FakeIndex(idxs=[-1, 0, 30, 60, 90], dists=[0.1, 0.1, 0.1, 0.1, 0.1])
     picked = _select_analogs(index, _catalog(200), np.zeros((1, 10)), k=2, max_distance=1e9)
     assert [i for i, _, _ in picked] == [0, 30], picked
+
+
+@pytest.mark.asyncio
+async def test_live_snapshot_is_deterministic_within_the_hour():
+    """Seeding per observed hour means repeated calls return identical samples."""
+    import numpy as np
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        first = (await client.get("/api/v1/dashboard/live")).json()
+        second = (await client.get("/api/v1/dashboard/live")).json()
+
+    for var in ("precipitation", "wind_speed", "relative_humidity"):
+        a = np.asarray(first["nowcast"][var]["samples"], dtype=float)
+        b = np.asarray(second["nowcast"][var]["samples"], dtype=float)
+        assert np.array_equal(a, b), f"{var} samples differ between calls"
+    assert first["frame"]["timeWib"] == second["frame"]["timeWib"]
