@@ -96,18 +96,18 @@ mesin suspend) ≈ **5,1 jam** di RTX 3050 Laptop 4 GB. Kurva validasi turun mon
 
 | Metrik | CSDI | RDM-STGNN |
 |---|---:|---:|
-| RMSE | 0.5821 | 0.6641 |
+| RMSE | 0.5821 | 0.6445 |
 | MAE | 0.1920 | 0.2730 |
 | Korelasi Pearson (r) | 0.7252 | 0.6997 |
-| CRPS | 0.1393 | 0.1953 |
+| CRPS | 0.1393 | 0.2009 |
 | Brier Score (ambang 2mm) | 0.0257 | 0.0367 |
 | POD (ambang 2mm) | 0.4157 | 0.7282 |
 | FAR (ambang 2mm) | 0.3759 | 0.5723 |
-| CSI (ambang 2mm) | 0.3324 | 0.3688 |
+| CSI (ambang 2mm) | 0.3324 | 0.3731 |
 | Brier Score (ambang 5mm) | 0.0060 | 0.0074 |
 | POD (ambang 5mm) | 0.1621 | 0.0870 |
 | FAR (ambang 5mm) | 0.4058 | 0.7215 |
-| CSI (ambang 5mm) | 0.1459 | 0.0710 |
+| CSI (ambang 5mm) | 0.1459 | 0.1144 |
 | Brier Score (ambang 10mm) | 0.0002 | 0.0003 |
 | POD (ambang 10mm) | 0.1429 | 0.0000 |
 | FAR (ambang 10mm) | 0.0000 | 1.0000 |

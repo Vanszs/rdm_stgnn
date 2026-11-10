@@ -1,0 +1,13 @@
+scenario,variable,rmse,mae,correlation,crps,main_node_name,graph_topology,target_node_policy,context_policy,model_mode
+diff_only,precipitation,0.6478307843208313,0.27406975626945496,0.6815407456598418,0.20363195194244163,MAIN,star,main_node_only,main_node_context,era5
+diff_only,wind_speed,1.1163305044174194,0.8589855432510376,0.8422266440072643,0.6121295198407072,MAIN,star,main_node_only,main_node_context,era5
+diff_only,relative_humidity,4.312718868255615,2.7729334831237793,0.9430467688906073,2.1459111787041243,MAIN,star,main_node_only,main_node_context,era5
+diff_retrieval,precipitation,0.6533721089363098,0.278178870677948,0.6770485734534749,0.2007078350633034,MAIN,star,main_node_only,main_node_context,era5
+diff_retrieval,wind_speed,1.1259633302688599,0.8664448261260986,0.8438382204014099,0.6077836104392513,MAIN,star,main_node_only,main_node_context,era5
+diff_retrieval,relative_humidity,4.355106830596924,2.7881217002868652,0.9416655983866491,2.067990866616987,MAIN,star,main_node_only,main_node_context,era5
+diff_gnn,precipitation,0.6468502283096313,0.280902236700058,0.7072942125883831,0.2059338853466807,MAIN,star,main_node_only,main_node_context,era5
+diff_gnn,wind_speed,0.9742201566696167,0.7497712969779968,0.8771926317053931,0.5286007258218982,MAIN,star,main_node_only,main_node_context,era5
+diff_gnn,relative_humidity,3.028701066970825,2.1139140129089355,0.9729236726608329,1.556596261868894,MAIN,star,main_node_only,main_node_context,era5
+full_model,precipitation,0.6444581151008606,0.28092050552368164,0.7076750895401743,0.20094200696927653,MAIN,star,main_node_only,main_node_context,era5
+full_model,wind_speed,1.0018724203109741,0.7668285965919495,0.8759990615784632,0.5341729933708614,MAIN,star,main_node_only,main_node_context,era5
+full_model,relative_humidity,2.971409559249878,2.0580828189849854,0.9726974008150343,1.4571482725843883,MAIN,star,main_node_only,main_node_context,era5

@@ -32,18 +32,18 @@ Perbedaan yang tersisa adalah **arsitektur**, bukan protokol. Itu memang objek p
 
 | Metrik | CSDI | RDM-STGNN | Menang |
 |---|---:|---:|---|
-| RMSE | 0,5821 | 0,6641 | CSDI |
+| RMSE | 0,5821 | 0,6445 | CSDI |
 | MAE | 0,1920 | 0,2730 | CSDI |
 | Korelasi | 0,7252 | 0,6997 | CSDI |
-| CRPS | 0,1393 | 0,1953 | CSDI |
+| CRPS | 0,1393 | 0,2009 | CSDI |
 | Brier 2 mm | 0,0257 | 0,0367 | CSDI |
 | POD 2 mm | 0,4157 | 0,7282 | RDM |
 | FAR 2 mm | 0,3759 | 0,5723 | CSDI |
-| CSI 2 mm | 0,3324 | 0,3688 | RDM |
+| CSI 2 mm | 0,3324 | 0,3731 | RDM |
 | Brier 5 mm | 0,0060 | 0,0074 | CSDI |
 | POD 5 mm | 0,1621 | 0,0870 | CSDI |
 | FAR 5 mm | 0,4058 | 0,7215 | CSDI |
-| CSI 5 mm | 0,1459 | 0,0710 | CSDI |
+| CSI 5 mm | 0,1459 | 0,1144 | CSDI |
 | Brier 10 mm | 0,0002 | 0,0003 | CSDI* |
 | POD 10 mm | 0,1429 | 0,0000 | CSDI* |
 | FAR 10 mm | 0,0000 | 1,0000 | CSDI* |
@@ -82,7 +82,7 @@ Perbedaan yang tersisa adalah **arsitektur**, bukan protokol. Itu memang objek p
 
 ## 5. Kontribusi RDM-STGNN
 
-- Unggul **CSI 2 mm** (0,3688 vs 0,3324) dan POD 2 mm (0,7282 vs 0,4157).
+- Unggul **CSI 2 mm** (0,3731 vs 0,3324) dan POD 2 mm (0,7282 vs 0,4157).
 - Namun FAR 2 mm lebih buruk (0,5723 vs 0,3759) — lebih banyak alarm palsu, bukan deteksi lebih baik.
 - Inferensi jauh lebih ringan (orde milidetik per sampel vs detik).
 - Memberi bukti kuantitatif bahwa retrieval dan graf belum memberi nilai tambah pada konfigurasi ini — temuan yang berguna, bukan kegagalan.
@@ -167,7 +167,7 @@ Beri denoiser akses jendela penuh, ambil embedding titik puncak (bukan rata-rata
 
 ## 11. Kalimat siap pakai untuk naskah
 
-> "Pada protokol 1:1 dengan 35.058 window uji, M=30, dan DDIM 20 langkah, CSDI unggul pada seluruh metrik akurasi dan kalibrasi serta pada ambang 5 mm. RDM-STGNN hanya unggul pada CSI 2 mm (0,3688 vs 0,3324), dengan FAR yang lebih tinggi. Tidak ditemukan kebocoran data; perbedaan hasil disebabkan oleh akses informasi dan supervisi arsitektur, bukan oleh perbedaan protokol."
+> "Pada protokol 1:1 dengan 35.058 window uji, M=30, dan DDIM 20 langkah, CSDI unggul pada seluruh metrik akurasi dan kalibrasi serta pada ambang 5 mm. RDM-STGNN hanya unggul pada CSI 2 mm (0,3731 vs 0,3324), dengan FAR yang lebih tinggi. Tidak ditemukan kebocoran data; perbedaan hasil disebabkan oleh akses informasi dan supervisi arsitektur, bukan oleh perbedaan protokol."
 
 ## 12. Kecepatan training dan evaluasi (angka terukur)
 

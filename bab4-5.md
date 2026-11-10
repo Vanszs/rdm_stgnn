@@ -40,10 +40,10 @@ Evaluasi *head-to-head* dilakukan secara ketat dan setara (*apple-to-apple*) pad
 ### Tabel 4.2 Evaluasi Komparasi Kinerja Lengkap CSDI Baseline vs RDM-STGNN Optimal
 | Variabel Target | Metrik Evaluasi | Baseline CSDI | RDM-STGNN (Skenario 3) | Model Unggul | Selisih / Analisis Fisis |
 |:---|:---|---:|---:|:---:|:---|
-| **Presipitasi** | RMSE (mm/jam) $\downarrow$ | **0,585797** | 0,662000 | CSDI | CSDI lebih rendah 11,5% |
-| | MAE (mm/jam) $\downarrow$ | **0,192588** | 0,272669 | CSDI | CSDI lebih rendah 29,4% |
-| | Korelasi Pearson ($r$) $\uparrow$ | **0,721180** | 0,700823 | CSDI | Selisih marjinal (keduanya kuat $>0{,}70$) |
-| | CRPS $\downarrow$ | **0,139844** | 0,194964 | CSDI | CSDI lebih rendah 28,3% |
+| **Presipitasi** | RMSE (mm/jam) $\downarrow$ | **0,582088** | 0,644458 | CSDI | CSDI lebih rendah 9,7% |
+| | MAE (mm/jam) $\downarrow$ | **0,192002** | 0,280921 | CSDI | CSDI lebih rendah 31,7% |
+| | Korelasi Pearson ($r$) $\uparrow$ | **0,721180** | 0,707675 | CSDI | Selisih marjinal (keduanya kuat $>0{,}70$) |
+| | CRPS $\downarrow$ | **0,139296** | 0,200942 | CSDI | CSDI lebih rendah 30,7% |
 | | Brier Score (ambang 2 mm) $\downarrow$ | **0,025199** | 0,036802 | CSDI | CSDI lebih rendah |
 | | **POD (ambang 2 mm)** $\uparrow$ | 0,425926 | **0,735043** | **RDM-STGNN** | **RDM unggul telak +72,6% (tangkap 73,5% event)** |
 | | FAR (ambang 2 mm) $\downarrow$ | **0,407334** | 0,593541 | CSDI | CSDI alarm palsu lebih rendah |

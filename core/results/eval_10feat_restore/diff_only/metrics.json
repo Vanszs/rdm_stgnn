@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "main_node_name": "MAIN",
+    "main_node_identifier": [
+      -6.75,
+      107.0
+    ],
+    "node_order": [
+      "MAIN",
+      "UP",
+      "DOWN",
+      "LEFT",
+      "RIGHT"
+    ],
+    "graph_topology": "star",
+    "target_node_policy": "main_node_only",
+    "context_policy": "main_node_context",
+    "model_mode": "era5",
+    "data_path": "/home/vanszs/Documents/Skripsi_Bevan/core/data/raw/pangrango_era5_5node_2005_2025.parquet",
+    "eval_step": 1,
+    "max_eval_samples": 0,
+    "samples_per_scenario": 35058,
+    "num_ensemble": 30,
+    "seq_len": 6,
+    "seed": 1,
+    "crps_estimator": "fair_unbiased",
+    "rain_specialization_enabled": true,
+    "rain_occurrence_threshold_mm": 0.1,
+    "rain_probability_threshold": 0.6000000238418579,
+    "sample_batch_size": 256
+  },
+  "metrics": {
+    "precipitation": {
+      "rmse": 0.6478307843208313,
+      "mae": 0.27406975626945496,
+      "correlation": 0.6815407456598418,
+      "crps": 0.20363195194244163,
+      "brier_2mm": 0.03513840556284507,
+      "pod_2mm": 0.6479250334672021,
+      "far_2mm": 0.5653345307588684,
+      "csi_2mm": 0.35161641845259717,
+      "brier_5mm": 0.006054252952250557,
+      "pod_5mm": 0.09486166007905138,
+      "far_5mm": 0.22580645161290322,
+      "csi_5mm": 0.09230769230769231,
+      "brier_10mm": 0.0001772935009286199,
+      "pod_10mm": 0.14285714285714285,
+      "far_10mm": 0.0,
+      "csi_10mm": 0.14285714285714285
+    },
+    "wind_speed": {
+      "rmse": 1.1163305044174194,
+      "mae": 0.8589855432510376,
+      "correlation": 0.8422266440072643,
+      "crps": 0.6121295198407072
+    },
+    "relative_humidity": {
+      "rmse": 4.312718868255615,
+      "mae": 2.7729334831237793,
+      "correlation": 0.9430467688906073,
+      "crps": 2.1459111787041243
+    }
+  }
+}
