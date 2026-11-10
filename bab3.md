@@ -209,7 +209,7 @@ Sebagai ilustrasi sebelum tahap preprocessing dilakukan, cuaca pada timestamp aw
 
 Setelah seluruh rangkaian tahap preprocessing (harmonisasi nama variabel, pengurutan kronologis, pembentukan lag, dan transformasi curah hujan) selesai dijalankan, catatan tersebut disiapkan menjadi data masukan terstruktur yang siap dibagi ke dalam partisi temporal. Pada akhir Subbab 3.3, nama variabel telah diharmonisasi (`temperature`, `wind_speed`, dsb.), fitur `precipitation_lag1` telah terisi nilai satu jam sebelumnya, dan nilai target curah hujan telah diubah ke skala $\log(1+y)$. Pembagian dataset ke partisi temporal dan proses normalisasi Z-score dijelaskan pada Subbab 3.4.
 
-Sebelum diproses, setiap catatan harus memiliki timestamp UTC, ID node, variabel meteorologis, elevasi, dan curah hujan. Urutan node tetap digunakan, yaitu `[MAIN, UP, DOWN, LEFT, RIGHT]`. Dataset yang tidak memiliki kolom wajib atau tidak memiliki nilai yang dapat digunakan pada kolom fitur yang diperlukan tidak diteruskan ke tahap berikutnya. Sebagai contoh, catatan yang memiliki timestamp, ID node, sembilan fitur, elevasi, dan curah hujan dapat diteruskan, sedangkan catatan tanpa timestamp atau ID node dihentikan pada tahap pemeriksaan. Dengan demikian, keluaran Subbab 3.3.1 adalah dataset penelitian dengan struktur yang siap diharmonisasi namanya.
+Sebelum diproses, setiap catatan harus memiliki timestamp UTC, ID node, variabel meteorologis, elevasi, dan curah hujan. Urutan node tetap digunakan, yaitu `[MAIN, UP, DOWN, LEFT, RIGHT]`. Dataset yang tidak memiliki kolom wajib atau tidak memiliki nilai yang dapat digunakan pada kolom fitur yang diperlukan tidak diteruskan ke tahap berikutnya. Sebagai contoh, catatan yang memiliki timestamp, ID node, sepuluh fitur masukan (9 meteorologis + precipitation), elevasi, dan curah hujan dapat diteruskan, sedangkan catatan tanpa timestamp atau ID node dihentikan pada tahap pemeriksaan. Dengan demikian, keluaran Subbab 3.3.1 adalah dataset penelitian dengan struktur yang siap diharmonisasi namanya.
 
 ### 3.3.2 Harmonisasi Nama Variabel
 
@@ -427,11 +427,11 @@ Nilai fitur pada lima node juga dinormalisasi sebelum masuk ke graf. Untuk conto
 | `LEFT` | 0,632 | 1,106 | 3,296 | `⋯` | 0,471 |
 | `RIGHT` | 2,078 | 1,027 | 5,954 | `⋯` | -0,489 |
 
-Tabel 3.11 menunjukkan bahwa satu timestamp menghasilkan lima baris fitur yang kemudian disusun menjadi matriks lima node. Kolom yang ditampilkan merupakan contoh dari sembilan fitur input; tanda `⋯` menunjukkan fitur lain yang tidak ditampilkan pada tabel. Nilai tersebut digunakan sebagai masukan graf, sedangkan target tetap hanya diambil dari `MAIN` pada waktu prediksi.
+Tabel 3.11 menunjukkan bahwa satu timestamp menghasilkan lima baris fitur yang kemudian disusun menjadi matriks lima node. Kolom yang ditampilkan merupakan contoh dari sepuluh fitur masukan (9 meteorologis + precipitation) input; tanda `⋯` menunjukkan fitur lain yang tidak ditampilkan pada tabel. Nilai tersebut digunakan sebagai masukan graf, sedangkan target tetap hanya diambil dari `MAIN` pada waktu prediksi.
 
 ## 3.5 Pembentukan Fitur dan Representasi Graf
 
-Setelah preprocessing, pembagian temporal, dan normalisasi, data disusun sebagai masukan yang sesuai dengan arsitektur model. Pada tahap ini, sembilan fitur dari lima node dibentuk menjadi enam timestamp historis. Contoh susunan fitur setelah normalisasi telah ditunjukkan pada Tabel 3.11.
+Setelah preprocessing, pembagian temporal, dan normalisasi, data disusun sebagai masukan yang sesuai dengan arsitektur model. Pada tahap ini, sepuluh fitur masukan (9 meteorologis + precipitation) dari lima node dibentuk menjadi enam timestamp historis. Contoh susunan fitur setelah normalisasi telah ditunjukkan pada Tabel 3.11.
 
 ### 3.5.1 Fitur Masukan Model
 
@@ -477,15 +477,15 @@ Contoh jendela historis untuk target pukul 18.00 UTC ditunjukkan pada Tabel 3.13
 
 | Posisi waktu | Timestamp UTC | Isi data | Peran |
 |---|---|---|---|
-| `t−6` | 12.00 | `G_{t-6}`: 5 node × 9 fitur | Snapshot graf |
-| `t−5` | 13.00 | `G_{t-5}`: 5 node × 9 fitur | Snapshot graf |
-| `t−4` | 14.00 | `G_{t-4}`: 5 node × 9 fitur | Snapshot graf |
-| `t−3` | 15.00 | `G_{t-3}`: 5 node × 9 fitur | Snapshot graf |
-| `t−2` | 16.00 | `G_{t-2}`: 5 node × 9 fitur | Snapshot graf |
-| `t−1` | 17.00 | `G_{t-1}`: 5 node × 9 fitur | Snapshot graf dan konteks `MAIN` |
+| `t−6` | 12.00 | `G_{t-6}`: 5 node × 10 fitur | Snapshot graf |
+| `t−5` | 13.00 | `G_{t-5}`: 5 node × 10 fitur | Snapshot graf |
+| `t−4` | 14.00 | `G_{t-4}`: 5 node × 10 fitur | Snapshot graf |
+| `t−3` | 15.00 | `G_{t-3}`: 5 node × 10 fitur | Snapshot graf |
+| `t−2` | 16.00 | `G_{t-2}`: 5 node × 10 fitur | Snapshot graf |
+| `t−1` | 17.00 | `G_{t-1}`: 5 node × 10 fitur | Snapshot graf dan konteks `MAIN` |
 | `t` | 18.00 | 3 target dari `MAIN` | Target prediksi, bukan masukan |
 
-Enam baris pertama pada Tabel 3.13 digunakan sebagai masukan model. Baris pada waktu `t` tidak dimasukkan ke dalam urutan graf karena berisi nilai yang ingin diprediksi. Setiap snapshot memiliki lima node dan sembilan fitur, sedangkan konteks tambahan hanya mengambil fitur `MAIN` pada `t−1`. Dengan demikian, urutan waktu, bentuk data, dan posisi target dapat dibaca secara langsung.
+Enam baris pertama pada Tabel 3.13 digunakan sebagai masukan model. Baris pada waktu `t` tidak dimasukkan ke dalam urutan graf karena berisi nilai yang ingin diprediksi. Setiap snapshot memiliki lima node dan sepuluh fitur masukan (9 meteorologis + precipitation), sedangkan konteks tambahan hanya mengambil fitur `MAIN` pada `t−1`. Dengan demikian, urutan waktu, bentuk data, dan posisi target dapat dibaca secara langsung.
 
 ### 3.5.3 Topologi Graf Lima Node
 
@@ -524,7 +524,7 @@ Pada tahap pembentukan graf, informasi spasial utama berasal dari topologi binta
 Gambar 3.7 dibaca dari kiri ke kanan dengan rincian tujuh tahapan pemrosesan sebagai berikut:
 
 1. **Input Sequence**
-   Lapisan masukan menerima urutan enam *snapshot* graf historis $\mathcal{G}_t = (G_{t-6}, G_{t-5}, \dots, G_{t-1})$ sepanjang jendela waktu $t-6$ hingga $t-1$. Setiap *snapshot* graf pada langkah waktu $\tau \in \{t-6, \dots, t-1\}$ didefinisikan sebagai $G_\tau = (\mathcal{V}, \mathcal{E}, \mathbf{X}_\tau, \mathbf{E})$, di mana $\mathcal{V} = \{\text{MAIN, UP, DOWN, LEFT, RIGHT}\}$ merupakan himpunan lima node pemantauan ($|\mathcal{V}| = 5$), $\mathcal{E}$ adalah himpunan 8 *directed edges* berarah dua arah antara `MAIN` dan empat node lereng bertopologi bintang (*star topology*), $\mathbf{E} \in \mathbb{R}^{8 \times 1}$ adalah atribut jarak spasial statis antar-grid ($0{,}25^\circ$), dan $\mathbf{X}_\tau \in \mathbb{R}^{5 \times 9}$ merupakan matriks sembilan fitur cuaca ternormalisasi untuk kelima node. Matriks fitur pada waktu $\tau$ dirumuskan sebagai:
+   Lapisan masukan menerima urutan enam *snapshot* graf historis $\mathcal{G}_t = (G_{t-6}, G_{t-5}, \dots, G_{t-1})$ sepanjang jendela waktu $t-6$ hingga $t-1$. Setiap *snapshot* graf pada langkah waktu $\tau \in \{t-6, \dots, t-1\}$ didefinisikan sebagai $G_\tau = (\mathcal{V}, \mathcal{E}, \mathbf{X}_\tau, \mathbf{E})$, di mana $\mathcal{V} = \{\text{MAIN, UP, DOWN, LEFT, RIGHT}\}$ merupakan himpunan lima node pemantauan ($|\mathcal{V}| = 5$), $\mathcal{E}$ adalah himpunan 8 *directed edges* berarah dua arah antara `MAIN` dan empat node lereng bertopologi bintang (*star topology*), $\mathbf{E} \in \mathbb{R}^{8 \times 1}$ adalah atribut jarak spasial statis antar-grid ($0{,}25^\circ$), dan $\mathbf{X}_\tau \in \mathbb{R}^{5 \times 9}$ merupakan matriks sepuluh fitur masukan (9 meteorologis + precipitation) cuaca ternormalisasi untuk kelima node. Matriks fitur pada waktu $\tau$ dirumuskan sebagai:
    $$
    \mathbf{X}_\tau = \begin{bmatrix} \mathbf{x}_{\text{MAIN},\tau}^T \\ \mathbf{x}_{\text{UP},\tau}^T \\ \mathbf{x}_{\text{DOWN},\tau}^T \\ \mathbf{x}_{\text{LEFT},\tau}^T \\ \mathbf{x}_{\text{RIGHT},\tau}^T \end{bmatrix} \in \mathbb{R}^{5 \times 9}
    \tag{3.6}
@@ -640,7 +640,7 @@ Gambar 3.8 dibaca mengikuti 25 tahapan penomoran komponen terpadu dengan rincian
 3. **Context Input (3)**
    - **Fungsi**: Menyediakan kondisi meteorologis permukaan mutakhir yang diamati secara lokal di node `MAIN`.
    - **Masukan**: Nilai observasi lokal pada $t-1$.
-   - **Keluaran**: Vektor sembilan fitur ternormalisasi $\mathbf{x}_{\text{MAIN}, t-1} \in \mathbb{R}^9$.
+   - **Keluaran**: Vektor sepuluh fitur masukan (9 meteorologis + precipitation) ternormalisasi $\mathbf{x}_{\text{MAIN}, t-1} \in \mathbb{R}^9$.
    - **Rumus**:
      $$
      \mathbf{x}_{\text{MAIN}, t-1} = [T, RH, DP, SP, WS, WD, CC, P_{lag1}, Elev]^T \in \mathbb{R}^9
@@ -649,7 +649,7 @@ Gambar 3.8 dibaca mengikuti 25 tahapan penomoran komponen terpadu dengan rincian
    - *Contoh pemakaian data:* Vektor fitur ternormalisasi Z-score pada waktu $t-1$ bernilai $\mathbf{x}_{\text{MAIN}, t-1} = [-0{,}996, 0{,}986, -0{,}034, 0{,}120, 0{,}857, -0{,}420, 0{,}310, 0{,}000, 1{,}737]^T \in \mathbb{R}^9$.
 
 4. **Context MLP (4)**
-   - **Fungsi**: Memetakan vektor sembilan fitur lokal `MAIN` ke ruang representasi kondisi tersembunyi.
+   - **Fungsi**: Memetakan vektor sepuluh fitur masukan (9 meteorologis + precipitation) lokal `MAIN` ke ruang representasi kondisi tersembunyi.
    - **Masukan**: Vektor $\mathbf{x}_{\text{MAIN}, t-1} \in \mathbb{R}^9$.
    - **Keluaran**: Vektor kondisi lokal $\mathbf{h}_t^{\text{MAIN}} \in \mathbb{R}^{64}$.
    - **Rumus**:
@@ -965,7 +965,7 @@ Pelatihan menggunakan sampel dengan enam snapshot historis. Pada setiap sampel, 
 Bentuk satu sampel yang masuk ke proses pelatihan diringkas sebagai berikut:
 
 ```text
-Graph sequence : 6 timestamp × 5 node × 9 fitur
+Graph sequence : 6 timestamp × 5 node × 10 fitur
 Konteks        : 9 fitur MAIN pada t−1
 Retrieval      : 3 analog historis × 3 variabel target
 Target         : 3 variabel MAIN pada t

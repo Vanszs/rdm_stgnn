@@ -67,6 +67,10 @@ Evaluasi *head-to-head* dilakukan secara ketat dan setara (*apple-to-apple*) pad
 
 ---
 
+## 4.3 Catatan reproduktibilitas
+
+Angka dekomposisi dan metrik pada bab ini berasal dari satu run GPU dengan sampling stokastik (M=30, DDIM 20). Nilai dapat bergeser tipis (±0,2%) pada run ulang meskipun konfigurasi dan checkpoint identik; seluruh kesimpulan arah (CSDI unggul pada RMSE/CRPS, RDM unggul pada CSI 2 mm dan hujan lebat) tetap di luar rentang variasi tersebut.
+
 ## 4.3 Pembahasan Kritis & Fisis: Mengapa Terjadi Trade-off Kinerja?
 
 Perbandingan pada Tabel 4.2 memperlihatkan pemisahan kinerja (*trade-off*) yang nyata: **CSDI unggul pada metrik regresi kontinu (RMSE, MAE, CRPS), sedangkan RDM-STGNN unggul signifikan pada metrik deteksi kejadian hujan operasional (POD dan CSI $\ge 2$ mm).** Fenomena ini dianalisis melalui tiga landasan teoretis dan arsitektural:
