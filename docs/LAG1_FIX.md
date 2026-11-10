@@ -42,7 +42,7 @@ Pengujian dilakukan pada checkpoint terlatih 20 epoch dengan protokol penuh (35.
 
 | Metrik | Model 9-Fitur Lama (t−2) | **Model 10-Fitur Baru (t−1 & t−2)** | Baseline CSDI | Perubahan vs Model Lama |
 | :--- | :---:| :---:| :---:| :---:|
-| **RMSE Presipitasi (mm/h)** | 0,7927 | **0,6252** | 0,5858 | **Turun 21,1%** |
+| **RMSE Presipitasi (mm/h)** | 0,7927 | **0,6252** | 0,5821 | **Turun 21,1%** |
 | **MAE Presipitasi (mm/h)** | 0,3651 | **0,2568** | 0,1926 | **Turun 29,7%** |
 | **Korelasi Pearson ($r$)** | 0,6278 | **0,7015** | 0,7212 | **Naik +11,7%** |
 | **CRPS Presipitasi** | 0,2588 | **0,1843** | 0,1398 | **Turun 28,8%** |
@@ -61,3 +61,5 @@ Pengujian dilakukan pada checkpoint terlatih 20 epoch dengan protokol penuh (35.
 - Checkpoint model terlatih: `core/results/fix_lag1/model.pth`
 - Evaluasi metrik lengkap: `core/results/fix_lag1/eval/comparison/comparison_summary.json`
 - Laporan komparasi resmi: `docs/CSDI_COMPARISON.md` (Tabel 3.18)
+
+> **Catatan kanonik:** angka pada tabel ini adalah hasil eksperimen historis (sebelum retrain 10-fitur final). Metrik kanonik: `core/results/eval_10feat_restore/`.
