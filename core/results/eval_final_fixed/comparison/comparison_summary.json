@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "main_node_name": "MAIN",
+    "main_node_identifier": [
+      -6.75,
+      107.0
+    ],
+    "node_order": [
+      "MAIN",
+      "UP",
+      "DOWN",
+      "LEFT",
+      "RIGHT"
+    ],
+    "graph_topology": "star",
+    "target_node_policy": "main_node_only",
+    "context_policy": "main_node_context",
+    "model_mode": "era5",
+    "data_path": "/home/vanszs/Documents/Skripsi_Bevan/core/data/raw/pangrango_era5_5node_2005_2025.parquet",
+    "eval_step": 1,
+    "max_eval_samples": 0,
+    "samples_per_scenario": 35058,
+    "num_ensemble": 30,
+    "seq_len": 6,
+    "seed": 1,
+    "crps_estimator": "fair_unbiased",
+    "rain_specialization_enabled": true,
+    "rain_occurrence_threshold_mm": 0.1,
+    "rain_probability_threshold": 0.6499999761581421,
+    "sample_batch_size": 256
+  },
+  "results": {
+    "diff_only": {
+      "precipitation": {
+        "rmse": 0.6538155674934387,
+        "mae": 0.26513388752937317,
+        "correlation": 0.6757839823644212,
+        "crps": 0.19806700503900915,
+        "brier_2mm": 0.036144611152312676,
+        "pod_2mm": 0.6459170013386881,
+        "far_2mm": 0.5735749005744587,
+        "csi_2mm": 0.3456303724928367,
+        "brier_5mm": 0.006566673639239102,
+        "pod_5mm": 0.06719367588932806,
+        "far_5mm": 0.41379310344827586,
+        "csi_5mm": 0.06415094339622641,
+        "brier_10mm": 0.00024115592573576485,
+        "pod_10mm": 0.0,
+        "far_10mm": NaN,
+        "csi_10mm": 0.0
+      },
+      "wind_speed": {
+        "rmse": 1.1813050508499146,
+        "mae": 0.894326388835907,
+        "correlation": 0.8405210198165394,
+        "crps": 0.6313412710405157
+      },
+      "relative_humidity": {
+        "rmse": 4.320517539978027,
+        "mae": 2.7818355560302734,
+        "correlation": 0.9421951567199384,
+        "crps": 2.094358696164947
+      }
+    },
+    "diff_retrieval": {
+      "precipitation": {
+        "rmse": 0.6705064177513123,
+        "mae": 0.272877037525177,
+        "correlation": 0.6595285278155807,
+        "crps": 0.19880096691027063,
+        "brier_2mm": 0.03783720311103505,
+        "pod_2mm": 0.6265060240963856,
+        "far_2mm": 0.5962036238136325,
+        "csi_2mm": 0.325452016689847,
+        "brier_5mm": 0.006902434695520439,
+        "pod_5mm": 0.03557312252964427,
+        "far_5mm": 0.47058823529411764,
+        "csi_5mm": 0.034482758620689655,
+        "brier_10mm": 0.00024026850742578964,
+        "pod_10mm": 0.0,
+        "far_10mm": NaN,
+        "csi_10mm": 0.0
+      },
+      "wind_speed": {
+        "rmse": 1.1943433284759521,
+        "mae": 0.9041179418563843,
+        "correlation": 0.8369444633681504,
+        "crps": 0.6335159997835702
+      },
+      "relative_humidity": {
+        "rmse": 4.382269382476807,
+        "mae": 2.829376220703125,
+        "correlation": 0.9404288071629482,
+        "crps": 2.0719384559859892
+      }
+    },
+    "diff_gnn": {
+      "precipitation": {
+        "rmse": 0.6554145216941833,
+        "mae": 0.26893678307533264,
+        "correlation": 0.7091892278612036,
+        "crps": 0.19737477236833834,
+        "brier_2mm": 0.03592579915188165,
+        "pod_2mm": 0.7356091030789826,
+        "far_2mm": 0.5630218687872763,
+        "csi_2mm": 0.3776632302405498,
+        "brier_5mm": 0.006976122108759453,
+        "pod_5mm": 0.1422924901185771,
+        "far_5mm": 0.5662650602409639,
+        "csi_5mm": 0.12,
+        "brier_10mm": 0.0002763991100462091,
+        "pod_10mm": 0.0,
+        "far_10mm": 1.0,
+        "csi_10mm": 0.0
+      },
+      "wind_speed": {
+        "rmse": 0.9718301296234131,
+        "mae": 0.7398821711540222,
+        "correlation": 0.8820476039120116,
+        "crps": 0.5181464789641046
+      },
+      "relative_humidity": {
+        "rmse": 3.1247599124908447,
+        "mae": 2.233710527420044,
+        "correlation": 0.9721791175762993,
+        "crps": 1.611009816292675
+      }
+    },
+    "full_model": {
+      "precipitation": {
+        "rmse": 0.6640893816947937,
+        "mae": 0.27301815152168274,
+        "correlation": 0.6996901528154831,
+        "crps": 0.19534903966888878,
+        "brier_2mm": 0.03669487389151946,
+        "pod_2mm": 0.7282463186077643,
+        "far_2mm": 0.5723270440251572,
+        "csi_2mm": 0.3688135593220339,
+        "brier_5mm": 0.007372639625763022,
+        "pod_5mm": 0.08695652173913043,
+        "far_5mm": 0.7215189873417721,
+        "csi_5mm": 0.07096774193548387,
+        "brier_10mm": 0.00027734991537832547,
+        "pod_10mm": 0.0,
+        "far_10mm": 1.0,
+        "csi_10mm": 0.0
+      },
+      "wind_speed": {
+        "rmse": 0.9946054220199585,
+        "mae": 0.7575274705886841,
+        "correlation": 0.8784046123301043,
+        "crps": 0.5284149752905467
+      },
+      "relative_humidity": {
+        "rmse": 3.100162982940674,
+        "mae": 2.1882388591766357,
+        "correlation": 0.9701259359930314,
+        "crps": 1.524387156140154
+      }
+    }
+  }
+}
