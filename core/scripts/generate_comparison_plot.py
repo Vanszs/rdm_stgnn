@@ -51,7 +51,7 @@ def main():
 
     print("[2/4] Generating RDM-STGNN (Skenario 3) predictions...")
     data_path = "data/raw/pangrango_era5_5node_2005_2025.parquet"
-    ckpt_path = "results/tabel_3_17/sken_3_default_kontrol/model.pth"
+    ckpt_path = "results/canonical/tabel_3_17/sken_3_default_kontrol/model.pth"
     main_df, per_node_data, feature_cols, stats = load_test_data(data_path, ckpt_path)
 
     # Run inference for the exact matching 320 windows
@@ -171,7 +171,7 @@ def main():
 
     out_paths = [
         "../docs/bukti_highlight/komparasi_prediksi_stgnn_csdi_aktual.png",
-        "results/tabel_3_17/sken_3_default_kontrol/eval/plots/komparasi_csdi_vs_rdm_aktual.png"
+        "results/canonical/tabel_3_17/sken_3_default_kontrol/eval/plots/komparasi_csdi_vs_rdm_aktual.png"
     ]
 
     for p in out_paths:

@@ -6,7 +6,7 @@ Dokumen ini merangkum hasil evaluasi terbaru setelah perbaikan protokol, alasan 
 
 - Waktu: 3 November 2026.
 - Perangkat: RTX 3050 Laptop 4 GB, CUDA.
-- RDM-STGNN: 4 skenario ablasi, 35.058 window, M=30, DDIM 20, `eval_step=1`, output `core/results/eval_final_fixed/`.
+- RDM-STGNN: 4 skenario ablasi, 35.058 window, M=30, DDIM 20, `eval_step=1`, output `core/results/archive/2026-11-03_pra_retrain/eval_final_fixed/`.
 - CSDI: 1.096 shard (35.058 window), M=30, DDIM 20, checkpoint epoch 25.
 - Validasi: `verify_metrics.py` → **TRACEABLE** (setiap angka tabel dihitung ulang dari shard mentah).
 - Perbandingan: `compare.py` menolak tabel bila jumlah window tidak sama; kedua model 35.058.
@@ -122,10 +122,10 @@ python verify_metrics.py
 
 cd ../..
 python core/scripts/run_eval_final.py --scenarios all --eval-step 1 --num-ensemble 30 \
-  --sample-batch-size 256 --out-dir results/eval_final_fixed
+  --sample-batch-size 256 --out-dir results/archive/2026-11-03_pra_retrain/eval_final_fixed
 
 cd core/csdi_baseline
-python make_rdm_metrics.py --summary ../results/eval_final_fixed/comparison/comparison_summary.json
+python make_rdm_metrics.py --summary ../results/archive/2026-11-03_pra_retrain/eval_final_fixed/comparison/comparison_summary.json
 python compare.py
 ```
 
@@ -177,8 +177,8 @@ Semua angka di bawah berasal dari log/berkas hasil yang ada di repo, bukan perki
 
 | Tahap | CSDI | RDM-STGNN | Sumber bukti |
 |---|---|---|---|
-| Training | 30 epoch = **33.546 s (9 j 19 m)**, ≈1.118 s/epoch | 20 epoch, 239 batch/epoch; epoch ke-20 = **16 s**, epoch ke-10 = 13 s → ≈**4–5 menit** loop training | `core/csdi_baseline/logs/train.log` baris `epoch 30/30 ... 33546s`; `core/results/tabel_3_17/sken_3_default_kontrol/train.log` (tqdm `100%|239/239 [00:16 ... 14,38 it/s]`) |
-| Evaluasi penuh | **9,52 jam** untuk 35.058 window (1.096 shard × 32 window), median **34 s/shard** ≈ **1,06 s/window** | **65,0 s total** untuk 35.058 window × 30 anggota × DDIM 20 → **1,85 ms/window** | rentang mtime `core/csdi_baseline/eval_shards/` (10:19:02 → 19:50:06); `core/results/tabel_3_17/sken_3_default_kontrol/latency.json` |
+| Training | 30 epoch = **33.546 s (9 j 19 m)**, ≈1.118 s/epoch | 20 epoch, 239 batch/epoch; epoch ke-20 = **16 s**, epoch ke-10 = 13 s → ≈**4–5 menit** loop training | `core/csdi_baseline/logs/train.log` baris `epoch 30/30 ... 33546s`; `core/results/canonical/tabel_3_17/sken_3_default_kontrol/train.log` (tqdm `100%|239/239 [00:16 ... 14,38 it/s]`) |
+| Evaluasi penuh | **9,52 jam** untuk 35.058 window (1.096 shard × 32 window), median **34 s/shard** ≈ **1,06 s/window** | **65,0 s total** untuk 35.058 window × 30 anggota × DDIM 20 → **1,85 ms/window** | rentang mtime `core/csdi_baseline/eval_shards/` (10:19:02 → 19:50:06); `core/results/canonical/tabel_3_17/sken_3_default_kontrol/latency.json` |
 | Rasio | — | evaluasi ≈ **526× lebih cepat** (per window ≈573×); training ≈ **110× lebih cepat** | hitungan dari dua baris di atas |
 
 Catatan kejujuran angka:
@@ -212,4 +212,4 @@ Terlihat: CSDI biasnya sedikit negatif (cenderung *under-predict*), RDM biasnya 
 
 **Gambar 13.2** — Cuplikan 320 jam pertama split uji (01–13 Jan 2022) untuk tiga variabel, plus zoom episode hujan ekstrem 09–11 Jan 2022. Pita = P10–P90 dari 30 anggota. Angka pada anotasi dihitung dari data, bukan angka tetap: pada puncak 6,3 mm/jam, median RDM 3,5 dan CSDI 2,6 — keduanya *under-predict* puncak.
 
-Catatan verifikasi: RMSE presipitasi dihitung ulang dari run pembuat grafik = CSDI **0,5821** (persis sama dengan metrik tersimpan) dan RDM **0,6445** (metrik kanonik run retrain 10-fitur; `core/results/eval_10feat_restore/`).
+Catatan verifikasi: RMSE presipitasi dihitung ulang dari run pembuat grafik = CSDI **0,5821** (persis sama dengan metrik tersimpan) dan RDM **0,6445** (metrik kanonik run retrain 10-fitur; `core/results/canonical/head_to_head/`).

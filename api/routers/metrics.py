@@ -9,7 +9,7 @@ from api.schemas import MetricsSummary
 router = APIRouter(prefix="/api/v1/metrics", tags=["Evaluation Metrics"])
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DEFAULT_SUMMARY_PATH = "core/results/tabel_3_17/sken_3_default_kontrol/eval/comparison/comparison_summary.json"
+DEFAULT_SUMMARY_PATH = "core/results/canonical/tabel_3_17/sken_3_default_kontrol/eval/comparison/comparison_summary.json"
 
 
 def _resolve_summary_path() -> str:

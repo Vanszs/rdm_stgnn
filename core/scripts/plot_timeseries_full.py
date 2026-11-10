@@ -16,7 +16,7 @@ import matplotlib.dates as mdates
 from scripts.run_eval_final import load_test_data, run_diffusion_scenario
 
 DATA = "data/raw/pangrango_era5_5node_2005_2025.parquet"
-CKPT = "results/tabel_3_17/sken_3_default_kontrol/model.pth"
+CKPT = "results/canonical/tabel_3_17/sken_3_default_kontrol/model.pth"
 ROLL = 24 * 7
 
 
@@ -82,7 +82,7 @@ def main():
 
     for path in [
         "../docs/bukti_highlight/timeseries_penuh_csdi_vs_rdm.png",
-        "results/tabel_3_17/sken_3_default_kontrol/eval/plots/timeseries_penuh_csdi_vs_rdm.png",
+        "results/canonical/tabel_3_17/sken_3_default_kontrol/eval/plots/timeseries_penuh_csdi_vs_rdm.png",
     ]:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         fig.savefig(path, bbox_inches="tight")

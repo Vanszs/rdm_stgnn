@@ -1,12 +1,12 @@
 """
-Susun Tabel 3.17 dari hasil 5 skenario (core/results/tabel_3_17/sken_*).
+Susun Tabel 3.17 dari hasil 5 skenario (core/results/canonical/tabel_3_17/sken_*).
 
 Aturan pemilihan model optimal mengikuti naskah hal. 69 (§3.8.2):
   "Model yang menghasilkan CRPS terendah, CSI >= 5 mm/jam tertinggi, dan
    latensi <= 2 detik dinobatkan sebagai RDM-STGNN Optimal."
 
 Jalankan:  cd core && python scripts/collect_5scenarios.py
-Output:    core/results/tabel_3_17/summary.json  + tabel markdown ke stdout
+Output:    core/results/canonical/tabel_3_17/summary.json  + tabel markdown ke stdout
 """
 from __future__ import annotations
 

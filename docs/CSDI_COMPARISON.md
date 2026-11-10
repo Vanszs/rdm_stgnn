@@ -133,7 +133,7 @@ mesin suspend) ≈ **5,1 jam** di RTX 3050 Laptop 4 GB. Kurva validasi turun mon
 
 _aligned_test_set: True_
 _source CSDI: checkpoint epoch 25, sampler ddim, M=30, windows=35058_
-_source RDM-STGNN: results/eval_final_fixed/comparison/comparison_summary.json (eval_step 1)_
+_source RDM-STGNN: results/archive/2026-11-03_pra_retrain/eval_final_fixed/comparison/comparison_summary.json (eval_step 1)_
 <!-- TABEL_3_18_END -->
 
 ## 6. Reproduksi
@@ -155,7 +155,7 @@ python evaluate_csdi.py --nsample 30 --sampler ddim --ddim-steps 20 --batch-size
 
 # 5. regenerasi angka pembanding RDM-STGNN dari run pada test set yang SAMA
 python make_rdm_metrics.py \
-  --summary ../results/current_code_eval/comparison/comparison_summary.json
+  --summary ../results/archive/2026-11-03_pra_retrain/current_code_eval/comparison/comparison_summary.json
 
 # 6. gabungkan -> Tabel 3.18 (otomatis mengisi docs/CSDI_COMPARISON.md)
 python compare.py
@@ -197,7 +197,7 @@ Artefak:
 ## 7. Keterbatasan (eksplisit)
 
 1. **VRAM 4 GB.** `batch_size` dinaikkan 8→64 (bukan diturunkan) agar GPU tidak idle; `is_linear` True→False memakai `nn.TransformerEncoder` bawaan torch. Dampak: varian atensi berbeda dari jalur linear upstream, meski masih keluarga arsitektur CSDI yang sama. Ini harus disebut saat sidang.
-2. **Baseline RDM-STGNN memakai konfigurasi 10 fitur setara.** `rdm_stgnn_metrics.json` diproduksi dari `core/results/eval_10feat_restore/comparison/comparison_summary.json` — RDM-STGNN menyertakan fitur `precipitation` (hujan jam t−1) di samping `precipitation_lag1` (hujan jam t−2), sehingga kedua model sama-sama menerima 10 fitur per node pada jendela observasi. Dijalankan dengan `eval_step=1` pada split penuh (35.058 window), `M=30`, `DDIM=20`, seed 1, dan estimator CRPS fair-unbiased. Sebagai perbandingan historis: pada model 9 fitur lama tanpa `precipitation` t−1, RMSE hujan RDM adalah 0,7927 (tertinggal 26% dari CSDI 0,5821); penambahan fitur ini menurunkan RMSE hujan RDM ke 0,6252 (gap terpangkas menjadi hanya 6,3%).
+2. **Baseline RDM-STGNN memakai konfigurasi 10 fitur setara.** `rdm_stgnn_metrics.json` diproduksi dari `core/results/canonical/head_to_head/comparison/comparison_summary.json` — RDM-STGNN menyertakan fitur `precipitation` (hujan jam t−1) di samping `precipitation_lag1` (hujan jam t−2), sehingga kedua model sama-sama menerima 10 fitur per node pada jendela observasi. Dijalankan dengan `eval_step=1` pada split penuh (35.058 window), `M=30`, `DDIM=20`, seed 1, dan estimator CRPS fair-unbiased. Sebagai perbandingan historis: pada model 9 fitur lama tanpa `precipitation` t−1, RMSE hujan RDM adalah 0,7927 (tertinggal 26% dari CSDI 0,5821); penambahan fitur ini menurunkan RMSE hujan RDM ke 0,6252 (gap terpangkas menjadi hanya 6,3%).
 3. **`num_steps` 50 (training) vs 20 langkah (inferensi).** Naskah §3.9.6 menyebut DDIM 20 langkah; CSDI resmi melatih dengan 50 langkah beta schedule lalu menyampel lebih sedikit saat inferensi. Konfigurasi ini mengikuti paper aslinya.
 4. **Tidak ada tuning CSDI.** CSDI dilatih dengan konfigurasi wajar sekali jalan, tanpa grid search. Bila CSDI kalah, itu belum tentu batas atas kemampuannya. Sebaiknya disebut.
 5. **Ensemble precipitation sensitif terhadap derau fp16.** Denormalisasi `expm1` memperkuat beda floating-point kecil, sehingga anggota ensemble bisa bergeser ~beberapa mm dan CSI ambang 5 mm bergoyang beberapa desimal. RMSE/MAE/korelasi/CRPS stabil. Berlaku untuk kedua model, jadi arah peringkat tidak berubah.

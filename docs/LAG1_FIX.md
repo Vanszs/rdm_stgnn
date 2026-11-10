@@ -62,4 +62,4 @@ Pengujian dilakukan pada checkpoint terlatih 20 epoch dengan protokol penuh (35.
 - Evaluasi metrik lengkap: `core/results/fix_lag1/eval/comparison/comparison_summary.json`
 - Laporan komparasi resmi: `docs/CSDI_COMPARISON.md` (Tabel 3.18)
 
-> **Catatan kanonik:** angka pada tabel ini adalah hasil eksperimen historis (sebelum retrain 10-fitur final). Metrik kanonik: `core/results/eval_10feat_restore/`.
+> **Catatan kanonik:** angka pada tabel ini adalah hasil eksperimen historis (sebelum retrain 10-fitur final). Metrik kanonik: `core/results/canonical/head_to_head/`.

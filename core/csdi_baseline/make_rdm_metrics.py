@@ -6,7 +6,7 @@ this reads whatever run produced that set and records the provenance alongside
 the numbers. Point it at the current-code run:
 
     cd core/csdi_baseline
-    python make_rdm_metrics.py --summary ../results/current_code_eval/comparison/comparison_summary.json
+    python make_rdm_metrics.py --summary ../results/archive/2026-11-03_pra_retrain/current_code_eval/comparison/comparison_summary.json
 
 Legacy key names from older runs (wind_speed/humidity) are mapped to the thesis
 contract (wind_speed_10m / relative_humidity_2m) on the way in.

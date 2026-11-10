@@ -75,7 +75,7 @@ for spec in "${SCHEMES[@]}"; do
   read -r ID LR EPOCHS PATIENCE K DDIM ENS AUX LABEL <<< "$spec"
   selected "$ID" || continue
 
-  RUN_DIR="results/tabel_3_17/sken_${ID}_${LABEL}"
+  RUN_DIR="results/canonical/tabel_3_17/sken_${ID}_${LABEL}"
   CKPT="${RUN_DIR}/model.pth"
   LOG="${RUN_DIR}/train.log"
   mkdir -p "$RUN_DIR"
@@ -185,6 +185,6 @@ done
 
 echo
 echo "=================================================================="
-echo "SELESAI. Ringkasan per skenario ada di results/tabel_3_17/sken_*/"
+echo "SELESAI. Ringkasan per skenario ada di results/canonical/tabel_3_17/sken_*/"
 echo "Jalankan 'python scripts/collect_5scenarios.py' untuk menyusun Tabel 3.17."
 echo "=================================================================="
