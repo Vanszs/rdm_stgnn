@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Gagal bila repo memuat kontradiksi yang bisa ditunjuk. Jalankan dari root repo.
 set -euo pipefail
+cd "$(dirname "$0")/.."
 fail=0
 stale=$(grep -rlnE '0,6641|0,6620|0,1953|0,1950|0,5858|0,3688|0,0710' --include='*.md' . 2>/dev/null | grep -vE 'node_modules|scratch/|archive/' || true)
 if [ -n "$stale" ]; then echo "FAIL: angka lama di: $stale"; fail=1; fi
