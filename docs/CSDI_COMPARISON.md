@@ -94,6 +94,8 @@ Pada konfigurasi ini, full pipeline RDM-STGNN sekitar **31× lebih cepat** darip
 
 **Interpretasi.** Angka ini mengukur biaya implementasi wall-clock pada konfigurasi yang diuji, bukan efisiensi algoritmik yang dikontrol. Perbedaan langkah diffusion per batch (CSDI 50 langkah; RDM satu timestep acak), ukuran batch (64 vs 512), dan anggaran validasi merupakan bagian dari konfigurasi masing-masing. Angka evaluasi RDM bersifat konservatif karena fixed overhead pada subset ikut diskalakan.
 
+![Komparasi biaya full pipeline](bukti_highlight/komparasi_waktu_full.png)
+
 **Modifikasi kode vendored:** satu baris di `diff_models.py` membuat import `linear_attention_transformer` menjadi lazy (`try/except`), karena upstream mengimpornya tanpa syarat padahal hanya dipakai saat `is_linear=True`. Arsitektur tidak berubah.
 
 ## 5. Hasil — Tabel 3.18
