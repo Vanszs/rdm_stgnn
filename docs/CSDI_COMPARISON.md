@@ -69,7 +69,7 @@ Perubahan dari `config/base_forecasting.yaml` resmi, beserta alasannya:
 | `is_linear` | True | **False** | Pakai `nn.TransformerEncoder` bawaan torch. Varian linear adalah swap efisiensi untuk sekuens panjang (168 langkah di benchmark electricity; di sini hanya 7). Sekaligus menghilangkan satu-satunya dependency yang tidak tersedia (`linear_attention_transformer`) dan menghemat VRAM. |
 | `batch_size` | 8 | **64** | 4 GB VRAM (RTX 3050 Laptop). Di-benchmark: bs=64 → 1,04 GB puncak, bs=256 → OOM. |
 | `target_strategy` | `test` | **`all`** | Strategi `test` menyubsampel `num_sample_features` kanal per batch secara acak, yang akan **menjatuhkan channel target MAIN** yang wajib dievaluasi. |
-| **Sampler inferensi** | `impute()` DDPM 50 langkah, loop sampel serial | **`ddim_sampler.impute_ddim()` DDIM 20 langkah, sampel di-batch** | Dua alasan terpisah: (1) naskah §3.9.6 mewajibkan **DDIM 20 langkah untuk kedua model** — CSDI resmi memakai DDPM 50 langkah, jadi baseline resmi tidak memenuhi protokol naskah; (2) loop sampel resmi bersifat serial (30×50 = 1.500 forward pass per window, terukur 3,9 s/window → ~38 jam untuk 35.058 window), sehingga dimensi ensemble dilipat ke batch. **Klaim "batching ≡ loop" dan sifat DDIM keduanya diuji** di `test_ddim_equivalence.py`, bukan diasumsikan. |
+| **Sampler inferensi** | `impute()` DDPM 50 langkah, loop sampel serial | **`ddim_sampler.impute_ddim()` DDIM 20 langkah, sampel di-batch** | Dua alasan terpisah: (1) naskah §3.9.6 mewajibkan **DDIM 20 langkah untuk kedua model** — CSDI resmi memakai DDPM 50 langkah, jadi baseline resmi tidak memenuhi protokol naskah; (2) loop sampel resmi bersifat serial (30×50 = 1.500 forward pass per window), sehingga dimensi ensemble dilipat ke batch. Angka 3,9 s/window dari implementasi serial **tidak dipakai** sebagai pembanding kecepatan dengan RDM; **klaim "batching ≡ loop" dan sifat DDIM diuji** di `test_ddim_equivalence.py`, bukan diasumsikan. |
 | `layers`, `channels` | 4, 64 | 4, 64 | Tidak diubah — muat di VRAM. |
 | `num_steps` | 50 | 50 | Jadwal difusi training, sesuai paper. |
 | `featureemb` | 16 | 16 | Tidak diubah. |
@@ -79,6 +79,24 @@ Perubahan dari `config/base_forecasting.yaml` resmi, beserta alasannya:
 **Waktu latih nyata:** 30 epoch × **618 s** (median, di luar satu lonjakan akibat
 mesin suspend) ≈ **5,1 jam** di RTX 3050 Laptop 4 GB. Kurva validasi turun monoton:
 0,1533 (ep 1) → 0,1125 (ep 25, terbaik) → 0,1134 (ep 27).
+
+### Biaya full training dan full evaluation
+
+Pengukuran dilakukan pada RTX 3050 Laptop 4 GB dengan konfigurasi proyek: CSDI 30 epoch, RDM-STGNN 20 epoch, 30 anggota ensemble, dan DDIM 20 langkah.
+
+| Tahap | CSDI | RDM-STGNN |
+|---|---:|---:|
+| Full training | 5,1 jam (30 epoch) | 15,8 menit (20 epoch) |
+| Full evaluation, 35.058 window | ±6,9 jam | ±7,6 menit |
+| **Total** | **±12 jam** | **±23 menit** |
+
+Pada konfigurasi ini, full pipeline RDM-STGNN sekitar **31× lebih cepat** daripada CSDI.
+
+**Metodologi.** Waktu training CSDI diambil dari durasi 30 epoch yang tercatat. Waktu training RDM-STGNN dihitung dari 47,5 detik per epoch. Waktu evaluasi diskalakan dari pengukuran subset 2.000 window: CSDI ±714 ms/window dan RDM-STGNN ±13 ms/window, lalu dikalikan 35.058 window.
+
+**Interpretasi.** Angka ini mengukur biaya implementasi wall-clock pada konfigurasi yang diuji, bukan efisiensi algoritmik yang dikontrol. Perbedaan langkah diffusion per batch (CSDI 50 langkah; RDM satu timestep acak), ukuran batch (64 vs 512), dan anggaran validasi merupakan bagian dari konfigurasi masing-masing. Angka evaluasi RDM bersifat konservatif karena fixed overhead pada subset ikut diskalakan.
+
+![Komparasi biaya full pipeline](bukti_highlight/komparasi_waktu_full.png)
 
 **Modifikasi kode vendored:** satu baris di `diff_models.py` membuat import `linear_attention_transformer` menjadi lazy (`try/except`), karena upstream mengimpornya tanpa syarat padahal hanya dipakai saat `is_linear=True`. Arsitektur tidak berubah.
 
