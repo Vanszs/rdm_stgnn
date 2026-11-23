@@ -1,6 +1,6 @@
 {
   "model": "RDM-STGNN",
-  "source": "results/tabel_3_17/sken_3_default_kontrol/eval/comparison/comparison_summary.json",
+  "source": "results/canonical/head_to_head/comparison/comparison_summary.json",
   "scenario": "full_model",
   "metadata": {
     "samples_per_scenario": 35058,
@@ -8,38 +8,38 @@
     "eval_step": 1,
     "seed": 1,
     "crps": "fair_unbiased",
-    "rain_probability_threshold": 0.6499999761581421
+    "rain_probability_threshold": 0.6000000238418579
   },
   "metrics": {
     "precipitation": {
-      "rmse": 0.6619998812675476,
-      "mae": 0.2726685404777527,
-      "correlation": 0.7008225393090203,
-      "crps": 0.19496439377696545,
-      "brier_2mm": 0.03680158594329397,
-      "pod_2mm": 0.7350427350427351,
-      "far_2mm": 0.5935407640803466,
-      "csi_2mm": 0.3545173479903813,
-      "brier_5mm": 0.007035008652328522,
-      "pod_5mm": 0.11203319502074689,
-      "far_5mm": 0.6582278481012658,
-      "csi_5mm": 0.09215017064846416,
-      "brier_10mm": 0.00026857081281178493,
-      "pod_10mm": 0.0,
-      "far_10mm": 1.0,
-      "csi_10mm": 0.0
+      "rmse": 0.6444581151008606,
+      "mae": 0.28092050552368164,
+      "correlation": 0.7076750895401743,
+      "crps": 0.20094200696927653,
+      "brier_2mm": 0.03588599210197705,
+      "pod_2mm": 0.7182061579651942,
+      "far_2mm": 0.5629327902240326,
+      "csi_2mm": 0.3730876216968011,
+      "brier_5mm": 0.006120238842299427,
+      "pod_5mm": 0.1225296442687747,
+      "far_5mm": 0.3673469387755102,
+      "csi_5mm": 0.11439114391143912,
+      "brier_10mm": 0.00018334696154309366,
+      "pod_10mm": 0.14285714285714285,
+      "far_10mm": 0.0,
+      "csi_10mm": 0.14285714285714285
     },
     "wind_speed": {
-      "rmse": 0.9952409267425537,
-      "mae": 0.7580803632736206,
-      "correlation": 0.878261888887304,
-      "crps": 0.5288480809482624
+      "rmse": 1.0018724203109741,
+      "mae": 0.7668285965919495,
+      "correlation": 0.8759990615784632,
+      "crps": 0.5341729933708614
     },
     "relative_humidity": {
-      "rmse": 3.095766067504883,
-      "mae": 2.190554618835449,
-      "correlation": 0.9702089197899052,
-      "crps": 1.5259761101706417
+      "rmse": 2.971409559249878,
+      "mae": 2.0580828189849854,
+      "correlation": 0.9726974008150343,
+      "crps": 1.4571482725843883
     }
   }
 }
