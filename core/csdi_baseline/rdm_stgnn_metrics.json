@@ -1,6 +1,6 @@
 {
   "model": "RDM-STGNN",
-  "source": "results/eval_10feat_restore/comparison/comparison_summary.json",
+  "source": "results/canonical/head_to_head/comparison/comparison_summary.json",
   "scenario": "full_model",
   "metadata": {
     "samples_per_scenario": 35058,
