@@ -16,7 +16,7 @@ import { TopologyGraphOverlay } from './components/TopologyGraphOverlay';
 import { Download, Maximize2, Database, X, CloudRain, MapPinned, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('forecast');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('map');
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId>('MAIN');
   const [radarVisible, setRadarVisible] = useState(true);
   const [nodesVisible, setNodesVisible] = useState(true);
