@@ -1,5 +1,5 @@
 """
-Inference service for ERA5 H-7 archive nowcasting with dataset fallback.
+Inference service for ERA5 lag archive nowcasting with dataset fallback.
 
 Integrates RDM-STGNN (Skenario 3, 10-fitur) and FAISS retrieval with the
 public dashboard snapshot contract.
@@ -116,7 +116,10 @@ _CACHE_LOCK = threading.Lock()
 _ERA5_CACHE: Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None = None
 _ERA5_TIMESTAMP: float = 0.0
 
-ERA5_H7_DAYS = 7
+# Open-Meteo ERA5 reanalysis lags ~5 days. Kept at 7 on purpose: two spare days
+# de-risking the thesis demo, since the walk-back still shifts on null hours.
+ERA5_LAG_DAYS = 7
+_MS_TO_KMH = 3.6
 ERA5_LOOKBACK_DAYS = 1
 ERA5_CACHE_TTL_SECONDS = 3600.0
 
@@ -139,7 +142,9 @@ def _has_complete_window(data: List[dict], end_i: int, seq_len: int = 6) -> bool
             hourly = node["hourly"]
             if any(hourly[field][i] is None for field in _COMPLETE_FIELDS):
                 return False
-    return True
+    # The feature matrix also reads precipitation[i - 1] for the earliest row.
+    lag_i = end_i - seq_len
+    return all(node["hourly"]["precipitation"][lag_i] is not None for node in data)
 
 
 def _telemetry(node_name: str, temp: float, dew: float, rain: float, humidity: float, wind: float, wind_dir: float, pressure: float) -> NodeTelemetry:
@@ -149,7 +154,7 @@ def _telemetry(node_name: str, temp: float, dew: float, rain: float, humidity: f
         dewPointCelsius=round(dew, 1),
         rainIntensityMmH=round(rain, 2),
         humidityPercent=round(humidity, 1),
-        windSpeedKmh=round(wind, 1),
+        windSpeedKmh=round(wind * _MS_TO_KMH, 1),  # ERA5 gives m/s; UI contract is km/h
         windDirectionDeg=round(wind_dir, 0),
         pressureHpa=round(pressure, 1),
     )
@@ -157,10 +162,10 @@ def _telemetry(node_name: str, temp: float, dew: float, rain: float, humidity: f
 
 def _fetch_era5_h7() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.datetime] | None:
     """
-    Fetch the newest ERA5 archive window that is at least H-7 old.
+    Fetch the newest ERA5 archive window that is at least ERA5_LAG_DAYS old.
 
-    cutoff = utcnow - 7 days; the last input hour must be <= cutoff, so every
-    response is guaranteed to lag at least 7 days. If the boundary hour is not
+    cutoff = utcnow - ERA5_LAG_DAYS; the last input hour must be <= cutoff, so every
+    response is guaranteed to lag that many days. If the boundary hour is not
     fully populated yet, the window shifts back one hour at a time instead of
     falling back to the stale parquet. Cached for an hour.
     Returns (features_array [6, 5, 10], telemetries_dict, latest_timestamp) or None.
@@ -173,7 +178,7 @@ def _fetch_era5_h7() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.dat
             return _ERA5_CACHE
 
     try:
-        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=ERA5_H7_DAYS)
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=ERA5_LAG_DAYS)
         start = (cutoff - datetime.timedelta(days=ERA5_LOOKBACK_DAYS)).date().isoformat()
         lats = [str(NODE_COORDINATES[n][0]) for n in NODE_NAMES]
         lons = [str(NODE_COORDINATES[n][1]) for n in NODE_NAMES]
@@ -204,7 +209,7 @@ def _fetch_era5_h7() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.dat
 
         latest_dt_utc = datetime.datetime.fromisoformat(h_sample["time"][end_i])
         if latest_dt_utc > cutoff:
-            raise RuntimeError(f"ERA5 H-7 guard violated: {latest_dt_utc} > {cutoff}")
+            raise RuntimeError(f"ERA5 lag guard violated: {latest_dt_utc} > {cutoff}")
 
         node_matrices = []
         telemetries: Dict[str, NodeTelemetry] = {}
@@ -247,7 +252,7 @@ def _fetch_era5_h7() -> Tuple[np.ndarray, Dict[str, NodeTelemetry], datetime.dat
         return _ERA5_CACHE
 
     except Exception:
-        logging.getLogger(__name__).exception("ERA5 H-7 fetch failed; serving fallback")
+        logging.getLogger(__name__).exception("ERA5 lag fetch failed; serving fallback")
         return _ERA5_CACHE
 
 
@@ -329,7 +334,7 @@ def generate_live_dashboard_snapshot(
     model_wrapper, stats, retrieval_db, main_train = get_inference_engine(checkpoint_path)
     feature_cols = model_wrapper.config["feature_cols"]
 
-    # 1. Fetch input sequence — ERA5 archive, guaranteed H-7 or older
+    # 1. Fetch input sequence — ERA5 archive, guaranteed ERA5_LAG_DAYS or older
     era5_result = _fetch_era5_h7()
     if era5_result is not None:
         feats_raw, telemetries, obs_dt = era5_result
@@ -389,7 +394,7 @@ def generate_live_dashboard_snapshot(
         wind_speed=_build_nowcast_distribution(
             variable="wind_speed",
             unit="km/jam",
-            raw_samples=inference_res["wind_speed"],
+            raw_samples=[v * _MS_TO_KMH for v in inference_res["wind_speed"]],
             observed_now=round(main_telemetry.windSpeedKmh, 2) if main_telemetry else None,
             valid_at_wib=valid_wib_str,
         ),
@@ -429,7 +434,7 @@ def generate_live_dashboard_snapshot(
             patternType=pattern,
             distanceL2=round(float(dist), 2),
             rainRateMmH=round(float(row["precipitation"]), 2),
-            peakWindKmh=round(float(row["wind_speed"]), 1),
+            peakWindKmh=round(float(row["wind_speed"]) * _MS_TO_KMH, 1),
             tempCelsius=round(float(row["temperature"]), 1),
             humidityPercent=round(float(row["relative_humidity"]), 1),
             pressureHpa=round(float(row["surface_pressure"]), 1),
@@ -437,7 +442,7 @@ def generate_live_dashboard_snapshot(
             outcomeSummary=(
                 ("" if is_close else "Analog jauh (di luar p95 data latih). ")
                 + f"Pola cuaca {pattern_wib} mirip. Satu jam kemudian: {pattern.lower()}, "
-                f"angin {row['wind_speed']:.1f} km/jam, kelembapan {row['relative_humidity']:.1f}%."
+                f"angin {row['wind_speed'] * _MS_TO_KMH:.1f} km/jam, kelembapan {row['relative_humidity']:.1f}%."
             ),
         )
         analogs.append(analog)

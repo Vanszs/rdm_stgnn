@@ -51,7 +51,7 @@ function samples(center: number, spread: number): number[] {
 
 export const SAMPLE_NOWCAST = {
   precipitation: makeDistribution('precipitation', 'mm/jam', samples(12.8, 5.4), 14.8),
-  wind_speed: makeDistribution('wind_speed', 'km/jam', samples(12, 4)),
+  wind_speed: makeDistribution('wind_speed', 'km/jam', samples(30, 8), 34),
   relative_humidity: makeDistribution('relative_humidity', '%', samples(94.0, 3.5), 98),
 };
 

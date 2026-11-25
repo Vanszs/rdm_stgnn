@@ -5,13 +5,14 @@ import { NowcastDistribution, NowcastVariableSet } from '../types';
 interface ForecastChartProps {
   nowcast: NowcastVariableSet;
   windowRangeWib?: string;
+  isSample?: boolean;
 }
 
 /**
  * One-step forecast panel: 50 ensemble members for 3 variables at a single horizon.
  * Rendered as a percentile band + observed marker, not a multi-step line.
  */
-const ForecastChartComponent: React.FC<ForecastChartProps> = ({ nowcast, windowRangeWib }) => {
+const ForecastChartComponent: React.FC<ForecastChartProps> = ({ nowcast, windowRangeWib, isSample }) => {
   const rows = [
     { key: 'precip', label: 'Curah hujan', icon: CloudRain, accent: '#1f6056', data: nowcast.precipitation },
     { key: 'wind', label: 'Kecepatan angin', icon: Wind, accent: '#b77817', data: nowcast.wind_speed },
@@ -32,6 +33,11 @@ const ForecastChartComponent: React.FC<ForecastChartProps> = ({ nowcast, windowR
           {windowRangeWib && (
             <span className="text-[10px] font-mono-data text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
               Data: 6 pembacaan jam terakhir ({windowRangeWib})
+            </span>
+          )}
+          {isSample && (
+            <span className="text-[10px] font-mono-data text-rose-700 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+              Contoh data — server belum terhubung
             </span>
           )}
         </div>
